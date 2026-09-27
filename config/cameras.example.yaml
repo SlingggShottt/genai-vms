@@ -1,0 +1,17 @@
+# Copy to config/cameras.yaml. Used by ingestion when GET /internal/v1/cameras
+# is unavailable (before P1-J3 lands, or if the api service is down) —
+# design_architecture.md §16. Same shape as that endpoint's JSON response
+# (libs/vms_common/contracts/camera.py), so ingestion validates it identically.
+cameras:
+  - id: cam01
+    code: cam01
+    name: North Gate
+    rtsp_url: rtsp://mediamtx:8554/cam01
+    site_id: rvce-campus
+    enabled: true
+  - id: cam02
+    code: cam02
+    name: Service Lane
+    rtsp_url: rtsp://mediamtx:8554/cam02
+    site_id: rvce-campus
+    enabled: true
