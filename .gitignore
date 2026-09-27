@@ -27,6 +27,13 @@ ml/**/wandb/
 ml/**/outputs/
 ml/**/checkpoints/
 
+# Model weights (ultralytics/torch download these to cwd by default if
+# run from the repo root — e.g. `yolo11s.pt`; real artefacts live in the
+# vms-models S3 bucket or are fetched at container build/run time, never committed)
+*.pt
+*.pth
+*.onnx
+
 # Downloaded datasets (tens to hundreds of GB; ml/datasets/download/*.sh
 # fetches these, see ml/datasets/README.md for licences)
 ml/datasets/raw/
@@ -42,6 +49,7 @@ ml/**/*.zip
 # config, not local overrides.
 config/cameras.yaml
 config/camera_sim.yaml
+config/zones.yaml
 
 # OS / editor
 .DS_Store
