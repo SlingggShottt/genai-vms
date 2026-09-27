@@ -1,0 +1,78 @@
+# Mirrors docs/design_architecture.md §3. Owners write; the other builder
+# reviews every PR (style_guide.md §A.3). Contract PRs under
+# libs/vms_common/contracts/ and fixtures/ need both.
+#
+# GitHub CODEOWNERS: the LAST matching pattern wins, so entries below go
+# broad -> specific on purpose (e.g. a whole service, then one submodule
+# inside it that the other track owns).
+#
+# TODO(divyansh): replace @jatin-handle with Jatin's real GitHub username.
+
+# --- Shared runtime library (libs/vms_common) — D, contracts/fixtures co-owned ---
+/libs/vms_common/                          @SlingggShottt
+/libs/vms_common/contracts/                @SlingggShottt @jatin-handle
+/libs/vms_common/fixtures/                 @SlingggShottt @jatin-handle
+
+# --- vms_db — J base; table ownership within is per §6.1, reviewed by both on migrations ---
+/libs/vms_db/                              @jatin-handle
+
+# --- Media & perception plane (D); grounding submodule (J) ---
+/services/ingestion/                       @SlingggShottt
+/services/perception/                      @SlingggShottt
+/services/perception/src/perception/api/grounding/  @jatin-handle
+/tools/camera_sim/                         @SlingggShottt
+
+# --- Event detection (D) ---
+/services/events/                          @SlingggShottt
+/config/rules.yaml                         @SlingggShottt
+
+# --- Indexing (J) ---
+/services/indexer/                         @jatin-handle
+
+# --- Correlation (J) ---
+/services/correlation/                     @jatin-handle
+/config/correlation.yaml                   @jatin-handle
+
+# --- Retrieval — split by module, no single top-level owner ---
+/services/retrieval/                       @SlingggShottt @jatin-handle
+/services/retrieval/src/retrieval/domain/search/text/   @SlingggShottt
+/services/retrieval/src/retrieval/domain/assistant/     @SlingggShottt
+/services/retrieval/src/retrieval/domain/search/image/  @jatin-handle
+/services/retrieval/src/retrieval/domain/search/jit/    @jatin-handle
+
+# --- Reasoning — split by module, no single top-level owner ---
+/services/reasoning/                       @SlingggShottt @jatin-handle
+/services/reasoning/src/reasoning/domain/orchestrator/  @SlingggShottt
+/services/reasoning/src/reasoning/domain/synthesis/     @SlingggShottt
+/services/reasoning/src/reasoning/domain/evidence/      @jatin-handle
+/services/reasoning/src/reasoning/domain/reports/       @jatin-handle
+
+# --- API (J) ---
+/services/api/                             @jatin-handle
+
+# --- Frontend — scaffold + most features (J); search & assistant (D) ---
+/frontend/                                 @jatin-handle
+/frontend/src/features/search/             @SlingggShottt
+/frontend/src/features/assistant/          @SlingggShottt
+
+# --- ML ---
+/ml/annotation/                            @SlingggShottt @jatin-handle
+/ml/datasets/                              @SlingggShottt @jatin-handle
+/ml/evaluation/                            @SlingggShottt @jatin-handle
+/ml/training/tg/                           @SlingggShottt
+/ml/training/phavr/                        @jatin-handle
+
+# --- Tools ---
+/tools/seed/                               @jatin-handle
+
+# --- Deploy ---
+/deploy/compose/                           @SlingggShottt @jatin-handle
+/deploy/k8s/base/infra/                    @SlingggShottt
+/deploy/k8s/base/obs/                      @SlingggShottt
+/deploy/k8s/base/apps/                     @jatin-handle
+/deploy/k8s/base/jobs/                     @jatin-handle
+/deploy/k8s/base/ingress/                  @jatin-handle
+
+# --- Config not covered above ---
+/config/models.yaml                        @SlingggShottt
+/config/vqa_bank.yaml                      @jatin-handle
