@@ -1,0 +1,32 @@
+# MediaMTX configuration for local dev (compose profile: infra).
+# Full reference: https://github.com/bluenviron/mediamtx/blob/main/mediamtx.yml
+# Keys verified against that reference on 2026-09-27 (techstack.md "verify" —
+# re-check against the pinned image's tag if `docker compose up` rejects a key).
+
+logLevel: info
+
+# HTTP control API — used by the compose healthcheck; not exposed beyond dev.
+api: yes
+apiAddress: :9997
+
+# RTSP — camera_sim (P1-D4) and real cameras publish here; ingestion (P1-D5)
+# pulls from here. Path naming: rtsp://mediamtx:8554/cam{n} (design_architecture.md §16).
+rtsp: yes
+rtspAddress: :8554
+rtspTransports: [tcp]
+
+# HLS — browser fallback playback (FR-LIVE-01: <= 8s glass-to-glass).
+hls: yes
+hlsAddress: :8888
+hlsAllowOrigins: ["*"]
+
+# WebRTC (WHEP) — low-latency browser playback (FR-LIVE-01: <= 3s on LAN).
+webrtc: yes
+webrtcAddress: :8889
+webrtcAllowOrigins: ["*"]
+
+# Any path name is accepted — no per-camera entry needed for a stream to
+# exist. Per-camera auth/recording config can be added here once P1-J3
+# (camera management API) needs it.
+paths:
+  all_others:
