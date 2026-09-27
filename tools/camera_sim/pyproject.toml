@@ -1,0 +1,22 @@
+[project]
+name = "vms-camera-sim"
+version = "0.1.0"
+description = "Replays dataset videos as synchronized live RTSP camera streams into MediaMTX (FR-ING-06)"
+requires-python = ">=3.11"
+dependencies = [
+    "vms-common",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+camera-sim = "camera_sim.main:main"
+
+[tool.uv.sources]
+vms-common = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/camera_sim"]
