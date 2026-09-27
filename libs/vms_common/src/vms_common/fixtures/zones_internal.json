@@ -1,0 +1,34 @@
+{
+  "zones": [
+    {
+      "id": "01929e6c-0001-7000-8000-000000000001",
+      "camera_id": "cam02",
+      "name": "Restricted yard",
+      "zone_type": "restricted",
+      "polygon": [
+        [0.1, 0.4],
+        [0.6, 0.35],
+        [0.65, 0.9],
+        [0.05, 0.85]
+      ],
+      "schedule": null
+    },
+    {
+      "id": "01929e6c-0002-7000-8000-000000000002",
+      "camera_id": "cam03",
+      "name": "Main entrance",
+      "zone_type": "entrance",
+      "polygon": [
+        [0.3, 0.2],
+        [0.7, 0.2],
+        [0.7, 0.6],
+        [0.3, 0.6]
+      ],
+      "schedule": {
+        "start_time": "20:00",
+        "end_time": "06:00",
+        "days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+      }
+    }
+  ]
+}

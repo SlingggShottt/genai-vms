@@ -1,0 +1,42 @@
+{
+  "schema_version": "twin.v1",
+  "segment_id": "cam03_20261005T101500Z_000123",
+  "camera_id": "cam03",
+  "site_id": "rvce-campus",
+  "start_ts": "2026-10-05T10:15:00.000000Z",
+  "end_ts": "2026-10-05T10:15:10.000000Z",
+  "sample_fps": 2.0,
+  "frame_size": { "w": 1920, "h": 1080 },
+  "frames": [
+    {
+      "ts": "2026-10-05T10:15:00.500000Z",
+      "idx": 1,
+      "keyframe_uri": "s3://vms-keyframes/cam03/2026/10/05/10/000123/0001.jpg",
+      "objects": [
+        {
+          "track_id": "cam03-t412",
+          "category": "person",
+          "conf": 0.91,
+          "bbox": [0.412, 0.31, 0.468, 0.702],
+          "attributes": { "upper_color": "red", "lower_color": "black" },
+          "motion": { "speed": 0.08, "direction_deg": 265 },
+          "zones": ["entrance"]
+        }
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "track_id": "cam03-t412",
+      "category": "person",
+      "first_ts": "2026-10-05T10:15:00.500000Z",
+      "last_ts": "2026-10-05T10:15:09.500000Z",
+      "dwell_s": 9.5,
+      "zones_visited": ["entrance"],
+      "attributes_summary": { "upper_color": "red", "lower_color": "black" },
+      "best_crop_uri": "s3://vms-crops/cam03/2026/10/05/10/000123/cam03-t412.jpg",
+      "embedding_index": 0
+    }
+  ],
+  "scene": { "person_count_max": 4, "vehicle_count_max": 1 }
+}
