@@ -63,41 +63,63 @@
 ## Divyansh — 24 pts
 
 ### P1-D1 · Monorepo scaffold — 3 pts · Must · E01
-- [ ] uv workspace with `libs/vms_common`, `libs/vms_db`, and empty service packages following `style_guide.md §A.1` layout.
-- [ ] Root `Makefile`: `make setup`, `make up PROFILE=…`, `make down`, `make test`, `make lint`.
-- [ ] Ruff + pytest config shared; pre-commit with ruff, nbstripout, gitleaks.
-- [ ] `CODEOWNERS` created from `design_architecture.md §3`.
+- [x] uv workspace with `libs/vms_common`, `libs/vms_db`, and empty service packages following `style_guide.md §A.1` layout.
+- [x] Root `Makefile`: `make setup`, `make up PROFILE=…`, `make down`, `make test`, `make lint`.
+- [x] Ruff + pytest config shared; pre-commit with ruff, nbstripout, gitleaks.
+- [x] `CODEOWNERS` created from `design_architecture.md §3`.
 
 ### P1-D2 · Shared runtime library v1 — 5 pts · Must · E01 · NFR-REL-01, NFR-OBS-01
-- [ ] `vms_common.config` (pydantic-settings), `logging` (structlog JSON with context binding), `ids` (uuid7), `metrics` helpers.
-- [ ] `vms_common.kafka`: async producer, consumer base class with validate → handle → commit, retry backoff, DLQ publish.
-- [ ] `vms_common.storage`: S3 client (put/get/stream/presign), URI parse/build helpers.
-- [ ] `contracts/segment.py` (`SegmentV1`) + fixture + round-trip test.
+- [x] `vms_common.config` (pydantic-settings), `logging` (structlog JSON with context binding), `ids` (uuid7), `metrics` helpers.
+- [x] `vms_common.kafka`: async producer, consumer base class with validate → handle → commit, retry backoff, DLQ publish.
+- [x] `vms_common.storage`: S3 client (put/get/stream/presign), URI parse/build helpers.
+- [x] `contracts/segment.py` (`SegmentV1`) + fixture + round-trip test.
 - [ ] Integration test with testcontainers Kafka: message produced → consumed → committed; poison message → DLQ.
+      **Written** (`libs/vms_common/tests/integration/test_kafka_consumer.py`), **not executed** — no Docker daemon in
+      the environment this was built in. Run `make test-int` (needs Docker) before trusting it fully.
 
 ### P1-D3 · Infrastructure Compose — 3 pts · Must · E17
-- [ ] `deploy/compose/docker-compose.yml` with profile `infra`: Kafka (KRaft), kafka-ui, Postgres, Qdrant, Redis, object storage (buckets auto-created), MediaMTX.
-- [ ] Healthchecks on every container; `.env.example` documented.
-- [ ] Topic bootstrap script creates topics from `design_architecture.md §5.2`.
+- [x] `deploy/compose/docker-compose.yml` with profile `infra`: Kafka (KRaft), kafka-ui, Postgres, Qdrant, Redis, object storage (buckets auto-created), MediaMTX.
+- [x] Healthchecks on every container; `.env.example` documented.
+      Two healthchecks (mediamtx, qdrant) are best-effort guesses at what's in the pulled image — unverified, see
+      `deploy/compose/README.md` Troubleshooting.
+- [x] Topic bootstrap script creates topics from `design_architecture.md §5.2`.
 - [ ] `nvidia-smi` works inside a test GPU container on both laptops (documented in README troubleshooting).
+      **Doc written** (`deploy/compose/README.md`); **not run on real hardware** — needs Divyansh and Jatin to each
+      confirm on their own laptop and update the note with what worked.
 
 ### P1-D4 · Camera simulator — 3 pts · Must · E02 · FR-ING-06
-- [ ] `tools/camera_sim` reads a YAML (camera id → video file, start offset) and publishes looping RTSP streams to MediaMTX at real-time rate.
-- [ ] Synchronized start for multi-view datasets (WILDTRACK/MEVA offsets honoured).
-- [ ] Compose service in profile `tools`; doc for publishing a phone camera as a live source.
+- [x] `tools/camera_sim` reads a YAML (camera id → video file, start offset) and publishes looping RTSP streams to MediaMTX at real-time rate.
+- [x] Synchronized start for multi-view datasets (WILDTRACK/MEVA offsets honoured).
+- [x] Compose service in profile `tools`; doc for publishing a phone camera as a live source.
+      Manifest parsing and ffmpeg command construction are unit-tested; not run end-to-end against real MediaMTX/video
+      (no Docker daemon, no sample dataset — P1-D6 — in this environment).
 
 ### P1-D5 · Ingestion service — 8 pts · Must · E02 · FR-ING-01…05
-- [ ] One async worker per enabled camera, camera list from `GET /internal/v1/cameras` (fallback `config/cameras.yaml`), refreshed every 60 s.
-- [ ] FFmpeg segmenter writes 10 s MPEG-TS segments without re-encode; each uploaded to `vms-segments` with the key layout in design §6.3.
-- [ ] Keyframes at 1 fps uploaded to `vms-keyframes`.
-- [ ] `segment.v1` published per segment with correct UTC start/end; `gap_before=true` after reconnects.
-- [ ] Reconnect with exponential backoff ≤ 30 s; camera status heartbeat to Redis `camera:status:<id>` every 5 s.
-- [ ] Metrics `vms_ingest_segments_total`, `vms_stream_reconnects_total`.
+- [x] One async worker per enabled camera, camera list from `GET /internal/v1/cameras` (fallback `config/cameras.yaml`), refreshed every 60 s.
+      `GET /internal/v1/cameras` client is written but P1-J3 doesn't exist yet, so only the YAML fallback path is
+      actually exercised so far — `libs/vms_common/contracts/camera.py` is a **proposed** day-1 contract per
+      design_architecture.md §16, needs Jatin's review when P1-J3 lands.
+- [x] FFmpeg segmenter writes 10 s MPEG-TS segments without re-encode; each uploaded to `vms-segments` with the key layout in design §6.3.
+      Mechanics (segment muxer + list-file polling, keyframe extraction) verified locally against a synthetic ffmpeg
+      source — see `adapters/segmenter.py` docstring for what that found (segments round up to the source's keyframe
+      interval when it exceeds `segment_seconds`). Full pipeline (real RTSP → S3 → Kafka) not run end-to-end — no
+      Docker daemon in this environment.
+- [x] Keyframes at 1 fps uploaded to `vms-keyframes`.
+- [x] `segment.v1` published per segment with correct UTC start/end; `gap_before=true` after reconnects.
+- [x] Reconnect with exponential backoff ≤ 30 s; camera status heartbeat to Redis `camera:status:<id>` every 5 s.
+- [x] Metrics `vms_ingest_segments_total`, `vms_stream_reconnects_total`.
 - [ ] Runs 6 simulated cameras for 30 min with no missing segment ids (test script).
+      **Script written** (`tests/smoke/check_no_missing_segments.py`); **not run** — needs the full stack (Docker,
+      6 dataset videos from P1-D6) which isn't available in this environment. Run it once infra + camera_sim +
+      ingestion are actually up.
 
 ### P1-D6 · Dataset acquisition scripts — 2 pts · Must · E10
-- [ ] `ml/datasets/download/` scripts + manifests for scoped subsets: WILDTRACK (full), MEVA (≤ 60 GB subset with ≥ 4 synchronized cameras), UCF-Crime (8 classes), ShanghaiTech Campus.
-- [ ] `ml/datasets/README.md` lists licence/usage terms and disk sizes.
+- [x] `ml/datasets/download/` scripts + manifests for scoped subsets: WILDTRACK (full), MEVA (≤ 60 GB subset with ≥ 4 synchronized cameras), UCF-Crime (8 classes), ShanghaiTech Campus.
+      Access URLs verified for real (fetched each dataset's page 27 Sep 2026 — see `ml/datasets/README.md`), but the
+      scripts themselves were **not run** — no network budget in this environment for tens/hundreds of GB. MEVA's
+      script lists/sizes/syncs a chosen prefix rather than hardcoding one, since exact bucket contents weren't
+      verified live; ShanghaiTech falls back to a manual step (OneDrive isn't reliably scriptable).
+- [x] `ml/datasets/README.md` lists licence/usage terms and disk sizes.
 
 ## Jatin — 24 pts
 
