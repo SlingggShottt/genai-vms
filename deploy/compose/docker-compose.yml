@@ -4,10 +4,10 @@
 # (S3-compatible, buckets auto-created), MediaMTX. Started with:
 #   make up PROFILE=infra
 #
-# `perception`, `genai`, `obs`, `lite` profiles (design_architecture.md
-# §12.1) are added by the stories that build those services (P1-J1 api,
-# ...) — this file only carries `infra`, `tools` (camera_sim) and `core`
-# (ingestion so far) until then.
+# `genai`, `obs`, `lite` profiles (design_architecture.md §12.1) are added
+# by the stories that build those services (P1-J1 api, ...) — this file
+# only carries `infra`, `tools` (camera_sim), `core` (ingestion) and
+# `perception` so far.
 #
 # Image tags are pinned per docs/techstack.md's "verify" column; re-check
 # them at setup time (registries and default branches change).
@@ -254,4 +254,41 @@ services:
       VMS_INGESTION_CAMERAS_YAML_FALLBACK: /app/config/cameras.yaml
     volumes:
       - ../../config:/app/config:ro
+    restart: unless-stopped
+
+  perception:
+    profiles: [perception]
+    container_name: vms-perception
+    build:
+      context: ../.. # repo root — see services/perception/Dockerfile
+      dockerfile: services/perception/Dockerfile
+    networks: [vms-net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      VMS_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      VMS_STORAGE_ENDPOINT_URL: http://minio:9000
+      VMS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-vms-admin}
+      VMS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+      VMS_REDIS_URL: redis://redis:6379/0
+      # No VMS_PERCEPTION_API_BASE_URL yet — api (P2-J4) doesn't exist;
+      # falls back to config/zones.yaml until then (see settings.py).
+      VMS_PERCEPTION_ZONES_YAML_FALLBACK: /app/config/zones.yaml
+    volumes:
+      - ../../config:/app/config:ro
+    # GPU required — one CUDA context for YOLO11 + SigLIP2 (design_architecture.md §11.3).
+    # Untested against a real Docker daemon in this environment; verify
+    # `docker run --gpus all ... nvidia-smi` works before relying on this block.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     restart: unless-stopped
