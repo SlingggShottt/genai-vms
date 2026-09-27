@@ -1,0 +1,37 @@
+{
+  "cameras": [
+    {
+      "id": "01929e6a-0001-7000-8000-000000000001",
+      "code": "cam01",
+      "name": "North Gate",
+      "rtsp_url": "rtsp://mediamtx:8554/cam01",
+      "site_id": "rvce-campus",
+      "location_label": "North gate entrance",
+      "lat": 12.9260,
+      "lon": 77.5000,
+      "enabled": true
+    },
+    {
+      "id": "01929e6a-0002-7000-8000-000000000002",
+      "code": "cam02",
+      "name": "Service Lane",
+      "rtsp_url": "rtsp://mediamtx:8554/cam02",
+      "site_id": "rvce-campus",
+      "location_label": null,
+      "lat": null,
+      "lon": null,
+      "enabled": true
+    },
+    {
+      "id": "01929e6a-0003-7000-8000-000000000003",
+      "code": "cam03",
+      "name": "Disabled Test Camera",
+      "rtsp_url": "rtsp://mediamtx:8554/cam03",
+      "site_id": "rvce-campus",
+      "location_label": null,
+      "lat": null,
+      "lon": null,
+      "enabled": false
+    }
+  ]
+}
