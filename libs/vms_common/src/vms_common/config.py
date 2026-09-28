@@ -76,6 +76,20 @@ class DatabaseSettings(VMSBaseSettings):
     echo: bool = Field(default=False)
 
 
+class JWTSettings(VMSBaseSettings):
+    """JWT signing settings — `VMS_JWT_*` (design_architecture.md §15: HS256
+    dev, RS256 option later). `secret` has no safe default — callers that
+    need a real one must set `VMS_JWT_SECRET`.
+    """
+
+    model_config = SettingsConfigDict(env_prefix="VMS_JWT_", env_file=".env", extra="ignore")
+
+    secret: str = Field(default="")
+    algorithm: str = Field(default="HS256")
+    access_token_expire_minutes: int = Field(default=15, gt=0)  # FR-AUTH-01
+    refresh_token_expire_days: int = Field(default=7, gt=0)  # FR-AUTH-01
+
+
 class LLMProfileSettings(VMSBaseSettings):
     """LLM profile switch — `VMS_LLM_PROFILE` (D-08, FR-CFG-02)."""
 

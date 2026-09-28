@@ -12,6 +12,7 @@ dependencies = [
     "prometheus-client>=0.21",
     "redis>=5.0",
     "numpy>=1.26",
+    "pyjwt>=2.9",
 ]
 
 [build-system]

@@ -130,11 +130,11 @@
 - [x] Integration tests with testcontainers Postgres.
 
 ### P1-J2 · Authentication & RBAC — 5 pts · Must · E03 · FR-AUTH-01…05
-- [ ] Login returns access (15 min) + refresh (7 d) JWT; refresh rotation; logout revokes.
-- [ ] Argon2id hashing; seed admin from env on first start.
-- [ ] `require_role()` dependency; service-token dependency for `/internal/*`.
-- [ ] Users CRUD (admin only); audit log entries for login and user changes.
-- [ ] Role × endpoint test matrix generated from the router table.
+- [x] Login returns access (15 min) + refresh (7 d) JWT; refresh rotation; logout revokes.
+- [x] Argon2id hashing; seed admin from env on first start.
+- [x] `require_role()` dependency; service-token dependency for `/internal/*`.
+- [x] Users CRUD (admin only); audit log entries for login and user changes.
+- [x] Role × endpoint test matrix generated from the router table.
 
 ### P1-J3 · Camera management API — 3 pts · Must · E03 · FR-CAM-01, FR-CAM-02
 - [ ] CRUD `/cameras` with validation (RTSP URL format, unique code).
