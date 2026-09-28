@@ -4,7 +4,7 @@ COMPOSE_FILE := deploy/compose/docker-compose.yml
 PROFILE ?=
 SVC ?=
 
-.PHONY: help setup up down test test-int lint topics sim
+.PHONY: help setup up down test test-int lint topics sim migrate migration
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -24,6 +24,13 @@ up: ## Start docker compose profiles, e.g. make up PROFILE=infra,core
 down: ## Stop and remove docker compose services
 	@if [ ! -f $(COMPOSE_FILE) ]; then echo "$(COMPOSE_FILE) not created yet (lands in P1-D3)"; exit 1; fi
 	docker compose -f $(COMPOSE_FILE) down
+
+migrate: ## Apply DB migrations (alembic upgrade head) — needs VMS_DB_DSN reachable
+	uv run --package vms-db alembic -c libs/vms_db/alembic.ini upgrade head
+
+migration: ## Create a new migration: make migration MSG="add zones"
+	@if [ -z "$(MSG)" ]; then echo "usage: make migration MSG=\"description\""; exit 1; fi
+	uv run --package vms-db alembic -c libs/vms_db/alembic.ini revision --autogenerate -m "$(MSG)"
 
 topics: ## Create Kafka topics from design_architecture.md §5.2 (needs `make up PROFILE=infra` first)
 	bash deploy/compose/scripts/create_topics.sh

@@ -1,12 +1,73 @@
-"""Entrypoint for the api service.
+"""Entrypoint for the api service: FastAPI app factory + uvicorn runner.
 
-Implementation lands with its backlog story — see docs/backlog.md and
-docs/design_architecture.md §4.
+Implementation grows with each story — see docs/backlog.md and
+docs/design_architecture.md §9 for the full endpoint surface this lands.
 """
+
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from vms_common.logging import configure_logging, get_logger
+from vms_db.session import create_engine, create_session_factory
+
+from api.api.errors import register_exception_handlers
+from api.api.health import router as health_router
+from api.api.middleware import RequestIDMiddleware
+from api.settings import ApiSettings
+
+log = get_logger(__name__)
+
+
+def create_app(settings: ApiSettings | None = None) -> FastAPI:
+    settings = settings or ApiSettings()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        # Configured on startup, not at create_app()/import time: create_app()
+        # can be called more than once (e.g. once per test), and importing
+        # api.main (module-level `app = create_app()` below) shouldn't mutate
+        # process-global logging state as a side effect (style_guide.md §A.1;
+        # mirrors ingestion/main.py's `_amain()`).
+        configure_logging(level=settings.log_level)
+        engine = create_engine(settings.db)
+        app.state.db_engine = engine
+        app.state.db_session_factory = create_session_factory(engine)
+        log.info("api_started", environment=settings.environment)
+        try:
+            yield
+        finally:
+            await engine.dispose()
+            log.info("api_stopped")
+
+    app = FastAPI(title="GenAI-VMS API", version="0.1.0", lifespan=lifespan)
+    app.state.settings = settings
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_allow_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    app.add_middleware(RequestIDMiddleware)
+
+    register_exception_handlers(app)
+    app.include_router(health_router)
+
+    return app
+
+
+app = create_app()
 
 
 def main() -> None:
-    raise NotImplementedError("api is not implemented yet (see docs/backlog.md)")
+    import uvicorn
+
+    uvicorn.run("api.main:app", host="0.0.0.0", port=8000, reload=False)  # noqa: S104
 
 
 if __name__ == "__main__":

@@ -1,9 +1,17 @@
 # vms_db
 
 SQLAlchemy 2 (async) models + one Alembic history for the single `vms`
-Postgres database, one schema per domain. Base/engine/session and the first
-migration land in P1-J1; table ownership within each schema follows
-`docs/design_architecture.md §6.1`.
+Postgres database, one schema per domain. `Base` (`base.py`), the async
+engine/session factory (`session.py`) and migration `0001` (`core` schema:
+`users`, `refresh_tokens`, `cameras`, `audit_log`) landed in P1-J1; table
+ownership within each schema follows `docs/design_architecture.md §6.1`.
+Connection DSN comes from `vms_common.config.DatabaseSettings` (`VMS_DB_DSN`)
+— never hardcoded in `alembic.ini`.
+
+```bash
+make migrate                          # alembic upgrade head
+make migration MSG="add zones"        # alembic revision --autogenerate
+```
 
 | Schema | Owner |
 |---|---|

@@ -62,6 +62,20 @@ class RedisSettings(VMSBaseSettings):
     url: str = Field(default="redis://localhost:6379/0")
 
 
+class DatabaseSettings(VMSBaseSettings):
+    """PostgreSQL connection settings — `VMS_DB_*` (design_architecture.md §6.1).
+
+    `dsn` uses the `asyncpg` driver (style_guide.md §A.1: async all the way).
+    """
+
+    model_config = SettingsConfigDict(env_prefix="VMS_DB_", env_file=".env", extra="ignore")
+
+    dsn: str = Field(default="postgresql+asyncpg://vms:vms@localhost:5432/vms")
+    pool_size: int = Field(default=5, gt=0)
+    max_overflow: int = Field(default=10, ge=0)
+    echo: bool = Field(default=False)
+
+
 class LLMProfileSettings(VMSBaseSettings):
     """LLM profile switch — `VMS_LLM_PROFILE` (D-08, FR-CFG-02)."""
 

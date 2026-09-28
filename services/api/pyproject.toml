@@ -3,10 +3,16 @@ name = "vms-api"
 version = "0.1.0"
 description = "Auth/RBAC, CRUD, recordings playlists, alerts (Kafka to WebSocket), notifier plugins, BFF proxy to retrieval/reasoning, audit."
 requires-python = ">=3.11"
-dependencies = ["vms-common"]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "vms-common",
+    "vms-db",
+]
 
 [tool.uv.sources]
 vms-common = { workspace = true }
+vms-db = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

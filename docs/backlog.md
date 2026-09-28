@@ -124,10 +124,10 @@
 ## Jatin — 24 pts
 
 ### P1-J1 · API service skeleton & database — 5 pts · Must · E01, E03
-- [ ] FastAPI app factory, router layout, error envelope (`style_guide.md §A.5`), request-id middleware, `/health`, `/ready`, `/metrics`.
-- [ ] `libs/vms_db`: async engine/session, base model, Alembic configured with per-domain schemas.
-- [ ] Migration 0001: `core.users`, `core.refresh_tokens`, `core.cameras`, `core.audit_log`.
-- [ ] Integration tests with testcontainers Postgres.
+- [x] FastAPI app factory, router layout, error envelope (`style_guide.md §A.5`), request-id middleware, `/health`, `/ready`, `/metrics`.
+- [x] `libs/vms_db`: async engine/session, base model, Alembic configured with per-domain schemas.
+- [x] Migration 0001: `core.users`, `core.refresh_tokens`, `core.cameras`, `core.audit_log`.
+- [x] Integration tests with testcontainers Postgres.
 
 ### P1-J2 · Authentication & RBAC — 5 pts · Must · E03 · FR-AUTH-01…05
 - [ ] Login returns access (15 min) + refresh (7 d) JWT; refresh rotation; logout revokes.

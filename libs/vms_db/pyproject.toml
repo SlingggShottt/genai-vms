@@ -3,7 +3,12 @@ name = "vms-db"
 version = "0.1.0"
 description = "SQLAlchemy models, async session, single Alembic history (schemas: core, media, vision, events, reasoning, retrieval)"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "alembic>=1.13",
+    "asyncpg>=0.29",
+    "sqlalchemy[asyncio]>=2.0",
+    "vms-common",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -11,3 +16,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vms_db"]
+
+[tool.uv.sources]
+vms-common = { workspace = true }
