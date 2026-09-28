@@ -1,0 +1,16 @@
+{
+  "schema_version": "twinready.v1",
+  "message_id": "01929e6b-0001-7000-8000-000000000001",
+  "produced_at": "2026-10-05T10:15:12.100000Z",
+  "site_id": "rvce-campus",
+  "camera_id": "cam03",
+  "segment_id": "cam03_20261005T101500Z_000123",
+  "start_ts": "2026-10-05T10:15:00.000000Z",
+  "end_ts": "2026-10-05T10:15:10.000000Z",
+  "twin_uri": "s3://vms-twins/cam03/2026/10/05/10/000123.json",
+  "embeddings_uri": "s3://vms-twins/cam03/2026/10/05/10/000123.npz",
+  "sample_fps": 2.0,
+  "counts": { "person": 4, "backpack": 1 },
+  "track_ids": ["cam03-t412", "cam03-t415"],
+  "perception_version": "yolo11s-bytetrack-siglip2b@0.3.0"
+}

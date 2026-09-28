@@ -1,0 +1,17 @@
+{
+  "schema_version": "segment.v1",
+  "message_id": "01929e6a-9c1f-7c3e-8b1a-5e2f3a4b5c6d",
+  "produced_at": "2026-10-05T10:15:10.412000Z",
+  "site_id": "rvce-campus",
+  "camera_id": "cam03",
+  "segment_id": "cam03_20261005T101500Z_000123",
+  "start_ts": "2026-10-05T10:15:00.000000Z",
+  "end_ts": "2026-10-05T10:15:10.000000Z",
+  "uri": "s3://vms-segments/cam03/2026/10/05/10/cam03_20261005T101500Z_000123.ts",
+  "keyframes_prefix": "s3://vms-keyframes/cam03/2026/10/05/10/000123/",
+  "fps": 25.0,
+  "width": 1920,
+  "height": 1080,
+  "codec": "h264",
+  "gap_before": false
+}

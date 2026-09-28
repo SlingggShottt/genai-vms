@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# uv
+uv.lock.tmp
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Env & secrets — never commit
+.env
+.env.*
+!.env.example
+
+# ML experiment artefacts (large; go to vms-models bucket, not git)
+ml/**/*.ipynb_checkpoints/
+ml/**/wandb/
+ml/**/outputs/
+ml/**/checkpoints/
+
+# Model weights (ultralytics/torch download these to cwd by default if
+# run from the repo root — e.g. `yolo11s.pt`; real artefacts live in the
+# vms-models S3 bucket or are fetched at container build/run time, never committed)
+*.pt
+*.pth
+*.onnx
+
+# Downloaded datasets (tens to hundreds of GB; ml/datasets/download/*.sh
+# fetches these, see ml/datasets/README.md for licences)
+ml/datasets/raw/
+ml/**/*.mp4
+ml/**/*.avi
+ml/**/*.mkv
+ml/**/*.zip
+
+# Local machine-specific config copied from the matching *.example.yaml
+# (not secrets, but per-machine paths/RTSP URLs — same pattern as .env vs
+# .env.example). Deliberately NOT a config/*.yaml blanket rule: models.yaml,
+# rules.yaml, correlation.yaml, vqa_bank.yaml are committed application
+# config, not local overrides.
+config/cameras.yaml
+config/camera_sim.yaml
+config/zones.yaml
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Terraform / local overrides some contributors may add
+*.local.yml
+*.local.yaml
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml

@@ -1,0 +1,26 @@
+# Copy to config/camera_sim.yaml and point `file` at real videos after
+# running ml/datasets/download/ (P1-D6). tools/camera_sim/README.md
+# explains the format and the WILDTRACK/MEVA offset convention.
+
+# rtsp://mediamtx:8554 from inside the compose network (profile: tools);
+# rtsp://localhost:8554 if you run camera_sim on the host directly.
+mediamtx_url: rtsp://localhost:8554
+
+cameras:
+  # Single-camera smoke test (e.g. ShanghaiTech Campus, UCF-Crime — no
+  # offset needed, each clip is its own independent scene).
+  - id: cam01
+    file: ml/datasets/shanghaitech/01_001.avi
+    start_offset_s: 0.0
+
+  # Multi-view example (WILDTRACK): 7 synchronized cameras. All 7 start at
+  # offset 0 here because WILDTRACK's per-camera files are already trimmed
+  # to a common start; for datasets where camera files start at different
+  # wall-clock points (MEVA), set start_offset_s per camera so playback is
+  # time-aligned across views (design_architecture.md §7.1).
+  # - id: cam02
+  #   file: ml/datasets/wildtrack/cam2.mp4
+  #   start_offset_s: 0.0
+  # - id: cam03
+  #   file: ml/datasets/wildtrack/cam3.mp4
+  #   start_offset_s: 0.0

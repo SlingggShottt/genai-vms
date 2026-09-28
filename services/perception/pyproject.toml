@@ -1,0 +1,40 @@
+[project]
+name = "vms-perception"
+version = "0.1.0"
+description = "Decode + sample, batched YOLO11 detection, per-camera ByteTrack, attributes, zone membership, SigLIP2 embeddings, digital twin JSON; hosts the grounding endpoint."
+requires-python = ">=3.11"
+dependencies = [
+    "vms-common",
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    # Pinned exactly to versions verified against a real RTX 3050 during
+    # P2-D1..D5 (see adapters/*.py docstrings for what was checked):
+    "torch==2.6.0",
+    "torchvision==0.21.0",
+    "ultralytics==8.4.163",
+    "supervision==0.30.5",
+    # NOT >=5.0: requires a newer torch than 2.6.0 (see adapters/embedder.py).
+    "transformers>=4.49,<5.0",
+    "sentencepiece>=0.2",
+    "protobuf>=4.25",
+    "av>=13.0",
+    "opencv-python-headless>=4.10",
+    "pillow>=10.4",
+]
+
+[tool.uv.sources]
+vms-common = { workspace = true }
+torch = { index = "pytorch-cu124" }
+torchvision = { index = "pytorch-cu124" }
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/perception"]

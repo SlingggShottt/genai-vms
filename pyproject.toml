@@ -1,0 +1,54 @@
+[project]
+name = "genai-vms"
+version = "0.1.0"
+description = "GenAI-powered video management system — multimodal search, event reasoning, incident summarization"
+requires-python = ">=3.11"
+dependencies = []
+
+# This root project has no source of its own — it only exists to declare the
+# uv workspace. Real packages live under libs/ and services/.
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["libs/*", "services/*", "tools/*"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.6.9",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pre-commit>=3.8",
+    "testcontainers[kafka]>=4.8",
+]
+
+# --- Ruff (style_guide.md §A.1: line length 100, rules E,F,W,I,B,UP,SIM,ASYNC,S,N) ---
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# docs/ has Python snippets in fenced code blocks (design examples, not
+# real source) — ruff format would rewrite them as if they were code.
+extend-exclude = ["docs/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "ASYNC", "S", "N"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests may use assert (S101), pass literal fixture credentials (S106 —
+# mock values for FakeGateway/mock-transport tests, never real), and shell
+# out to build fixed, hardcoded test fixtures (S603 — untrusted-input
+# subprocess calls don't apply to a fixture generator with no external input).
+"**/tests/**" = ["S101", "S106", "S603"]
+
+# --- pytest (style_guide.md §A.1: unit tests mandatory for domain/, integration via testcontainers) ---
+[tool.pytest.ini_options]
+testpaths = ["libs", "services", "tools"]
+# Every package has its own tests/unit/, tests/integration/ — importlib
+# mode gives each test file a unique fully-qualified module name derived
+# from its path, so same-named test files across different services/libs
+# (bound to happen as more land) don't collide on sys.path.
+addopts = "--import-mode=importlib"
+asyncio_mode = "auto"
+markers = [
+    "integration: requires testcontainers (Kafka/Postgres/Qdrant) — excluded from `make test`, run via `make test-int`",
+]

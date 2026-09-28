@@ -1,0 +1,28 @@
+# Copy to config/zones.yaml. Used by perception and events when
+# GET /internal/v1/zones is unavailable (before P2-J4 lands, or if the api
+# service is down) — design_architecture.md §16. Same shape as that
+# endpoint's JSON response (libs/vms_common/contracts/zones.py).
+zones:
+  - id: zone01
+    camera_id: cam01
+    name: entrance
+    zone_type: entrance
+    polygon:
+      - [0.3, 0.2]
+      - [0.7, 0.2]
+      - [0.7, 0.6]
+      - [0.3, 0.6]
+    schedule: null
+  - id: zone02
+    camera_id: cam02
+    name: restricted-yard
+    zone_type: restricted
+    polygon:
+      - [0.1, 0.4]
+      - [0.6, 0.35]
+      - [0.65, 0.9]
+      - [0.05, 0.85]
+    schedule:
+      start_time: "20:00"
+      end_time: "06:00"
+      days: [mon, tue, wed, thu, fri, sat, sun]

@@ -63,41 +63,63 @@
 ## Divyansh — 24 pts
 
 ### P1-D1 · Monorepo scaffold — 3 pts · Must · E01
-- [ ] uv workspace with `libs/vms_common`, `libs/vms_db`, and empty service packages following `style_guide.md §A.1` layout.
-- [ ] Root `Makefile`: `make setup`, `make up PROFILE=…`, `make down`, `make test`, `make lint`.
-- [ ] Ruff + pytest config shared; pre-commit with ruff, nbstripout, gitleaks.
-- [ ] `CODEOWNERS` created from `design_architecture.md §3`.
+- [x] uv workspace with `libs/vms_common`, `libs/vms_db`, and empty service packages following `style_guide.md §A.1` layout.
+- [x] Root `Makefile`: `make setup`, `make up PROFILE=…`, `make down`, `make test`, `make lint`.
+- [x] Ruff + pytest config shared; pre-commit with ruff, nbstripout, gitleaks.
+- [x] `CODEOWNERS` created from `design_architecture.md §3`.
 
 ### P1-D2 · Shared runtime library v1 — 5 pts · Must · E01 · NFR-REL-01, NFR-OBS-01
-- [ ] `vms_common.config` (pydantic-settings), `logging` (structlog JSON with context binding), `ids` (uuid7), `metrics` helpers.
-- [ ] `vms_common.kafka`: async producer, consumer base class with validate → handle → commit, retry backoff, DLQ publish.
-- [ ] `vms_common.storage`: S3 client (put/get/stream/presign), URI parse/build helpers.
-- [ ] `contracts/segment.py` (`SegmentV1`) + fixture + round-trip test.
+- [x] `vms_common.config` (pydantic-settings), `logging` (structlog JSON with context binding), `ids` (uuid7), `metrics` helpers.
+- [x] `vms_common.kafka`: async producer, consumer base class with validate → handle → commit, retry backoff, DLQ publish.
+- [x] `vms_common.storage`: S3 client (put/get/stream/presign), URI parse/build helpers.
+- [x] `contracts/segment.py` (`SegmentV1`) + fixture + round-trip test.
 - [ ] Integration test with testcontainers Kafka: message produced → consumed → committed; poison message → DLQ.
+      **Written** (`libs/vms_common/tests/integration/test_kafka_consumer.py`), **not executed** — no Docker daemon in
+      the environment this was built in. Run `make test-int` (needs Docker) before trusting it fully.
 
 ### P1-D3 · Infrastructure Compose — 3 pts · Must · E17
-- [ ] `deploy/compose/docker-compose.yml` with profile `infra`: Kafka (KRaft), kafka-ui, Postgres, Qdrant, Redis, object storage (buckets auto-created), MediaMTX.
-- [ ] Healthchecks on every container; `.env.example` documented.
-- [ ] Topic bootstrap script creates topics from `design_architecture.md §5.2`.
+- [x] `deploy/compose/docker-compose.yml` with profile `infra`: Kafka (KRaft), kafka-ui, Postgres, Qdrant, Redis, object storage (buckets auto-created), MediaMTX.
+- [x] Healthchecks on every container; `.env.example` documented.
+      Two healthchecks (mediamtx, qdrant) are best-effort guesses at what's in the pulled image — unverified, see
+      `deploy/compose/README.md` Troubleshooting.
+- [x] Topic bootstrap script creates topics from `design_architecture.md §5.2`.
 - [ ] `nvidia-smi` works inside a test GPU container on both laptops (documented in README troubleshooting).
+      **Doc written** (`deploy/compose/README.md`); **not run on real hardware** — needs Divyansh and Jatin to each
+      confirm on their own laptop and update the note with what worked.
 
 ### P1-D4 · Camera simulator — 3 pts · Must · E02 · FR-ING-06
-- [ ] `tools/camera_sim` reads a YAML (camera id → video file, start offset) and publishes looping RTSP streams to MediaMTX at real-time rate.
-- [ ] Synchronized start for multi-view datasets (WILDTRACK/MEVA offsets honoured).
-- [ ] Compose service in profile `tools`; doc for publishing a phone camera as a live source.
+- [x] `tools/camera_sim` reads a YAML (camera id → video file, start offset) and publishes looping RTSP streams to MediaMTX at real-time rate.
+- [x] Synchronized start for multi-view datasets (WILDTRACK/MEVA offsets honoured).
+- [x] Compose service in profile `tools`; doc for publishing a phone camera as a live source.
+      Manifest parsing and ffmpeg command construction are unit-tested; not run end-to-end against real MediaMTX/video
+      (no Docker daemon, no sample dataset — P1-D6 — in this environment).
 
 ### P1-D5 · Ingestion service — 8 pts · Must · E02 · FR-ING-01…05
-- [ ] One async worker per enabled camera, camera list from `GET /internal/v1/cameras` (fallback `config/cameras.yaml`), refreshed every 60 s.
-- [ ] FFmpeg segmenter writes 10 s MPEG-TS segments without re-encode; each uploaded to `vms-segments` with the key layout in design §6.3.
-- [ ] Keyframes at 1 fps uploaded to `vms-keyframes`.
-- [ ] `segment.v1` published per segment with correct UTC start/end; `gap_before=true` after reconnects.
-- [ ] Reconnect with exponential backoff ≤ 30 s; camera status heartbeat to Redis `camera:status:<id>` every 5 s.
-- [ ] Metrics `vms_ingest_segments_total`, `vms_stream_reconnects_total`.
+- [x] One async worker per enabled camera, camera list from `GET /internal/v1/cameras` (fallback `config/cameras.yaml`), refreshed every 60 s.
+      `GET /internal/v1/cameras` client is written but P1-J3 doesn't exist yet, so only the YAML fallback path is
+      actually exercised so far — `libs/vms_common/contracts/camera.py` is a **proposed** day-1 contract per
+      design_architecture.md §16, needs Jatin's review when P1-J3 lands.
+- [x] FFmpeg segmenter writes 10 s MPEG-TS segments without re-encode; each uploaded to `vms-segments` with the key layout in design §6.3.
+      Mechanics (segment muxer + list-file polling, keyframe extraction) verified locally against a synthetic ffmpeg
+      source — see `adapters/segmenter.py` docstring for what that found (segments round up to the source's keyframe
+      interval when it exceeds `segment_seconds`). Full pipeline (real RTSP → S3 → Kafka) not run end-to-end — no
+      Docker daemon in this environment.
+- [x] Keyframes at 1 fps uploaded to `vms-keyframes`.
+- [x] `segment.v1` published per segment with correct UTC start/end; `gap_before=true` after reconnects.
+- [x] Reconnect with exponential backoff ≤ 30 s; camera status heartbeat to Redis `camera:status:<id>` every 5 s.
+- [x] Metrics `vms_ingest_segments_total`, `vms_stream_reconnects_total`.
 - [ ] Runs 6 simulated cameras for 30 min with no missing segment ids (test script).
+      **Script written** (`tests/smoke/check_no_missing_segments.py`); **not run** — needs the full stack (Docker,
+      6 dataset videos from P1-D6) which isn't available in this environment. Run it once infra + camera_sim +
+      ingestion are actually up.
 
 ### P1-D6 · Dataset acquisition scripts — 2 pts · Must · E10
-- [ ] `ml/datasets/download/` scripts + manifests for scoped subsets: WILDTRACK (full), MEVA (≤ 60 GB subset with ≥ 4 synchronized cameras), UCF-Crime (8 classes), ShanghaiTech Campus.
-- [ ] `ml/datasets/README.md` lists licence/usage terms and disk sizes.
+- [x] `ml/datasets/download/` scripts + manifests for scoped subsets: WILDTRACK (full), MEVA (≤ 60 GB subset with ≥ 4 synchronized cameras), UCF-Crime (8 classes), ShanghaiTech Campus.
+      Access URLs verified for real (fetched each dataset's page 27 Sep 2026 — see `ml/datasets/README.md`), but the
+      scripts themselves were **not run** — no network budget in this environment for tens/hundreds of GB. MEVA's
+      script lists/sizes/syncs a chosen prefix rather than hardcoding one, since exact bucket contents weren't
+      verified live; ShanghaiTech falls back to a manual step (OneDrive isn't reliably scriptable).
+- [x] `ml/datasets/README.md` lists licence/usage terms and disk sizes.
 
 ## Jatin — 24 pts
 
@@ -145,33 +167,59 @@
 ## Divyansh — 23 pts
 
 ### P2-D1 · Perception worker & batched detection — 5 pts · Must · E05 · FR-PER-01, FR-PER-02
-- [ ] Consumes `segment.v1`; decodes with PyAV; samples at `sample_fps` (default 2).
-- [ ] Cross-camera batching (≤ 8 frames) into YOLO11s FP16; class filter per FR-PER-02.
-- [ ] Adaptive sampling: 1 fps when consumer lag > 60 s, back to default when < 10 s.
+- [x] Consumes `segment.v1`; decodes with PyAV; samples at `sample_fps` (default 2).
+      Decoder verified against a real MPEG-TS file — caught and fixed a real bug (raw PTS doesn't start at 0 in
+      MPEG-TS; see `adapters/decoder.py`).
+- [x] Cross-camera batching (≤ 8 frames) into YOLO11s FP16; class filter per FR-PER-02.
+      Batches within one segment's own frames rather than truly across concurrent cameras — a deliberate
+      simplification, documented in `services/perception/README.md`. Real detection verified against
+      ultralytics' own `bus.jpg` reference image (correctly found 1 bus + 4 people).
+- [x] Adaptive sampling: 1 fps when consumer lag > 60 s, back to default when < 10 s.
+      `AdaptiveSampler` implemented + unit tested with hysteresis; not yet wired to a real aiokafka lag metric
+      (`_consumer_lag_seconds` is a stub — needs live infra, see worker.py TODO).
 
 ### P2-D2 · Persistent multi-camera tracking — 5 pts · Must · E05 · FR-PER-03
-- [ ] Per-camera ByteTrack instances; track ids formatted `cam03-t412`.
-- [ ] Tracker state checkpointed to Redis per segment and restored on restart; ids continue across segment boundaries (test with a person crossing a boundary).
-- [ ] Handles out-of-order segments by skipping state update and logging.
+- [x] Per-camera ByteTrack instances; track ids formatted `cam03-t412`.
+- [x] Tracker state checkpointed to Redis per segment and restored on restart; ids continue across segment boundaries (test with a person crossing a boundary).
+      Verified for real against `supervision==0.30.5`: found and worked around an undocumented one-frame
+      confirmation lag in `ByteTrack`'s output (a new object doesn't appear until the *next* frame), and verified
+      restart + IoU re-association recovers the right track_num — see `adapters/tracker.py`'s docstring.
+- [x] Handles out-of-order segments by skipping state update and logging.
 
 ### P2-D3 · Attributes, motion & zones — 3 pts · Must · E05 · FR-PER-04
-- [ ] Upper/lower dominant colour for persons, dominant colour for vehicles/bags (11 named colours).
-- [ ] Speed (normalized units/s) and direction from centroid displacement.
-- [ ] Zone membership via bottom-centre point-in-polygon; zones from internal API (fallback YAML), refreshed every 60 s.
+- [x] Upper/lower dominant colour for persons, dominant colour for vehicles/bags (11 named colours).
+      Verified for real on solid-colour crops and on real person crops from `bus.jpg`.
+- [x] Speed (normalized units/s) and direction from centroid displacement.
+- [x] Zone membership via bottom-centre point-in-polygon; zones from internal API (fallback YAML), refreshed every 60 s.
+      `libs/vms_common/contracts/zones.py` is a **proposed** day-1 contract per design_architecture.md §16 (P2-J4
+      doesn't exist yet, same treatment as camera.py) — needs Jatin's review when the real zones API lands.
 
 ### P2-D4 · Digital twin writer — 3 pts · Must · E05 · FR-PER-05
-- [ ] Twin JSON conforms to `TwinV1`; track summaries (dwell, zones visited, best crop) computed.
-- [ ] Written to `vms-twins`, crops to `vms-crops`; `twinready.v1` published.
-- [ ] Contract test: produced twin validates against fixture schema.
+- [x] Twin JSON conforms to `TwinV1`; track summaries (dwell, zones visited, best crop) computed.
+- [x] Written to `vms-twins`, crops to `vms-crops`; `twinready.v1` published.
+- [x] Contract test: produced twin validates against fixture schema.
+      Full write path (S3 + Kafka) not run end-to-end — no Docker daemon in this environment; the document-shaping
+      logic (`twin_builder.py`) is real-data-tested via the tracker/detector verification above.
 
 ### P2-D5 · SigLIP 2 embeddings — 5 pts · Must · E05 · FR-PER-06
-- [ ] Keyframe embeddings every 2 s and one best-crop embedding per track per segment, FP16, L2-normalized.
-- [ ] Stored as `.npz` (`frame_vectors`, `frame_ts`, `track_vectors`, `track_ids`) per contract.
-- [ ] Sanity test: text "a red car" ranks a red-car crop above others in a small fixture set.
+- [x] Keyframe embeddings every 2 s and one best-crop embedding per track per segment, FP16, L2-normalized.
+      Verified for real: 768-d output (matches design_architecture.md §6.2), L2-normalized, ~35ms warm batch-of-8
+      on an RTX 3050.
+- [x] Stored as `.npz` (`frame_vectors`, `frame_ts`, `track_vectors`, `track_ids`) per contract.
+- [x] Sanity test: text "a red car" ranks a red-car crop above others in a small fixture set.
+      **Actually run, not just asserted**: `test_embedder_sanity.py` (marked `integration` — needs GPU + HF
+      download) — clean diagonal, each colour's text query ranks its own crop highest by 4-6x margin over the
+      others.
 
 ### P2-D6 · Perception benchmark on 4 GB — 2 pts · Must · E05 · NFR-PERF-01
 - [ ] Script runs 2/4/6 simulated cameras for 20 min; records fps, p95 segment latency, VRAM peak, consumer lag.
-- [ ] Results table committed to `ml/evaluation/results/` and default config chosen; `design_architecture.md §11.3` updated with measured VRAM.
+      **Not run** — needs the live multi-camera stack (Docker), unavailable in this environment. What *was* done:
+      real model-level GPU benchmarking (load + inference timing + peak VRAM, both models together) via
+      `tests/smoke/gpu_pipeline_check.py` — see below.
+- [x] Results table committed to `ml/evaluation/results/` and default config chosen; `design_architecture.md §11.3` updated with measured VRAM.
+      `ml/evaluation/results/p2-d6-perception-benchmark.md` — real numbers (not estimates): ~966 MB peak VRAM for
+      both models + batch-of-8 inference, well under the 4 GB budget. Explicitly scoped as model-level only, not
+      the full multi-camera 20-min run the story asks for.
 
 ## Jatin — 23 pts
 

@@ -721,7 +721,7 @@ A Redis lock `gpu:lease:{node}` (TTL + heartbeat) gives one GenAI model family t
 
 | Node | Workload | Est. VRAM | Notes |
 |---|---|---|---|
-| A (perception) | CUDA context + YOLO11s FP16 + SigLIP2-base FP16 | ~1.5 GB | Always on |
+| A (perception) | CUDA context + YOLO11s FP16 + SigLIP2-base FP16 | ~1.5 GB planning estimate; **~0.8–1.0 GB measured** (P2-D6, RTX 3050, both models loaded + batch-of-8 inference: 38 MB YOLO11s, 804 MB total with SigLIP2 added, 966 MB peak during inference) | Always on. Full numbers + method: `ml/evaluation/results/p2-d6-perception-benchmark.md`. Not yet measured: decode/tracking overhead under sustained multi-camera load |
 | A | + SAM 2.1-tiny (grounding, on demand) | +0.5 GB | Same process as perception |
 | B (GenAI) | Qwen2.5-VL-3B Q4 via Ollama (≤ 4 images at ≤ 448 px) | ~3.2–3.6 GB | Leased; tight — cap pixels |
 | B | Qwen2.5-VL-3B 4-bit (hf_local) + 2 LoRA adapters | ~2.8–3.4 GB | Leased; ≤ 16 frames at ≤ 360 p |
