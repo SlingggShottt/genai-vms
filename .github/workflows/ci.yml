@@ -1,0 +1,416 @@
+# CI (P1-J6): path-filtered jobs so a change to one service/lib doesn't
+# force a full-repo run. `changes` detects what moved; every other job
+# gates on its own filter output, or on `shared` (libs/**, the lockfile,
+# this file) since every Python package depends on libs/*.
+#
+# uv/Python versions pinned to match .python-version and `uv --version` in
+# this repo as of 2026-09-29 — re-check if `uv sync` starts failing in CI.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.12.19"
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      shared: ${{ steps.filter.outputs.shared }}
+      vms_common: ${{ steps.filter.outputs.vms_common }}
+      vms_db: ${{ steps.filter.outputs.vms_db }}
+      api: ${{ steps.filter.outputs.api }}
+      ingestion: ${{ steps.filter.outputs.ingestion }}
+      perception: ${{ steps.filter.outputs.perception }}
+      indexer: ${{ steps.filter.outputs.indexer }}
+      events: ${{ steps.filter.outputs.events }}
+      correlation: ${{ steps.filter.outputs.correlation }}
+      retrieval: ${{ steps.filter.outputs.retrieval }}
+      reasoning: ${{ steps.filter.outputs.reasoning }}
+      camera_sim: ${{ steps.filter.outputs.camera_sim }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'pyproject.toml'
+              - 'uv.lock'
+              - 'libs/**'
+              - '.github/workflows/ci.yml'
+            vms_common:
+              - 'libs/vms_common/**'
+            vms_db:
+              - 'libs/vms_db/**'
+            api:
+              - 'services/api/**'
+            ingestion:
+              - 'services/ingestion/**'
+            perception:
+              - 'services/perception/**'
+            indexer:
+              - 'services/indexer/**'
+            events:
+              - 'services/events/**'
+            correlation:
+              - 'services/correlation/**'
+            retrieval:
+              - 'services/retrieval/**'
+            reasoning:
+              - 'services/reasoning/**'
+            camera_sim:
+              - 'tools/camera_sim/**'
+            frontend:
+              - 'frontend/**'
+
+  # --- Python: lint + unit tests, one job per workspace member -------------
+  # Each is `uv sync --all-packages` (matches `make setup`) then ruff +
+  # pytest scoped to that package's directory (matches `make lint` /
+  # `make test SVC=<name>`). Integration tests (testcontainers) are out of
+  # scope here — see make test-int; wiring that into CI is a later story.
+
+  lint-test-vms-common:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.vms_common == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check libs/vms_common
+      - run: uv run ruff format --check libs/vms_common
+      - run: uv run pytest libs/vms_common -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-vms-db:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.vms_db == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check libs/vms_db
+      - run: uv run ruff format --check libs/vms_db
+      - run: uv run pytest libs/vms_db -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-api:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check services/api
+      - run: uv run ruff format --check services/api
+      - run: uv run pytest services/api -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-ingestion:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.ingestion == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check services/ingestion
+      - run: uv run ruff format --check services/ingestion
+      - run: uv run pytest services/ingestion -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-perception:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.perception == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check services/perception
+      - run: uv run ruff format --check services/perception
+      - run: uv run pytest services/perception -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-indexer:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.indexer == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check services/indexer
+      - run: uv run ruff format --check services/indexer
+      - run: uv run pytest services/indexer -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-events:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.events == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check services/events
+      - run: uv run ruff format --check services/events
+      - run: uv run pytest services/events -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-correlation:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.correlation == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check services/correlation
+      - run: uv run ruff format --check services/correlation
+      - run: uv run pytest services/correlation -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-retrieval:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.retrieval == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check services/retrieval
+      - run: uv run ruff format --check services/retrieval
+      - run: uv run pytest services/retrieval -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-reasoning:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.reasoning == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check services/reasoning
+      - run: uv run ruff format --check services/reasoning
+      - run: uv run pytest services/reasoning -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  lint-test-camera-sim:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.camera_sim == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run ruff check tools/camera_sim
+      - run: uv run ruff format --check tools/camera_sim
+      - run: uv run pytest tools/camera_sim -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
+
+  # --- Frontend --------------------------------------------------------------
+
+  frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+
+  # --- Docker builds -----------------------------------------------------
+  # Proves each Dockerfile still builds; no push (that's P7-J3, CD to GHCR).
+  # Context is the repo root — every service's Dockerfile needs the
+  # workspace lockfile once it's more than the current placeholder.
+
+  docker-build-api:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f services/api/Dockerfile -t vms-api:ci .
+
+  docker-build-ingestion:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.ingestion == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f services/ingestion/Dockerfile -t vms-ingestion:ci .
+
+  docker-build-perception:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.perception == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f services/perception/Dockerfile -t vms-perception:ci .
+
+  docker-build-indexer:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.indexer == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f services/indexer/Dockerfile -t vms-indexer:ci .
+
+  docker-build-events:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.events == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f services/events/Dockerfile -t vms-events:ci .
+
+  docker-build-correlation:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.correlation == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f services/correlation/Dockerfile -t vms-correlation:ci .
+
+  docker-build-retrieval:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.retrieval == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f services/retrieval/Dockerfile -t vms-retrieval:ci .
+
+  docker-build-reasoning:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.reasoning == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f services/reasoning/Dockerfile -t vms-reasoning:ci .
+
+  docker-build-camera-sim:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.camera_sim == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f tools/camera_sim/Dockerfile -t vms-camera-sim:ci .
+
+  # --- Required-status-check gate -----------------------------------------
+  # Path filtering means most jobs above are legitimately `skipped` on any
+  # given PR — branch protection can't require all of them by name without
+  # breaking every time one is (rightly) skipped, or needing an update every
+  # time a service is added. This job aggregates: skipped is fine, anything
+  # that actually failed is not. Point branch protection's required check at
+  # this job only.
+  ci-success:
+    if: always()
+    needs:
+      - changes
+      - lint-test-vms-common
+      - lint-test-vms-db
+      - lint-test-api
+      - lint-test-ingestion
+      - lint-test-perception
+      - lint-test-indexer
+      - lint-test-events
+      - lint-test-correlation
+      - lint-test-retrieval
+      - lint-test-reasoning
+      - lint-test-camera-sim
+      - frontend
+      - docker-build-api
+      - docker-build-ingestion
+      - docker-build-perception
+      - docker-build-indexer
+      - docker-build-events
+      - docker-build-correlation
+      - docker-build-retrieval
+      - docker-build-reasoning
+      - docker-build-camera-sim
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require no failed/cancelled jobs
+        run: |
+          echo '${{ toJSON(needs) }}' | jq -e '[.[].result] | map(. == "success" or . == "skipped") | all'
