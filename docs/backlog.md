@@ -173,9 +173,10 @@
       run watch`), found and fixed a real bug (pytest exits 5 on zero tests collected, which several not-yet-built
       services hit — now treated as pass, not failure), re-ran, all 21 jobs green.
 - [x] PR template with story id + AC checklist.
-- [ ] Branch protection on `main`. Not applied — this is a GitHub repo setting affecting how both builders push (not
-      a git change), so it needs Jatin/Divyansh to agree on the rules (required reviews, required CI checks) before
-      it's turned on.
+- [ ] Branch protection on `main`. Not applied. The `ci-success` job (aggregates every path-filtered job so branch
+      protection doesn't need updating each time a service is added) is already in place as the thing to point a
+      required status check at, once someone with admin on the repo (jatinbansal2994 has write, not admin) sets it
+      up. Skipped for now by choice — revisit later.
 
 ---
 
