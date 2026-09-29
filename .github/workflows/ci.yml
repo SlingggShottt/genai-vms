@@ -96,7 +96,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check libs/vms_common
       - run: uv run ruff format --check libs/vms_common
-      - run: uv run pytest libs/vms_common -m "not integration"
+      - run: uv run pytest libs/vms_common -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-vms-db:
     needs: changes
@@ -114,7 +114,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check libs/vms_db
       - run: uv run ruff format --check libs/vms_db
-      - run: uv run pytest libs/vms_db -m "not integration"
+      - run: uv run pytest libs/vms_db -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-api:
     needs: changes
@@ -132,7 +132,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check services/api
       - run: uv run ruff format --check services/api
-      - run: uv run pytest services/api -m "not integration"
+      - run: uv run pytest services/api -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-ingestion:
     needs: changes
@@ -150,7 +150,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check services/ingestion
       - run: uv run ruff format --check services/ingestion
-      - run: uv run pytest services/ingestion -m "not integration"
+      - run: uv run pytest services/ingestion -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-perception:
     needs: changes
@@ -168,7 +168,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check services/perception
       - run: uv run ruff format --check services/perception
-      - run: uv run pytest services/perception -m "not integration"
+      - run: uv run pytest services/perception -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-indexer:
     needs: changes
@@ -186,7 +186,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check services/indexer
       - run: uv run ruff format --check services/indexer
-      - run: uv run pytest services/indexer -m "not integration"
+      - run: uv run pytest services/indexer -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-events:
     needs: changes
@@ -204,7 +204,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check services/events
       - run: uv run ruff format --check services/events
-      - run: uv run pytest services/events -m "not integration"
+      - run: uv run pytest services/events -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-correlation:
     needs: changes
@@ -222,7 +222,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check services/correlation
       - run: uv run ruff format --check services/correlation
-      - run: uv run pytest services/correlation -m "not integration"
+      - run: uv run pytest services/correlation -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-retrieval:
     needs: changes
@@ -240,7 +240,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check services/retrieval
       - run: uv run ruff format --check services/retrieval
-      - run: uv run pytest services/retrieval -m "not integration"
+      - run: uv run pytest services/retrieval -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-reasoning:
     needs: changes
@@ -258,7 +258,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check services/reasoning
       - run: uv run ruff format --check services/reasoning
-      - run: uv run pytest services/reasoning -m "not integration"
+      - run: uv run pytest services/reasoning -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   lint-test-camera-sim:
     needs: changes
@@ -276,7 +276,7 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run ruff check tools/camera_sim
       - run: uv run ruff format --check tools/camera_sim
-      - run: uv run pytest tools/camera_sim -m "not integration"
+      - run: uv run pytest tools/camera_sim -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
   # --- Frontend --------------------------------------------------------------
 
