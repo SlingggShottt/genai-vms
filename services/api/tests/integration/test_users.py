@@ -20,6 +20,33 @@ def _unique_email(prefix: str) -> str:
     return f"{prefix}-{uuid.uuid4().hex[:8]}@example.com"
 
 
+def test_listing_users_shows_a_just_created_user_on_the_first_page(
+    client: TestClient, admin_access_token: str, auth_headers: Callable[[str], dict[str, str]]
+) -> None:
+    """Regression test: listing used to order oldest-first with no cursor,
+    so a newly created user became invisible on the default (first,
+    unpaginated) page as soon as the table passed the page size — this
+    surfaced when enough other integration tests had accumulated rows in
+    the same shared test-session database. Newest-first fixes it structurally.
+    """
+    headers = auth_headers(admin_access_token)
+    created = client.post(
+        "/api/v1/users",
+        json={
+            "email": _unique_email("justcreated"),
+            "full_name": "Just Created",
+            "password": "correct-horse-battery-1",
+            "role": "viewer",
+        },
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+
+    listing = client.get("/api/v1/users", headers=headers)
+    assert listing.status_code == 200
+    assert listing.json()["items"][0]["id"] == created.json()["id"]
+
+
 def test_admin_can_create_list_update_and_delete_a_user(
     client: TestClient, admin_access_token: str, auth_headers: Callable[[str], dict[str, str]]
 ) -> None:

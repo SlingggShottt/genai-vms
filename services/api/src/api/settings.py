@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
-from vms_common.config import DatabaseSettings, JWTSettings, VMSBaseSettings
+from vms_common.config import DatabaseSettings, JWTSettings, RedisSettings, VMSBaseSettings
 
 
 class AdminSeedSettings(VMSBaseSettings):
@@ -53,3 +53,4 @@ class ApiSettings(VMSBaseSettings):
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     admin: AdminSeedSettings = Field(default_factory=AdminSeedSettings)
+    redis: RedisSettings = Field(default_factory=RedisSettings)

@@ -31,12 +31,14 @@ async def get_user_by_id(session: AsyncSession, user_id: uuid.UUID) -> User | No
 
 
 async def list_users(session: AsyncSession, *, limit: int, cursor: uuid.UUID | None) -> list[User]:
-    """Cursor pagination on `id`: uuid7 is time-ordered, so `id > cursor`
-    with `ORDER BY id` is a stable, index-friendly "created after" page.
+    """Cursor pagination on `id`, newest first: uuid7 is time-ordered, so
+    `ORDER BY id DESC` with `id < cursor` for the next page surfaces
+    recently created rows by default — an ascending, no-cursor first page
+    would show the same oldest N forever once the table passes `limit` rows.
     """
-    stmt = select(User).order_by(User.id).limit(limit)
+    stmt = select(User).order_by(User.id.desc()).limit(limit)
     if cursor is not None:
-        stmt = stmt.where(User.id > cursor)
+        stmt = stmt.where(User.id < cursor)
     result = await session.execute(stmt)
     return list(result.scalars().all())
 
