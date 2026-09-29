@@ -1,0 +1,39 @@
+/* Design tokens — docs/style_guide.md §B.3. Dark is the default theme
+   (control rooms are dim); light is opt-in via [data-theme="light"] for
+   reports/print. Values live only here; Tailwind maps names to them
+   (tailwind.config.js) so components never use raw hex. */
+
+:root,
+:root[data-theme='dark'] {
+  --bg: #1a222c;
+  --surface: #222c38;
+  --surface-raised: #2a3645;
+  --rule: #35434f;
+  --text: #d3dbe3;
+  --text-muted: #8a99a8;
+  --accent: #5ec4cf;
+  --accent-ink: #0e2a2e;
+  --sev-low: #8fb3c9;
+  --sev-medium: #d9b64a;
+  --sev-high: #e57c3c;
+  --sev-critical: #e5484d;
+  --ok: #6fb58a;
+  --video-bg: #000000;
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f7f9;
+  --surface: #ffffff;
+  --surface-raised: #eef1f4;
+  --rule: #d5dce3;
+  --text: #1c2733;
+  --text-muted: #5a6978;
+  --accent: #16808b;
+  --accent-ink: #ffffff;
+  --sev-low: #3f6f8c;
+  --sev-medium: #9a7a12;
+  --sev-high: #b4531a;
+  --sev-critical: #b8272d;
+  --ok: #2f7a4b;
+  --video-bg: #000000;
+}

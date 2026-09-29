@@ -142,10 +142,15 @@
 - [x] `GET /internal/v1/cameras` matches the frozen fixture.
 
 ### P1-J4 · Frontend scaffold & app shell — 5 pts · Must · E04
-- [ ] Vite React (JavaScript), Tailwind, shadcn/ui with `tsx: false`, tokens from `style_guide.md §B.3`, Barlow fonts.
-- [ ] Router with protected routes; login page; `apiClient` with token refresh; TanStack Query provider.
-- [ ] App shell: nav rail, page header, collapsible alert tray placeholder (layout §B.5).
-- [ ] ESLint + Prettier + Vitest configured; one component test.
+- [x] Vite React (JavaScript), Tailwind, shadcn/ui with `tsx: false`, tokens from `style_guide.md §B.3`, Barlow fonts.
+- [x] Router with protected routes; login page; `apiClient` with token refresh; TanStack Query provider.
+- [x] App shell: nav rail, page header, collapsible alert tray placeholder (layout §B.5).
+- [x] ESLint + Prettier + Vitest configured; one component test.
+      Verified for real: `npm install`, `npm run lint` (caught and fixed a `no-useless-catch` in `apiClient.js` and
+      an a11y rule on the generic `Label` primitive), `npm run format:check`, `npm test` (2/2 passing), `npm run
+      build`, and a dev-server smoke test (served real HTML, `main.jsx` transformed and returned 200). Also fixed a
+      rules-of-hooks bug in `ProtectedRoute` (called `useCurrentUser` after a conditional early return) found on
+      review, not by lint.
 
 ### P1-J5 · Live camera wall — 3 pts · Must · E04 · FR-LIVE-01
 - [ ] Layouts 1/4/6 tiles; WebRTC (WHEP) playback from MediaMTX with HLS fallback via hls.js.
