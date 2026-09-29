@@ -376,3 +376,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -f tools/camera_sim/Dockerfile -t vms-camera-sim:ci .
+
+  # --- Required-status-check gate -----------------------------------------
+  # Path filtering means most jobs above are legitimately `skipped` on any
+  # given PR — branch protection can't require all of them by name without
+  # breaking every time one is (rightly) skipped, or needing an update every
+  # time a service is added. This job aggregates: skipped is fine, anything
+  # that actually failed is not. Point branch protection's required check at
+  # this job only.
+  ci-success:
+    if: always()
+    needs:
+      - changes
+      - lint-test-vms-common
+      - lint-test-vms-db
+      - lint-test-api
+      - lint-test-ingestion
+      - lint-test-perception
+      - lint-test-indexer
+      - lint-test-events
+      - lint-test-correlation
+      - lint-test-retrieval
+      - lint-test-reasoning
+      - lint-test-camera-sim
+      - frontend
+      - docker-build-api
+      - docker-build-ingestion
+      - docker-build-perception
+      - docker-build-indexer
+      - docker-build-events
+      - docker-build-correlation
+      - docker-build-retrieval
+      - docker-build-reasoning
+      - docker-build-camera-sim
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require no failed/cancelled jobs
+        run: |
+          echo '${{ toJSON(needs) }}' | jq -e '[.[].result] | map(. == "success" or . == "skipped") | all'
