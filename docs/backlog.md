@@ -168,8 +168,14 @@
       appeared in the list, disabled it through the UI (real PATCH), status flipped. Screenshotted at each step.
 
 ### P1-J6 · CI pipeline — 3 pts · Must · E17 · NFR-MNT-03
-- [ ] GitHub Actions: path-filtered jobs for Python (ruff, pytest) per service/lib, frontend (eslint, vitest, build), Docker build per service.
-- [ ] PR template with story id + AC checklist; branch protection on `main`.
+- [x] GitHub Actions: path-filtered jobs for Python (ruff, pytest) per service/lib, frontend (eslint, vitest, build), Docker build per service.
+      Verified for real — not just written: pushed the workflow, watched it run on GitHub's own infrastructure (`gh
+      run watch`), found and fixed a real bug (pytest exits 5 on zero tests collected, which several not-yet-built
+      services hit — now treated as pass, not failure), re-ran, all 21 jobs green.
+- [x] PR template with story id + AC checklist.
+- [ ] Branch protection on `main`. Not applied — this is a GitHub repo setting affecting how both builders push (not
+      a git change), so it needs Jatin/Divyansh to agree on the rules (required reviews, required CI checks) before
+      it's turned on.
 
 ---
 
