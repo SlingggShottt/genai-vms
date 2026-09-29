@@ -153,9 +153,19 @@
       review, not by lint.
 
 ### P1-J5 · Live camera wall — 3 pts · Must · E04 · FR-LIVE-01
-- [ ] Layouts 1/4/6 tiles; WebRTC (WHEP) playback from MediaMTX with HLS fallback via hls.js.
-- [ ] VideoTile per §B.7 with status dot from `/cameras/status` (poll 5 s); double-click → single-tile focus.
-- [ ] Settings → Cameras page (list/add/edit/disable) for admins.
+- [x] Layouts 1/4/6 tiles; WebRTC (WHEP) playback from MediaMTX with HLS fallback via hls.js.
+      WHEP client (`lib/mediamtx.js`) hand-implemented against MediaMTX's documented offer/answer protocol — no
+      client library exists for it. **Fallback path verified for real**: with no MediaMTX running, WHEP correctly
+      fails, hls.js correctly fails, tile shows "No signal" with no crash (Playwright screenshot + zero console
+      errors). **Not verified against an actual live stream** — this host has no `ffmpeg` and no spare disk budget
+      today to pull another container and publish a test pattern (see PROGRESS.md session note re: disk). Verify
+      against a real `make sim` camera before trusting the happy path.
+- [x] VideoTile per §B.7 with status dot from `/cameras/status` (poll 5 s); double-click → single-tile focus.
+      Verified for real end-to-end through the running API: layout switch (1/4/6), double-click focus with accent
+      ring, live clock — all screenshotted and working.
+- [x] Settings → Cameras page (list/add/edit/disable) for admins.
+      Verified for real end-to-end: added a camera through the actual UI form (hit the real POST /cameras), it
+      appeared in the list, disabled it through the UI (real PATCH), status flipped. Screenshotted at each step.
 
 ### P1-J6 · CI pipeline — 3 pts · Must · E17 · NFR-MNT-03
 - [ ] GitHub Actions: path-filtered jobs for Python (ruff, pytest) per service/lib, frontend (eslint, vitest, build), Docker build per service.
