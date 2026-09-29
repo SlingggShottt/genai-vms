@@ -137,9 +137,9 @@
 - [x] Role × endpoint test matrix generated from the router table.
 
 ### P1-J3 · Camera management API — 3 pts · Must · E03 · FR-CAM-01, FR-CAM-02
-- [ ] CRUD `/cameras` with validation (RTSP URL format, unique code).
-- [ ] `GET /cameras/status` merges Redis heartbeats (online / reconnecting / offline).
-- [ ] `GET /internal/v1/cameras` matches the frozen fixture.
+- [x] CRUD `/cameras` with validation (RTSP URL format, unique code).
+- [x] `GET /cameras/status` merges Redis heartbeats (online / reconnecting / offline).
+- [x] `GET /internal/v1/cameras` matches the frozen fixture.
 
 ### P1-J4 · Frontend scaffold & app shell — 5 pts · Must · E04
 - [ ] Vite React (JavaScript), Tailwind, shadcn/ui with `tsx: false`, tokens from `style_guide.md §B.3`, Barlow fonts.

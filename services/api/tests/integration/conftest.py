@@ -21,8 +21,10 @@ from api.main import create_app
 from api.settings import AdminSeedSettings, ApiSettings
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from redis.asyncio import Redis
 from testcontainers.community.postgres import PostgresContainer
-from vms_common.config import DatabaseSettings, JWTSettings
+from testcontainers.community.redis import RedisContainer
+from vms_common.config import DatabaseSettings, JWTSettings, RedisSettings
 
 VMS_DB_ALEMBIC_INI = Path(__file__).resolve().parents[4] / "libs" / "vms_db" / "alembic.ini"
 
@@ -52,6 +54,24 @@ def migrated_postgres_dsn() -> Iterator[str]:
         yield dsn
 
 
+@pytest.fixture(scope="session")
+def redis_url() -> Iterator[str]:
+    with RedisContainer("redis:7-alpine") as redis:
+        yield f"redis://{redis.get_container_host_ip()}:{redis.get_exposed_port(6379)}/0"
+
+
+@pytest.fixture
+async def redis_client(redis_url: str) -> Iterator[Redis]:
+    """A client tests can use to write heartbeats directly, separate from
+    the app's own client (`app.state.redis_client`) — same container.
+    """
+    client = Redis.from_url(redis_url, decode_responses=True)
+    try:
+        yield client
+    finally:
+        await client.aclose()
+
+
 @pytest.fixture
 def admin_email() -> str:
     return _ADMIN_EMAIL
@@ -73,12 +93,13 @@ def jwt_secret() -> str:
 
 
 @pytest.fixture
-def api_settings(migrated_postgres_dsn: str) -> ApiSettings:
+def api_settings(migrated_postgres_dsn: str, redis_url: str) -> ApiSettings:
     return ApiSettings(
         db=DatabaseSettings(dsn=migrated_postgres_dsn),
         jwt=JWTSettings(secret=_JWT_SECRET),
         admin=AdminSeedSettings(email=_ADMIN_EMAIL, password=_ADMIN_PASSWORD),
         service_token=_SERVICE_TOKEN,
+        redis=RedisSettings(url=redis_url),
     )
 
 

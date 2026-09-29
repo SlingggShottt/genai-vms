@@ -12,12 +12,15 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from vms_common.logging import configure_logging, get_logger
+from vms_common.redis import get_redis_client
 from vms_db.session import create_engine, create_session_factory, session_scope
 
 from api.adapters.users import seed_admin_user
 from api.api.auth import router as auth_router
+from api.api.cameras import router as cameras_router
 from api.api.errors import register_exception_handlers
 from api.api.health import router as health_router
+from api.api.internal import router as internal_router
 from api.api.middleware import RequestIDMiddleware
 from api.api.users import router as users_router
 from api.settings import ApiSettings
@@ -41,6 +44,9 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
         session_factory = create_session_factory(engine)
         app.state.db_session_factory = session_factory
 
+        redis_client = get_redis_client(settings.redis)
+        app.state.redis_client = redis_client
+
         async with session_scope(session_factory) as session:
             await seed_admin_user(
                 session, email=settings.admin.email, password=settings.admin.password
@@ -50,6 +56,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
         try:
             yield
         finally:
+            await redis_client.aclose()
             await engine.dispose()
             log.info("api_stopped")
 
@@ -69,6 +76,8 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app.include_router(health_router)
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(cameras_router, prefix="/api/v1")
+    app.include_router(internal_router, prefix="/api/v1")
 
     return app
 
