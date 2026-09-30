@@ -87,6 +87,15 @@ it's the real thing.
   service as of P2-J3, wired as `app.state.s3` in `main.py`'s lifespan,
   same shape as `app.state.redis_client`.
 
+**P2-J6** — `GET /tracks/{track_id}` (`api/tracks.py`), all roles read:
+side-panel data for the frontend's detection overlay (P2-J6's click-a-box
+AC) — category, first/last seen, zones visited, attributes, and total
+dwell time. `dwell_s` is summed from every `vision.track_segments` row for
+that track (`adapters/tracks.py`) rather than read off `vision.tracks`
+itself, since a track can leave and re-enter frame within its overall
+`first_ts`/`last_ts` span, so only the per-segment rows know actual time
+in view.
+
 Not yet implemented: everything else in `docs/design_architecture.md §9`
 — see `docs/backlog.md`.
 `docs/style_guide.md §A.1` for the layout (`domain/` has no I/O and is where

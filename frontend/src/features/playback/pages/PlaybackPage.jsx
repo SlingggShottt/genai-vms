@@ -1,12 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useCameras } from '@/features/cameras/api';
 import { formatDateTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import { hlsAuthConfig, playlistUrl, useRecordingDensity } from '../api';
+import {
+  hlsAuthConfig,
+  OVERLAY_WINDOW_SECONDS,
+  playlistUrl,
+  useRecordingDensity,
+  useTwinFrames,
+} from '../api';
+import { DetectionOverlay } from '../components/DetectionOverlay';
 import { TimelineScrubber } from '../components/TimelineScrubber';
+import { TrackSummaryPanel } from '../components/TrackSummaryPanel';
 import { playerTimeToWallClock, wallClockToPlayerTime } from '../lib/programDateTime';
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -37,6 +45,8 @@ export function PlaybackPage() {
   const [activeRange, setActiveRange] = useState(null); // { startIso, endIso, startDate, endDate }
   const [playheadMs, setPlayheadMs] = useState(null);
   const [playerError, setPlayerError] = useState(null);
+  const [overlayEnabled, setOverlayEnabled] = useState(true);
+  const [selectedTrackId, setSelectedTrackId] = useState(null);
 
   const videoRef = useRef(null);
   const fragmentsRef = useRef([]);
@@ -52,6 +62,33 @@ export function PlaybackPage() {
     cameraCode,
     activeRange?.startIso,
     activeRange?.endIso,
+  );
+
+  // Twin frames are fetched in <= 60s windows (`/twin/{camera}/frames`'s
+  // own limit), aligned to the active range's start so the window only
+  // changes — and only then triggers a refetch — once every
+  // OVERLAY_WINDOW_SECONDS of playback, not on every `timeupdate` tick.
+  const overlayWindow = useMemo(() => {
+    if (!activeRange || playheadMs == null) return null;
+    const rangeStartMs = activeRange.startDate.getTime();
+    const elapsedS = Math.max(0, (playheadMs - rangeStartMs) / 1000);
+    const windowIndex = Math.floor(elapsedS / OVERLAY_WINDOW_SECONDS);
+    const windowStartMs = rangeStartMs + windowIndex * OVERLAY_WINDOW_SECONDS * 1000;
+    const windowEndMs = Math.min(
+      windowStartMs + OVERLAY_WINDOW_SECONDS * 1000,
+      activeRange.endDate.getTime(),
+    );
+    if (windowEndMs <= windowStartMs) return null;
+    return {
+      startIso: new Date(windowStartMs).toISOString(),
+      endIso: new Date(windowEndMs).toISOString(),
+    };
+  }, [activeRange, playheadMs]);
+
+  const { data: twinFrames } = useTwinFrames(
+    overlayEnabled ? cameraCode : undefined,
+    overlayWindow?.startIso,
+    overlayWindow?.endIso,
   );
 
   useEffect(() => {
@@ -106,6 +143,7 @@ export function PlaybackPage() {
       endIso: endDate.toISOString(),
     });
     setPlayheadMs(startDate.getTime());
+    setSelectedTrackId(null);
   }
 
   function handleScrub(wallClockMs) {
@@ -173,27 +211,47 @@ export function PlaybackPage() {
         <Button type="submit" disabled={!cameraCode || rangeInvalid}>
           Load
         </Button>
+
+        <Button
+          type="button"
+          variant={overlayEnabled ? 'default' : 'outline'}
+          onClick={() => setOverlayEnabled((prev) => !prev)}
+          aria-pressed={overlayEnabled}
+        >
+          {overlayEnabled ? 'Detections on' : 'Detections off'}
+        </Button>
       </form>
 
-      <div
-        className={cn(
-          'relative aspect-video max-h-[60vh] overflow-hidden rounded-tile bg-video-bg',
-        )}
-      >
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption -- recorded
-            camera footage has no caption track to provide; there's nothing
-            to attach */}
-        <video ref={videoRef} controls className="h-full w-full object-contain" />
-        {playerError && (
-          <div className="pointer-events-none absolute inset-0 flex select-none items-center justify-center bg-video-bg text-sm text-text-muted">
-            {playerError}
-          </div>
-        )}
-        {!activeRange && (
-          <div className="pointer-events-none absolute inset-0 flex select-none items-center justify-center bg-video-bg text-sm text-text-muted">
-            Choose a camera and time range, then Load.
-          </div>
-        )}
+      <div className="flex gap-4">
+        <div
+          className={cn(
+            'relative aspect-video max-h-[60vh] flex-1 overflow-hidden rounded-tile bg-video-bg',
+          )}
+        >
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption -- recorded
+              camera footage has no caption track to provide; there's nothing
+              to attach */}
+          <video ref={videoRef} controls className="h-full w-full object-contain" />
+          <DetectionOverlay
+            videoRef={videoRef}
+            fragmentsRef={fragmentsRef}
+            frames={twinFrames?.frames ?? []}
+            enabled={overlayEnabled && Boolean(activeRange)}
+            onSelectTrack={setSelectedTrackId}
+          />
+          {playerError && (
+            <div className="pointer-events-none absolute inset-0 flex select-none items-center justify-center bg-video-bg text-sm text-text-muted">
+              {playerError}
+            </div>
+          )}
+          {!activeRange && (
+            <div className="pointer-events-none absolute inset-0 flex select-none items-center justify-center bg-video-bg text-sm text-text-muted">
+              Choose a camera and time range, then Load.
+            </div>
+          )}
+        </div>
+
+        <TrackSummaryPanel trackId={selectedTrackId} onClose={() => setSelectedTrackId(null)} />
       </div>
 
       {activeRange && (
