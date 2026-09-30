@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { ChevronRight, LayoutGrid, Settings, LogOut } from 'lucide-react';
+import { ChevronRight, History, LayoutGrid, Settings, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCurrentUser, useLogout } from '@/features/auth/api';
 import { cn } from '@/lib/utils';
@@ -10,7 +10,10 @@ import { cn } from '@/lib/utils';
  * The timeline dock (playback/investigation) is added by the pages that
  * need it, inside the main work area — it isn't part of the shell itself.
  */
-const NAV_ITEMS = [{ to: '/', label: 'Live wall', icon: LayoutGrid, end: true }];
+const NAV_ITEMS = [
+  { to: '/', label: 'Live wall', icon: LayoutGrid, end: true },
+  { to: '/playback', label: 'Playback', icon: History, end: false },
+];
 
 function NavRail() {
   return (

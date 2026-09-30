@@ -42,6 +42,10 @@ function buildUrl(path) {
   return `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
+// Exported for callers that need the raw URL rather than a parsed JSON
+// response — e.g. hls.js loading a playlist directly (features/playback).
+export const apiUrl = buildUrl;
+
 async function rawRequest(path, { method = 'GET', body, headers = {}, skipAuth = false } = {}) {
   const finalHeaders = { ...headers };
   if (body !== undefined) finalHeaders['Content-Type'] = 'application/json';
