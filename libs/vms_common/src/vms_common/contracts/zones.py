@@ -1,11 +1,13 @@
 """Zone config shape for `GET /internal/v1/zones` (api -> perception, events —
 an internal HTTP contract, same treatment as `camera.py`).
 
-Proposed day 1 per design_architecture.md §16 ("Zones internal API | J (api)
-| D (perception, events) — YAML fallback | P2 day 1 |
-fixtures/zones_internal.json") so P2-D3 could build against a fixture
-before P2-J4 (zones API) ships. Field names match `core.zones` columns in
-design_architecture.md §6.1 — review/adjust together when P2-J4 lands.
+Landed with P2-J4 (`services/api/src/api/api/internal.py`); field names
+match `core.zones` columns in design_architecture.md §6.1. `camera_id`
+here is the camera's **code** (e.g. `cam03`), not `core.cameras.id` —
+perception/events only ever see camera codes (from `segment.v1`), matching
+`camera.py`'s own `CameraInternal.code` field. The public
+`/cameras/{id}/zones` API (services/api) uses the UUID id instead, same
+split as cameras.
 """
 
 from __future__ import annotations
@@ -13,6 +15,8 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from vms_common.types import CameraCode
 
 Weekday = Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 ALL_WEEKDAYS: list[Weekday] = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
@@ -36,7 +40,7 @@ class ZoneInternal(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str
-    camera_id: str
+    camera_id: CameraCode
     name: str
     zone_type: Literal["generic", "restricted", "entrance", "exit"]
     polygon: list[tuple[float, float]] = Field(

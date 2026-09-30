@@ -5,7 +5,7 @@ autogenerate can discover them through `Base.metadata`
 
 from __future__ import annotations
 
-from vms_db.models.core import AuditLog, Camera, RefreshToken, User, UserRole
+from vms_db.models.core import AuditLog, Camera, RefreshToken, User, UserRole, Zone, ZoneType
 from vms_db.models.media import Segment
 from vms_db.models.vision import MinuteCount, Track, TrackSegment
 
@@ -19,4 +19,6 @@ __all__ = [
     "TrackSegment",
     "User",
     "UserRole",
+    "Zone",
+    "ZoneType",
 ]

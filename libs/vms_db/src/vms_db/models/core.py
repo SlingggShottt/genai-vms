@@ -1,7 +1,7 @@
-"""ORM models for the `core` schema — accounts, roles, cameras, audit
-(design_architecture.md §6.1). Owner: J. `core.zones`, `core.topology_edges`,
+"""ORM models for the `core` schema — accounts, roles, cameras, zones, audit
+(design_architecture.md §6.1). Owner: J. `core.topology_edges`,
 `core.alerts`, `core.cases` land with the stories that need them
-(P1-J3, P2-J4, P3-J1, P3-J3, P6-J4).
+(P3-J1, P3-J3, P6-J4).
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from vms_common.ids import uuid7
+from vms_common.types import CameraCode
 
 from vms_db.base import Base
 
@@ -99,7 +100,7 @@ class Camera(Base):
     __table_args__ = {"schema": SCHEMA}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
-    code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
+    code: Mapped[CameraCode] = mapped_column(String(50), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     rtsp_url: Mapped[str] = mapped_column(Text, nullable=False)
     site_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -107,6 +108,55 @@ class Camera(Base):
     lat: Mapped[float | None] = mapped_column(nullable=True)
     lon: Mapped[float | None] = mapped_column(nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class ZoneType(enum.StrEnum):
+    """FR-CAM-03. `restricted`/`entrance`/`exit` are the types event rules
+    (P3-D1) key off of; `generic` is anything else worth naming/drawing.
+    """
+
+    GENERIC = "generic"
+    RESTRICTED = "restricted"
+    ENTRANCE = "entrance"
+    EXIT = "exit"
+
+
+class Zone(Base):
+    """`core.zones` — field names match `ZoneInternal`
+    (`vms_common.contracts.zones`), the shape `GET /internal/v1/zones`
+    returns to perception/events. `polygon`/`schedule` are stored as JSONB
+    rather than normalized tables — a polygon is always read/written whole,
+    never queried by individual point (same reasoning as `core.zones`'
+    design_architecture.md §6.1 column, and as `attributes_summary`
+    elsewhere in this schema).
+    """
+
+    __tablename__ = "zones"
+    __table_args__ = {"schema": SCHEMA}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    camera_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.cameras.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    zone_type: Mapped[ZoneType] = mapped_column(
+        Enum(
+            ZoneType,
+            name="zone_type",
+            schema=SCHEMA,
+            native_enum=True,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+        ),
+        nullable=False,
+    )
+    polygon: Mapped[list] = mapped_column(JSONB, nullable=False)
+    schedule: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

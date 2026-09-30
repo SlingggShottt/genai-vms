@@ -49,7 +49,10 @@ def test_migration_0001_creates_core_schema_tables_and_constraints() -> None:
             os.environ.pop("VMS_DB_DSN", None)
 
     assert info["schemas"] >= {"core"}
-    assert info["core_tables"] == {"users", "refresh_tokens", "cameras", "audit_log"}
+    # >= , not ==: this upgrades to "head", which by now includes later
+    # migrations that add more tables to the `core` schema (e.g. 0003's
+    # `zones`) — 0001's own tables just need to still be present.
+    assert info["core_tables"] >= {"users", "refresh_tokens", "cameras", "audit_log"}
     assert "user_role" in info["enum_types"]
 
 
