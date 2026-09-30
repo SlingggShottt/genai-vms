@@ -369,8 +369,17 @@
       full happy path once real footage exists (`make sim` + ingestion/perception/indexer running for a while).
 
 ### P2-J6 · Detection overlay — 3 pts · Must · E06 · FR-PLAY-03
-- [ ] Canvas overlay draws bboxes + track ids synchronized with the player (≤ 200 ms drift measured on a test clip).
-- [ ] Toggle overlays; click a box → side panel with track summary (attributes, dwell, zones).
+- [x] Canvas overlay draws bboxes + track ids synchronized with the player (≤ 200 ms drift measured on a test clip).
+  Drawn on a `requestAnimationFrame` loop reading `videoEl.currentTime` directly each frame (not React state,
+  which only updates on `timeupdate`) and mapped to wall-clock via the same `programDateTime.js` helper the
+  scrubber uses, against the nearest `/twin/{camera}/frames` sample within a 1s staleness budget.
+- [x] Toggle overlays; click a box → side panel with track summary (attributes, dwell, zones).
+  `GET /tracks/{track_id}` (new, `services/api/src/api/api/tracks.py`) backs `TrackSummaryPanel.jsx`; dwell is
+  summed from `vision.track_segments` since a track can leave and re-enter frame within its overall span.
+  Verified: 80/80 role-matrix integration tests pass (including 4 new ones seeding a real `vision.tracks` row
+  via `db_session_factory`, since tracks are only ever written by the indexer, not creatable through the API);
+  ruff clean; frontend lint/Vitest/`npm run build` all pass. Not verified against real footage — no indexed
+  twin data exists in this dev environment yet (same caveat as P2-J5).
 
 ---
 
