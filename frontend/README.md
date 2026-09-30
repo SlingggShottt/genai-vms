@@ -66,5 +66,23 @@ redirects to `/login` when there's no refresh token or refresh itself fails.
   failed" fallback for that case instead of crashing. Verify the full
   happy path once real footage exists (`make sim` + the ingestion/
   perception/indexer pipeline actually running for a while).
+- **P2-J6** — detection overlay on the same page
+  (`components/DetectionOverlay.jsx`, `components/TrackSummaryPanel.jsx`):
+  a canvas drawn on a `requestAnimationFrame` loop (not React state, which
+  only updates on `timeupdate` — too coarse for the ≤200ms drift AC) that
+  reads `videoEl.currentTime` directly each frame, maps it to wall-clock
+  via the same `programDateTime.js` the scrubber uses, and looks up the
+  nearest `/twin/{camera}/frames` frame within a 1s staleness budget.
+  Bboxes are mapped through the video's own `object-contain` letterboxing
+  so they land on the actual picture, not the container. A "Detections
+  on/off" toggle; clicking a box opens `TrackSummaryPanel` (fetches
+  `GET /tracks/{track_id}` — category, dwell, zones, attributes). The
+  canvas reserves the native `<video controls>` bar's height so it stays
+  clickable when overlays are on, and is `pointer-events-none` when off.
+  `/twin` is queried in `OVERLAY_WINDOW_SECONDS` (60s) windows aligned to
+  the active range's start, matching the endpoint's own window cap and
+  keyed so TanStack Query only refetches when the playhead actually moves
+  into a new window. Not verified against real footage for the same
+  reason as P2-J5 (no indexed twin data in this environment yet).
 
-What's next: P2-J6 (detection overlay on this same page).
+Phase 2 (both tracks) is now fully implemented.
