@@ -2,17 +2,18 @@
 perception, events — an internal HTTP contract, not a Kafka message, but
 still a cross-service boundary per CLAUDE.md's contract rule).
 
-Proposed day 1 per design_architecture.md §16 ("Camera internal API |
-J (api) | D (ingestion) — YAML fallback | P1 day 1 |
-fixtures/cameras_internal.json"), written from the ingestion side so
-P1-D5 can build against a fixture before P1-J3 (camera management API)
-ships. Field names match `core.cameras` columns in design_architecture.md
-§6.1 — review/adjust together when P1-J3 lands.
+Landed with P1-J3 (`services/api/src/api/api/internal.py`); field names
+match `core.cameras` columns in design_architecture.md §6.1. `id` and
+`code` are genuinely different identifiers (design_architecture.md §5.1) —
+`code` is what every Kafka message and every other internal contract calls
+`camera_id`; `id` is the UUID the public REST API keys on instead.
 """
 
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
+
+from vms_common.types import CameraCode, CameraId
 
 
 class CameraInternal(BaseModel):
@@ -20,8 +21,8 @@ class CameraInternal(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    id: str
-    code: str
+    id: CameraId
+    code: CameraCode
     name: str
     rtsp_url: str
     site_id: str

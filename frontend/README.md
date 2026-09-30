@@ -36,8 +36,35 @@ request and transparently refreshes it from the refresh token (persisted in
 `localStorage`) on a 401, retrying the request once. `ProtectedRoute`
 redirects to `/login` when there's no refresh token or refresh itself fails.
 
-## What's here vs. what's next
+## What's here
 
-This story is the shell: routing, auth, layout chrome, design tokens. The
-live camera wall and camera settings pages are placeholders — P1-J5 builds
-them against the camera API that already exists (`services/api`, P1-J3).
+- **P1-J4** — shell: routing, auth, layout chrome, design tokens.
+- **P1-J5** — live camera wall (`features/live-wall`) and camera settings
+  (`features/cameras`): WHEP-first playback with hls.js fallback
+  (`lib/mediamtx.js`, `components/VideoTile.jsx`).
+- **P2-J5** — playback page (`features/playback`): camera + date/time range
+  picker, hls.js loading `services/api`'s generated `.m3u8` playlist (auth
+  header injected via hls.js's `xhrSetup`, since it loads the manifest
+  directly rather than through `lib/apiClient.js`), and the timeline
+  scrubber v1 (`components/TimelineScrubber.jsx`, docs/style_guide.md
+  §B.6 reduced to one lane — no events/phases/correlation links yet, those
+  need data phase 3+ stories haven't built): density sparkline, 2px accent
+  playhead, drag/click to scrub, arrow-key steps (1s, Shift+arrow 10s).
+  Player time <-> wall-clock mapping via each HLS fragment's
+  `#EXT-X-PROGRAM-DATE-TIME` lives in `features/playback/lib/programDateTime.js`
+  (pure, unit-tested — handles clamping past either end of the loaded range
+  and scrubbing into a genuine mid-recording gap, not just a
+  `#EXT-X-DISCONTINUITY`).
+
+  Verified for real: logged into a real running `services/api` + Postgres
+  (with the P2-J1..J4 migrations applied) via a scripted Playwright
+  session — camera picker populated from real camera rows, timeline
+  scrubber rendered and responded to both click-to-scrub and keyboard
+  step, console had no unexpected errors. Not verified: actual HLS video
+  frames playing, since no real ingestion pipeline has produced recorded
+  segments in this environment — the page correctly shows its "Playback
+  failed" fallback for that case instead of crashing. Verify the full
+  happy path once real footage exists (`make sim` + the ingestion/
+  perception/indexer pipeline actually running for a while).
+
+What's next: P2-J6 (detection overlay on this same page).

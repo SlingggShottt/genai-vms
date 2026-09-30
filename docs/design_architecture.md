@@ -173,6 +173,7 @@ genai-vms/
 - Keys: `camera_id` for camera-scoped topics (preserves per-camera order), `site_id` for correlations.
 - Delivery: at-least-once. Consumers commit offsets **after** idempotent write. 3 failures → `vms.dlq.v1` with headers `x-origin-topic`, `x-error`, `x-attempts`.
 - Kafka in KRaft mode, single broker for dev/demo (`replication.factor=1`).
+- **`camera_id` is always the camera's `code`** (e.g. `"cam03"`), never `core.cameras.id` (a UUID) — in every message on this page, in the internal HTTP contracts (`CameraInternal.code`, `ZoneInternal.camera_id`), and in every table populated from those (`media.segments`, `vision.*`). The public REST API (`services/api`) is the one place that keys on the UUID instead (`/cameras/{id}`, `/zones/{id}`, …), matching every other resource id it exposes. `libs/vms_common/types.py`'s `CameraCode`/`CameraId` make this distinction visible at the type level where it matters most (contract fields, the columns above) — a plain `str` field is a hint that call site hasn't been annotated yet, not that the distinction doesn't apply.
 
 ### 5.2 Topics
 | Topic | Key | Partitions | Retention | Producer | Consumers |

@@ -62,6 +62,15 @@ class RedisSettings(VMSBaseSettings):
     url: str = Field(default="redis://localhost:6379/0")
 
 
+class QdrantSettings(VMSBaseSettings):
+    """Qdrant vector store settings — `VMS_QDRANT_*` (design_architecture.md §6.2)."""
+
+    model_config = SettingsConfigDict(env_prefix="VMS_QDRANT_", env_file=".env", extra="ignore")
+
+    url: str = Field(default="http://localhost:6333")
+    api_key: str = Field(default="")
+
+
 class DatabaseSettings(VMSBaseSettings):
     """PostgreSQL connection settings — `VMS_DB_*` (design_architecture.md §6.1).
 

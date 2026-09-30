@@ -9,8 +9,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from vms_common.contracts.camera import CameraInternal, CamerasInternalResponse
+from vms_common.contracts.zones import ZoneInternal, ZoneSchedule, ZonesInternalResponse
 
 from api.adapters.cameras import list_all_cameras
+from api.adapters.zones import list_all_zones
 from api.api.deps import get_session
 from api.api.security import require_service_token
 
@@ -42,5 +44,34 @@ async def internal_cameras_endpoint(
                 enabled=c.enabled,
             )
             for c in cameras
+        ]
+    )
+
+
+@router.get("/zones", response_model=ZonesInternalResponse)
+async def internal_zones_endpoint(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ZonesInternalResponse:
+    """Matches `libs/vms_common/fixtures/zones_internal.json` — note
+    `camera_id` here is the camera's **code** (e.g. `cam03`), not its
+    `core.cameras.id` UUID the public `/cameras/{id}/zones` router uses.
+    Perception/events only ever see camera codes (from `segment.v1`), so
+    that's what this internal contract exposes too.
+    """
+    cameras = await list_all_cameras(session)
+    camera_codes = {c.id: c.code for c in cameras}
+    zones = await list_all_zones(session)
+    return ZonesInternalResponse(
+        zones=[
+            ZoneInternal(
+                id=str(z.id),
+                camera_id=camera_codes[z.camera_id],
+                name=z.name,
+                zone_type=z.zone_type,
+                polygon=z.polygon,
+                schedule=ZoneSchedule.model_validate(z.schedule) if z.schedule else None,
+            )
+            for z in zones
+            if z.camera_id in camera_codes
         ]
     )

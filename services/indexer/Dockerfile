@@ -1,12 +1,17 @@
-# indexer service image — placeholder.
+# indexer image — idempotent Postgres writes from twinready.v1 (P2-J1).
 #
-# Completed when this service's backlog story lands (see docs/backlog.md
-# and docs/design_architecture.md §4). Build pattern: uv-based Python 3.11
-# image, non-root user, multi-stage (builder installs deps, runtime copies
-# the synced venv + src/). See docs/techstack.md §9 for base image policy.
+# Build context is the REPO ROOT (see deploy/compose/docker-compose.yml:
+# `build.context: ../..`) — uv needs the whole workspace visible to resolve
+# the vms-common/vms-db dependencies. See services/ingestion/Dockerfile for
+# the same pattern (indexer is a plain consumer, same shape, no GPU/ffmpeg).
 
-FROM python:3.11-slim AS base
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir uv
+
 WORKDIR /app
+COPY . /app
 
-# TODO: install uv, copy pyproject.toml + uv.lock, `uv sync --frozen --no-dev`,
-# copy src/, set non-root USER, set CMD/ENTRYPOINT.
+RUN uv sync --package vms-indexer --no-dev
+
+ENTRYPOINT ["uv", "run", "--package", "vms-indexer", "indexer"]

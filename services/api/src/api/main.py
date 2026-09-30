@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from vms_common.logging import configure_logging, get_logger
 from vms_common.redis import get_redis_client
+from vms_common.storage.s3 import S3Client
 from vms_db.session import create_engine, create_session_factory, session_scope
 
 from api.adapters.users import seed_admin_user
@@ -22,7 +23,10 @@ from api.api.errors import register_exception_handlers
 from api.api.health import router as health_router
 from api.api.internal import router as internal_router
 from api.api.middleware import RequestIDMiddleware
+from api.api.recordings import router as recordings_router
+from api.api.twin import router as twin_router
 from api.api.users import router as users_router
+from api.api.zones import router as zones_router
 from api.settings import ApiSettings
 
 log = get_logger(__name__)
@@ -46,6 +50,13 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
 
         redis_client = get_redis_client(settings.redis)
         app.state.redis_client = redis_client
+
+        app.state.s3 = S3Client(
+            endpoint_url=settings.storage.endpoint_url,
+            access_key=settings.storage.access_key,
+            secret_key=settings.storage.secret_key,
+            region=settings.storage.region,
+        )
 
         async with session_scope(session_factory) as session:
             await seed_admin_user(
@@ -77,6 +88,9 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
     app.include_router(cameras_router, prefix="/api/v1")
+    app.include_router(zones_router, prefix="/api/v1")
+    app.include_router(recordings_router, prefix="/api/v1")
+    app.include_router(twin_router, prefix="/api/v1")
     app.include_router(internal_router, prefix="/api/v1")
 
     return app

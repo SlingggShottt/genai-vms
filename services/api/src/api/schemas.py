@@ -12,7 +12,11 @@ from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-from vms_db.models import Camera, User, UserRole
+from vms_common.types import CameraCode, CameraId
+from vms_db.models import Camera, User, UserRole, Zone, ZoneType
+
+from api.domain.recordings import DensityBucket, Gap, SegmentWindow
+from api.domain.zones import validate_polygon
 
 _RTSP_URL_PATTERN = re.compile(r"^rtsp://\S+$")  # FR-CAM-01: validate RTSP URL format
 
@@ -101,7 +105,7 @@ class CameraOut(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str
-    code: str
+    code: CameraCode
     name: str
     rtsp_url: str
     site_id: str
@@ -137,7 +141,7 @@ class CamerasPage(BaseModel):
 class CameraCreateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    code: str = Field(min_length=1, max_length=50)
+    code: CameraCode = Field(min_length=1, max_length=50)
     name: str = Field(min_length=1, max_length=200)
     rtsp_url: str
     site_id: str = Field(min_length=1, max_length=100)
@@ -180,7 +184,7 @@ class CameraStatusOut(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     id: str
-    code: str
+    code: CameraCode
     name: str
     status: Literal["online", "reconnecting", "offline"]
 
@@ -189,3 +193,166 @@ class CamerasStatusResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     cameras: list[CameraStatusOut]
+
+
+class SegmentItemOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["segment"] = "segment"
+    segment_id: str
+    start_ts: datetime
+    end_ts: datetime
+    uri: str
+
+    @classmethod
+    def from_domain(cls, seg: SegmentWindow) -> SegmentItemOut:
+        return cls(segment_id=seg.segment_id, start_ts=seg.start_ts, end_ts=seg.end_ts, uri=seg.uri)
+
+
+class GapItemOut(BaseModel):
+    """An explicit marker for uncovered time (P2-J3 AC: "gaps return
+    explicit markers instead of silent skips"), not a silently missing
+    stretch of the requested range.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    type: Literal["gap"] = "gap"
+    start_ts: datetime
+    end_ts: datetime
+
+    @classmethod
+    def from_domain(cls, gap: Gap) -> GapItemOut:
+        return cls(start_ts=gap.start_ts, end_ts=gap.end_ts)
+
+
+class RecordingsSegmentsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    camera_id: CameraCode
+    start: datetime
+    end: datetime
+    items: list[SegmentItemOut | GapItemOut]
+
+
+class DensityBucketOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    start_ts: datetime
+    end_ts: datetime
+    count: int
+
+    @classmethod
+    def from_domain(cls, bucket: DensityBucket) -> DensityBucketOut:
+        return cls(start_ts=bucket.start_ts, end_ts=bucket.end_ts, count=bucket.count)
+
+
+class RecordingsDensityResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    camera_id: CameraCode
+    start: datetime
+    end: datetime
+    bucket_seconds: int
+    buckets: list[DensityBucketOut]
+
+
+class OverlayObjectOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    track_id: str
+    category: str
+    bbox: tuple[float, float, float, float]
+
+
+class OverlayFrameOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    ts: datetime
+    objects: list[OverlayObjectOut]
+
+
+class TwinFramesResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    camera_id: CameraCode
+    start: datetime
+    end: datetime
+    frames: list[OverlayFrameOut]
+
+
+class ZoneScheduleIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    start_time: str = Field(pattern=r"^\d{2}:\d{2}$", description="HH:MM, site-local time")
+    end_time: str = Field(pattern=r"^\d{2}:\d{2}$", description="HH:MM, site-local time")
+    days: list[Literal["mon", "tue", "wed", "thu", "fri", "sat", "sun"]] = Field(
+        default_factory=lambda: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+    )
+
+
+class ZoneOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    # The UUID core.cameras.id, NOT the code — see api/zones.py's module docstring.
+    camera_id: CameraId
+    name: str
+    zone_type: ZoneType
+    polygon: list[tuple[float, float]]
+    schedule: ZoneScheduleIn | None
+    created_at: datetime
+
+    @classmethod
+    def from_model(cls, zone: Zone) -> ZoneOut:
+        return cls(
+            id=str(zone.id),
+            camera_id=str(zone.camera_id),
+            name=zone.name,
+            zone_type=zone.zone_type,
+            polygon=[tuple(p) for p in zone.polygon],
+            schedule=ZoneScheduleIn.model_validate(zone.schedule) if zone.schedule else None,
+            created_at=zone.created_at,
+        )
+
+
+class ZonesPage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[ZoneOut]
+
+
+class ZoneCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, max_length=200)
+    zone_type: ZoneType
+    polygon: list[tuple[float, float]] = Field(min_length=3, max_length=32)
+    schedule: ZoneScheduleIn | None = None
+
+    @field_validator("polygon")
+    @classmethod
+    def _polygon_is_normalized(cls, value: list[tuple[float, float]]) -> list[tuple[float, float]]:
+        return validate_polygon(value)
+
+
+class ZoneUpdateRequest(BaseModel):
+    """`name`/`zone_type`/`polygon` are non-nullable columns — the router
+    rejects an explicit `null` for those (see `api.api.zones._NON_NULLABLE_FIELDS`),
+    same reasoning as `CameraUpdateRequest`. `schedule` is nullable, so
+    `null` there legitimately clears it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    zone_type: ZoneType | None = None
+    polygon: list[tuple[float, float]] | None = Field(default=None, min_length=3, max_length=32)
+    schedule: ZoneScheduleIn | None = None
+
+    @field_validator("polygon")
+    @classmethod
+    def _polygon_is_normalized_if_set(
+        cls, value: list[tuple[float, float]] | None
+    ) -> list[tuple[float, float]] | None:
+        return validate_polygon(value) if value is not None else value

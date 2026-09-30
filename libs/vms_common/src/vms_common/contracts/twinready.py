@@ -12,13 +12,14 @@ from typing import Literal
 from pydantic import AwareDatetime, Field, ValidationInfo, field_validator
 
 from vms_common.contracts.base import MessageEnvelope
+from vms_common.types import CameraCode
 
 
 class TwinReadyV1(MessageEnvelope):
     schema_version: Literal["twinready.v1"] = "twinready.v1"
 
     site_id: str
-    camera_id: str
+    camera_id: CameraCode
     segment_id: str
     start_ts: AwareDatetime
     end_ts: AwareDatetime

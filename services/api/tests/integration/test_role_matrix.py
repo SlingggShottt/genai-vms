@@ -10,11 +10,15 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
 
 pytestmark = pytest.mark.integration
+
+_WINDOW_START = datetime(2026, 1, 1, tzinfo=UTC)
+_WINDOW_END = _WINDOW_START + timedelta(seconds=30)
 
 ROLES = ("admin", "operator", "viewer")
 
@@ -36,6 +40,14 @@ ROUTER_TABLE: list[tuple[str, str, frozenset[str] | None]] = [
     ("GET", "/api/v1/cameras/{target_id}", None),
     ("PATCH", "/api/v1/cameras/{target_id}", frozenset({"admin"})),
     ("DELETE", "/api/v1/cameras/{target_id}", frozenset({"admin"})),
+    ("GET", "/api/v1/recordings/{camera_id}/segments", None),
+    ("GET", "/api/v1/recordings/{camera_id}/playlist.m3u8", None),
+    ("GET", "/api/v1/recordings/{camera_id}/density", None),
+    ("GET", "/api/v1/twin/{camera_id}/frames", None),
+    ("GET", "/api/v1/cameras/{target_id}/zones", None),
+    ("POST", "/api/v1/cameras/{target_id}/zones", frozenset({"admin"})),
+    ("PATCH", "/api/v1/zones/{target_id}", frozenset({"admin"})),
+    ("DELETE", "/api/v1/zones/{target_id}", frozenset({"admin"})),
 ]
 
 
@@ -78,13 +90,58 @@ def _create_camera(client: TestClient, admin_headers: dict[str, str]) -> str:
     return created.json()["id"]
 
 
-def _target_id_for(path: str, client: TestClient, admin_headers: dict[str, str]) -> str | None:
-    if "{target_id}" not in path:
-        return None
-    if "/cameras/" in path:
-        return _create_camera(client, admin_headers)
-    user_id, _ = _create_user(client, admin_headers, "viewer")
-    return user_id
+def _create_camera_code(client: TestClient, admin_headers: dict[str, str]) -> str:
+    """Create a camera as admin; returns its `code` — recordings/twin
+    endpoints key on the camera's code, not its id (media.segments and
+    vision.minute_counts denormalize `camera.code` from Kafka messages;
+    see services/indexer/README.md).
+    """
+    code = _unique_code("cam")
+    created = client.post(
+        "/api/v1/cameras",
+        json={
+            "code": code,
+            "name": "Matrix Test Camera",
+            "rtsp_url": "rtsp://mediamtx:8554/matrix",
+            "site_id": "rvce-campus",
+        },
+        headers=admin_headers,
+    )
+    assert created.status_code == 201, created.text
+    return code
+
+
+def _create_zone_id(client: TestClient, admin_headers: dict[str, str]) -> str:
+    """Create a camera, then a zone under it as admin; returns the zone's id."""
+    camera_id = _create_camera(client, admin_headers)
+    created = client.post(
+        f"/api/v1/cameras/{camera_id}/zones",
+        json={
+            "name": "Matrix Test Zone",
+            "zone_type": "restricted",
+            "polygon": [[0.1, 0.1], [0.5, 0.2], [0.3, 0.6]],
+        },
+        headers=admin_headers,
+    )
+    assert created.status_code == 201, created.text
+    return created.json()["id"]
+
+
+def _path_kwargs_for(
+    path: str, client: TestClient, admin_headers: dict[str, str]
+) -> dict[str, str]:
+    kwargs: dict[str, str] = {}
+    if "{target_id}" in path:
+        if "/cameras/" in path:
+            kwargs["target_id"] = _create_camera(client, admin_headers)
+        elif "/zones/" in path:
+            kwargs["target_id"] = _create_zone_id(client, admin_headers)
+        else:
+            user_id, _ = _create_user(client, admin_headers, "viewer")
+            kwargs["target_id"] = user_id
+    if "{camera_id}" in path:
+        kwargs["camera_id"] = _create_camera_code(client, admin_headers)
+    return kwargs
 
 
 @pytest.fixture
@@ -112,16 +169,31 @@ def _body_for(method: str, path: str) -> dict[str, object] | None:
             "rtsp_url": "rtsp://mediamtx:8554/target",
             "site_id": "rvce-campus",
         }
+    if method == "POST" and "/cameras/" in path and path.endswith("/zones"):
+        return {
+            "name": "Target Zone",
+            "zone_type": "restricted",
+            "polygon": [[0.1, 0.1], [0.5, 0.2], [0.3, 0.6]],
+        }
     if method == "PATCH" and "/users/" in path:
         return {"full_name": "Renamed"}
     if method == "PATCH" and "/cameras/" in path:
         return {"name": "Renamed"}
+    if method == "PATCH" and "/zones/" in path:
+        return {"name": "Renamed Zone"}
+    return None
+
+
+def _params_for(path: str) -> dict[str, str] | None:
+    if "/recordings/" in path or "/twin/" in path:
+        return {"start": _WINDOW_START.isoformat(), "end": _WINDOW_END.isoformat()}
     return None
 
 
 def _call(client: TestClient, method: str, path: str, headers: dict[str, str] | None) -> int:
     body = _body_for(method, path)
-    return client.request(method, path, json=body, headers=headers).status_code
+    params = _params_for(path)
+    return client.request(method, path, json=body, params=params, headers=headers).status_code
 
 
 @pytest.mark.parametrize("method,path,allowed_roles", ROUTER_TABLE)
@@ -137,8 +209,7 @@ def test_router_table_role_matrix(
     allowed_roles: frozenset[str] | None,
 ) -> None:
     admin_headers = auth_headers(admin_access_token)
-    target_id = _target_id_for(path, client, admin_headers)
-    resolved_path = path.format(target_id=target_id)
+    resolved_path = path.format(**_path_kwargs_for(path, client, admin_headers))
 
     status_code = _call(client, method, resolved_path, auth_headers(role_tokens[role]))
 
@@ -156,6 +227,8 @@ def test_router_table_role_matrix(
 def test_router_table_rejects_unauthenticated(
     client: TestClient, method: str, path: str, allowed_roles: frozenset[str] | None
 ) -> None:
-    resolved_path = path.format(target_id=str(uuid.uuid4()))
+    # Unauthenticated requests 401 before any resource lookup, so the
+    # placeholder values themselves don't need to resolve to anything real.
+    resolved_path = path.format(target_id=str(uuid.uuid4()), camera_id="does-not-matter")
     status_code = _call(client, method, resolved_path, None)
     assert status_code == 401

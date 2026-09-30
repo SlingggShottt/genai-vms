@@ -6,8 +6,8 @@
 #
 # `genai`, `obs`, `lite` profiles (design_architecture.md §12.1) are added
 # by the stories that build those services (P1-J1 api, ...) — this file
-# only carries `infra`, `tools` (camera_sim), `core` (ingestion) and
-# `perception` so far.
+# only carries `infra`, `tools` (camera_sim), `core` (ingestion, indexer)
+# and `perception` so far.
 #
 # Image tags are pinned per docs/techstack.md's "verify" column; re-check
 # them at setup time (registries and default branches change).
@@ -141,45 +141,41 @@ services:
       retries: 10
       start_period: 5s
 
+  # `quay.io/minio/minio` and `quay.io/minio/mc` (the two images this block
+  # and `minio-init` used) both now 401/repository-not-found on every tag —
+  # MinIO gated anonymous pulls on quay.io and removed docker.io/minio/minio
+  # entirely, some time after this pin was written (docs/techstack.md's own
+  # "verify MinIO community image distribution... before pinning" note).
+  # `bitnamilegacy/minio` is Bitnami's frozen (no longer updated, but still
+  # pullable) MinIO packaging — verified for real: `MINIO_ROOT_USER`/
+  # `MINIO_ROOT_PASSWORD` match upstream exactly, `mc ready local` still
+  # works (mc ships in the same image), and a real boto3 `S3Client`
+  # put/get/presigned-GET round-trip against it succeeds. Its data dir is
+  # `/bitnami/minio/data`, not `/data` (volume path updated to match), and
+  # `MINIO_DEFAULT_BUCKETS` auto-creates buckets on startup, removing the
+  # need for a separate `minio-init` + `mc` image entirely.
   minio:
-    image: minio/minio:latest
+    image: bitnamilegacy/minio:latest
     profiles: [infra]
     container_name: vms-minio
     networks: [vms-net]
     restart: unless-stopped
-    command: server /data --console-address ":9001"
     ports:
       - "9000:9000" # S3 API
       - "9001:9001" # console
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vms-admin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+      # Buckets from design_architecture.md §6.3.
+      MINIO_DEFAULT_BUCKETS: vms-segments,vms-keyframes,vms-twins,vms-crops,vms-masks,vms-evidence,vms-reports,vms-models
     volumes:
-      - minio_data:/data
+      - minio_data:/bitnami/minio/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 10s
-
-  # One-shot: creates the buckets in design_architecture.md §6.3, then exits.
-  # `docker compose up` runs it once per `up`; it's idempotent (mc mb --ignore-existing).
-  minio-init:
-    image: minio/mc:latest
-    profiles: [infra]
-    container_name: vms-minio-init
-    networks: [vms-net]
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vms-admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
-    entrypoint: ["/bin/sh", "/scripts/create_buckets.sh"]
-    volumes:
-      - ./scripts/create_buckets.sh:/scripts/create_buckets.sh:ro
-    restart: "no"
 
   mediamtx:
     image: bluenviron/mediamtx:latest
@@ -291,4 +287,29 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    restart: unless-stopped
+
+  indexer:
+    profiles: [core]
+    container_name: vms-indexer
+    build:
+      context: ../.. # repo root — see services/indexer/Dockerfile
+      dockerfile: services/indexer/Dockerfile
+    networks: [vms-net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    environment:
+      VMS_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      VMS_STORAGE_ENDPOINT_URL: http://minio:9000
+      VMS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-vms-admin}
+      VMS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+      VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
+      VMS_QDRANT_URL: http://qdrant:6333
     restart: unless-stopped

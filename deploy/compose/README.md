@@ -66,3 +66,11 @@ existing value still works fine for a fresh cluster.
 **Ports already in use.** This stack claims 9092, 8080, 5432, 6333, 6334,
 6379, 9000, 9001, 8554, 8888, 8889, 9997. Stop any local Postgres/Redis/etc.
 first, or remap the host side of the relevant `ports:` entry.
+
+**MinIO image.** `docker-compose.yml` pins `bitnamilegacy/minio`, not the
+official `minio/minio`/`quay.io/minio/minio` — both stopped allowing
+anonymous pulls (verified 2026-09-30; see `docs/techstack.md §7`). There's
+no separate bucket-creation step anymore either — buckets come from
+`MINIO_DEFAULT_BUCKETS` on the `minio` service itself, set on container
+start. If MinIO ever needs recreating from scratch, just `docker compose
+up -d minio`; no `minio-init` service to wait on.

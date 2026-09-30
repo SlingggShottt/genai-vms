@@ -45,8 +45,50 @@ audit entries for login/logout/refresh/user-changes, written in their own
 committed transaction (`adapters/audit.py`) so they survive even when the
 handler that triggered them goes on to raise/roll back.
 
-Not yet implemented: camera management (P1-J3) and everything else in
-`docs/design_architecture.md §9` — see `docs/backlog.md`.
+**P1-J3** — Camera CRUD at `/cameras` (admin write, any role read);
+`GET /cameras/status` merges live Redis heartbeats
+(`adapters/camera_status.py`) with `core.cameras`; `GET /internal/v1/cameras`
+for ingestion/perception (service-token gated, `api/internal.py`).
+
+**P2-J4** — Zone CRUD (`api/zones.py`): `GET/POST /cameras/{id}/zones`,
+`PATCH/DELETE /zones/{id}` (admin write, any role read); `core.zones`
+(migration `0003`) FKs to `core.cameras.id`, `ondelete=CASCADE`. Polygon
+validation (3-32 points, normalized to `[0,1]`, `api/domain/zones.py`) is
+pure and shared between create/update. `GET /internal/v1/zones` added to
+`api/internal.py` — its `camera_id` is the camera's **code**, not the UUID
+`id` the public zones router uses (perception/events only ever see camera
+codes, from `segment.v1`; same split `CameraInternal` already has for
+cameras). `libs/vms_common/contracts/zones.py` (P2-D3's proposed day-1
+contract) needed no field changes, just its docstring updated now that
+it's the real thing.
+
+**P2-J3** — Recordings & twin overlay endpoints, all roles read
+(`api/recordings.py`, `api/twin.py`):
+- `GET /recordings/{camera_id}/segments` — `media.segments` in `[start,
+  end)`, each with a presigned GET url, interleaved with explicit `gap`
+  markers for uncovered time (never a silent skip).
+- `GET /recordings/{camera_id}/playlist.m3u8` — the same timeline as an
+  HLS VOD playlist; a gap between two segments becomes
+  `#EXT-X-DISCONTINUITY`, every segment gets its own
+  `#EXT-X-PROGRAM-DATE-TIME`. No transcoding — a presigned url always
+  serves its segment's whole `.ts` file (`domain/recordings.py`).
+- `GET /recordings/{camera_id}/density` — `vision.minute_counts` summed
+  across categories and re-bucketed to the requested `bucket` seconds,
+  zero-filled (a sparkline needs a continuous series, unlike the
+  absence-means-nothing convention `vision.minute_counts` itself uses).
+- `GET /twin/{camera_id}/frames` — bboxes/track-ids for a window capped at
+  60s, fetched live from each covering segment's twin JSON in S3
+  (`adapters/twin_frames.py`) — Postgres only has track *summaries*, not
+  per-frame boxes.
+- `camera_id` in all four is the camera's `code` (e.g. `cam03`), matching
+  what `media.segments`/`vision.minute_counts` actually store — not the
+  UUID `core.cameras.id` the rest of this router uses elsewhere.
+- Needs `storage: StorageSettings` (`VMS_STORAGE_*`) — new for this
+  service as of P2-J3, wired as `app.state.s3` in `main.py`'s lifespan,
+  same shape as `app.state.redis_client`.
+
+Not yet implemented: everything else in `docs/design_architecture.md §9`
+— see `docs/backlog.md`.
 `docs/style_guide.md §A.1` for the layout (`domain/` has no I/O and is where
 unit tests target; `adapters/` wraps DB/S3/Qdrant/gateway; services never
 import another service, only `libs/*`).

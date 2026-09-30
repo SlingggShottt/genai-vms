@@ -4,7 +4,7 @@ COMPOSE_FILE := deploy/compose/docker-compose.yml
 PROFILE ?=
 SVC ?=
 
-.PHONY: help setup up down test test-int lint topics sim migrate migration
+.PHONY: help setup up down test test-int lint topics qdrant-collections sim migrate migration
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -34,6 +34,9 @@ migration: ## Create a new migration: make migration MSG="add zones"
 
 topics: ## Create Kafka topics from design_architecture.md §5.2 (needs `make up PROFILE=infra` first)
 	bash deploy/compose/scripts/create_topics.sh
+
+qdrant-collections: ## Create Qdrant collections from design_architecture.md §6.2 (needs `make up PROFILE=infra` first)
+	uv run --package vms-common python deploy/compose/scripts/create_qdrant_collections.py
 
 sim: ## Replay dataset videos as live RTSP cameras (needs config/camera_sim.yaml, see tools/camera_sim/README.md)
 	uv run --package vms-camera-sim camera-sim
