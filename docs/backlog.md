@@ -246,29 +246,127 @@
 ## Jatin — 23 pts
 
 ### P2-J1 · Indexer service (Postgres) — 5 pts · Must · E06 · FR-IDX-01, FR-IDX-02
-- [ ] Consumes `twinready.v1`; upserts `media.segments`, `vision.tracks`, `vision.track_segments`, `vision.minute_counts` (per camera/category/minute).
-- [ ] Idempotent by `segment_id` (replaying a topic doesn't duplicate rows — test).
-- [ ] Migrations for `media.*` and `vision.*`.
+- [x] Consumes `twinready.v1`; upserts `media.segments`, `vision.tracks`, `vision.track_segments`, `vision.minute_counts` (per camera/category/minute).
+      `vision.tracks` is recomputed from its `track_segments` children on every write rather than merged
+      incrementally — see `services/indexer/README.md` for why. The DB write path (`index_twin` against a real
+      Postgres) is verified for real (see below); the Kafka consumer wiring itself (`worker.py`/`main.py`,
+      `BaseConsumer` over `vms.twin.v1`) is not run against a live broker in this environment — verify with
+      `make up PROFILE=infra,core,perception` + `make sim` before trusting the end-to-end path.
+- [x] Idempotent by `segment_id` (replaying a topic doesn't duplicate rows — test).
+      **Verified for real**: `make test-int` — `services/indexer/tests/integration/test_index_twin_idempotency.py`
+      runs `index_twin` twice against a real testcontainers Postgres with the shared twin/twinready fixtures;
+      row counts stay at 1 (segments, tracks, track_segments, minute_counts), and a second test checks the
+      indexed rows' content matches the twin document. 3/3 passed.
+- [x] Migrations for `media.*` and `vision.*`.
+      Migration `0002_media_vision_initial` — **verified for real** via `make test-int`:
+      `libs/vms_db/tests/integration/test_migrations_media_vision.py` applies the full Alembic history to a
+      throwaway Postgres container and round-trips a row through every new table's FKs. 2/2 passed (this and
+      the existing 0001 test).
 
 ### P2-J2 · Qdrant collections & vector upserts — 3 pts · Must · E06 · FR-IDX-01
-- [ ] Bootstrap script creates `frames`, `tracks` (and empty `knowledge`) with payload indexes per design §6.2.
-- [ ] Indexer reads `.npz` and upserts points with deterministic ids (re-runs overwrite, no duplicates).
-- [ ] Filtered search smoke test (`camera_id` + time range) returns expected fixture points.
+- [x] Bootstrap script creates `frames`, `tracks` (and empty `knowledge`) with payload indexes per design §6.2.
+      `deploy/compose/scripts/create_qdrant_collections.py` (`make qdrant-collections`), backed by
+      `vms_common.qdrant.collections.ensure_collections` (shared with the indexer's own startup call, and with
+      retrieval later — design §6.2 notes "query side: D"). **Verified for real** via `make test-int`.
+- [x] Indexer reads `.npz` and upserts points with deterministic ids (re-runs overwrite, no duplicates).
+      One point per `twin.frames[i]` / `twin.tracks[i]` — `tracks` collection is per (track_id, segment_id), not
+      one point merged across a track's whole life; see `services/indexer/README.md` for why. **Verified for
+      real**: `test_replaying_index_embeddings_does_not_duplicate_points` upserts the fixture twin's embeddings
+      twice against a real Qdrant and asserts the point counts stay at 1 each.
+- [x] Filtered search smoke test (`camera_id` + time range) returns expected fixture points.
+      **Verified for real**: `test_filtered_search_by_camera_and_time_range_returns_the_expected_point` — a
+      `camera_id` + `ts` range filter on `frames` returns exactly the fixture's point; a mismatched `camera_id`
+      returns none, proving the filter is load-bearing, not a no-op.
+      Test container pinned to `qdrant/qdrant:v1.11.5` to match the real compose pin, and `qdrant-client` pinned
+      to `<1.12` to match it (a newer client against that server warned on a >1-minor-version gap — see
+      `libs/vms_common/pyproject.toml`).
 
 ### P2-J3 · Recordings API & HLS playlists — 5 pts · Must · E06 · FR-PLAY-01
-- [ ] `GET /recordings/{camera}/segments?start&end` and `playlist.m3u8` generating a VOD playlist with presigned segment URLs and `#EXT-X-PROGRAM-DATE-TIME`.
-- [ ] `GET /recordings/{camera}/density` from `vision.minute_counts`.
-- [ ] `GET /twin/{camera}/frames?start&end` returns overlay-ready bboxes for a ≤ 60 s window.
-- [ ] Gaps return explicit markers instead of silent skips.
+- [x] `GET /recordings/{camera}/segments?start&end` and `playlist.m3u8` generating a VOD playlist with presigned segment URLs and `#EXT-X-PROGRAM-DATE-TIME`.
+      **Verified for real** via `make test-int`: `services/api/tests/integration/test_recordings.py` against a real
+      Postgres + S3-compatible store (see note below on which one). No transcoding — a presigned url always serves
+      its segment's whole `.ts` file, per design's "no transcoding" constraint; a request window that starts/ends
+      mid-segment gets a little extra footage at the edges rather than a trimmed file.
+- [x] `GET /recordings/{camera}/density` from `vision.minute_counts`.
+      Sums across categories, re-buckets to the requested `bucket` seconds, zero-fills empty buckets (a sparkline
+      needs a continuous series — documented as a deliberate departure from `vision.minute_counts`'
+      absence-means-nothing convention). Verified for real.
+- [x] `GET /twin/{camera}/frames?start&end` returns overlay-ready bboxes for a ≤ 60 s window.
+      Fetches each covering segment's twin JSON live from S3 (Postgres only has track summaries, not per-frame
+      boxes); rejects a window > 60s with 400. Verified for real.
+- [x] Gaps return explicit markers instead of silent skips.
+      One shared `build_timeline` (pure, unit-tested) drives both the JSON `segments` response (`type: "gap"` items)
+      and the playlist (`#EXT-X-DISCONTINUITY` for an *interior* gap only — a leading/trailing gap has nothing to
+      be discontinuous from, so gets no marker). Found and fixed a real bug here during testing: the first playlist
+      implementation marked a trailing gap too; fixed with a deferred-marker approach (only emit
+      `#EXT-X-DISCONTINUITY` once a segment is actually known to follow), now unit-tested for exactly that case.
+
+      Role × endpoint matrix (`test_role_matrix.py`) extended to cover all four new endpoints (all roles read).
+
+      **S3-compatible store note**: the integration tests use `adobe/s3mock`, not real MinIO — both
+      `minio/minio` (Docker Hub) and `quay.io/minio/minio` (what this compose file's `minio` service was
+      pinned to) returned 401/404 on every tag when pulled in this environment; MinIO tightened anonymous-pull
+      access since that pin was written. **Fixed** (2026-09-30, separately from this story):
+      `deploy/compose/docker-compose.yml`'s `minio` service now pins `bitnamilegacy/minio` instead — verified
+      for real (healthcheck, bucket auto-creation via `MINIO_DEFAULT_BUCKETS`, and a real boto3 `S3Client`
+      put/get/presigned-GET round-trip, all through actual `docker compose up`); `minio-init` and
+      `create_buckets.sh` are gone, no longer needed. `docs/techstack.md §7` and
+      `deploy/compose/README.md` updated. The test fixture here still uses `s3mock` rather than real MinIO —
+      lighter weight for a unit-ish integration test, no strong reason to switch now that MinIO itself works.
 
 ### P2-J4 · Zones API — 2 pts · Must · E03 · FR-CAM-03
-- [ ] CRUD zones with normalized polygon validation (3–32 points, within [0,1]), type and schedule JSON.
-- [ ] `GET /internal/v1/zones` matches the frozen fixture.
+- [x] CRUD zones with normalized polygon validation (3–32 points, within [0,1]), type and schedule JSON.
+      `GET/POST /cameras/{id}/zones`, `PATCH/DELETE /zones/{id}` (read: all, write: admin) — matches
+      design_architecture.md §9 exactly, including the mixed nested/flat path shape. `core.zones` (migration 0003)
+      FKs `camera_id` to `core.cameras.id` with `ondelete=CASCADE`. Polygon validation
+      (`api/domain/zones.py::validate_polygon`, pure, unit-tested) mirrors `ZoneInternal`'s own check. Verified for
+      real via `make test-int`: full CRUD lifecycle, invalid-polygon rejection, unknown-camera 404,
+      null-for-non-nullable-field rejection, `schedule` clear-to-null.
+- [x] `GET /internal/v1/zones` matches the frozen fixture.
+      `camera_id` in the internal contract is the camera's **code**, not its UUID `core.cameras.id` — different
+      from the public zones API's own `camera_id`, matching the same split `camera.py`'s `CameraInternal`
+      already has (code for internal/Kafka-facing consumers, UUID id for the public REST API). Finalized
+      `libs/vms_common/contracts/zones.py`'s "proposed, review when P2-J4 lands" docstring now that it's landed —
+      field shapes matched the fixture as-is, no changes needed. Verified for real, including that a user JWT
+      (not a service token) is rejected.
+
+      Role × endpoint matrix extended to cover all four new endpoints (76 test cases total now).
+
+      **Follow-up (2026-09-30, not part of this story's AC but prompted by reviewing it)**: the camera
+      code-vs-UUID split this story made explicit for zones already existed for cameras/segments/tracks and was
+      only ever documented in scattered docstrings. Hardened it: `libs/vms_common/types.py` adds `CameraCode`/
+      `CameraId` (`NewType` over `str` — zero runtime effect, confirmed with Pydantic v2 and by re-running
+      perception's and ingestion's own unit tests unchanged) and design_architecture.md §5.1 now states the rule
+      once, explicitly. Applied to every contract/model/schema field where the distinction actually matters
+      (`CameraInternal`, `ZoneInternal`, `SegmentV1`, `TwinV1`, `TwinReadyV1`, `core.cameras.code`,
+      `media.segments.camera_id`, `vision.*.camera_id`, and the relevant `services/api/src/api/schemas.py`
+      fields) — not touching Divyansh's perception/ingestion source files themselves, since the contract-layer
+      typing is what's load-bearing and NewType requires no call-site changes to be safe.
 
 ### P2-J5 · Playback page — 5 pts · Must · E06 · FR-PLAY-01, FR-PLAY-02
-- [ ] Camera + date/time range picker; hls.js playback of generated playlists.
-- [ ] Timeline scrubber v1 (signature component, §B.6): density sparkline, playhead, drag to scrub, keyboard steps.
-- [ ] Player time ↔ wall-clock mapping via program-date-time.
+- [x] Camera + date/time range picker; hls.js playback of generated playlists.
+      `frontend/src/features/playback/pages/PlaybackPage.jsx`. hls.js loads the `.m3u8` manifest directly (not
+      through `lib/apiClient.js`), so the bearer token is attached via hls.js's own `xhrSetup` hook
+      (`features/playback/api.js::hlsAuthConfig`) — presigned segment URIs inside the playlist need no auth of
+      their own.
+- [x] Timeline scrubber v1 (signature component, §B.6): density sparkline, playhead, drag to scrub, keyboard steps.
+      Reduced to one lane — no event markers/phase band/correlation links, those need data from phase 3+ stories
+      that don't exist yet. `components/TimelineScrubber.jsx`: click/drag to scrub, ← → step 1s, Shift+← →
+      step 10s, per §B.6's interaction spec.
+- [x] Player time ↔ wall-clock mapping via program-date-time.
+      `features/playback/lib/programDateTime.js` — pure, unit-tested (11 tests): reads hls.js's own parsed
+      `fragment.programDateTime`, clamps correctly past either end of the loaded range, and (a case easy to miss)
+      snaps forward to the next fragment when scrubbed into a genuine wall-clock gap between two segments, as
+      opposed to the player-time axis, which stays contiguous across a `#EXT-X-DISCONTINUITY`.
+
+      **Verified for real**: applied migrations 0002/0003 to the team's real dev Postgres (additive only, didn't
+      touch existing data), started a second `services/api` instance on a spare port with current code (left the
+      team's existing one untouched), and drove the actual page through a real login with Playwright — camera
+      picker populated from real camera rows, timeline scrubber rendered and responded to both click-to-scrub and
+      the keyboard step (confirmed exactly 1000ms per press), no unexpected console errors. **Not verified**:
+      actual HLS video frames playing — no real ingestion pipeline has produced recorded segments in this
+      environment, so the page correctly shows its "Playback failed" fallback instead of crashing; verify the
+      full happy path once real footage exists (`make sim` + ingestion/perception/indexer running for a while).
 
 ### P2-J6 · Detection overlay — 3 pts · Must · E06 · FR-PLAY-03
 - [ ] Canvas overlay draws bboxes + track ids synchronized with the player (≤ 200 ms drift measured on a test clip).
