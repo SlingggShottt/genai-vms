@@ -13,7 +13,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from vms_common.types import CameraCode, CameraId
-from vms_db.models import Camera, User, UserRole, Zone, ZoneType
+from vms_db.models import Camera, Track, User, UserRole, Zone, ZoneType
 
 from api.domain.recordings import DensityBucket, Gap, SegmentWindow
 from api.domain.zones import validate_polygon
@@ -279,6 +279,42 @@ class TwinFramesResponse(BaseModel):
     start: datetime
     end: datetime
     frames: list[OverlayFrameOut]
+
+
+class TrackSummaryOut(BaseModel):
+    """Side-panel data for one clicked overlay box (P2-J6, FR-PLAY-03).
+    `attributes_summary` is whatever subset of
+    `vms_common.contracts.twin.ObjectAttributes` the twin populated for
+    this category (colours only; never face data, per CLAUDE.md).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    track_id: str
+    camera_id: CameraCode
+    category: str
+    first_ts: datetime
+    last_ts: datetime
+    # Sum of vision.track_segments.dwell_s across every segment the track
+    # appears in — vision.tracks itself only keeps first/last_ts (the
+    # cross-segment span), not a dwell total, since a track can leave and
+    # re-enter frame within that span.
+    dwell_s: float
+    zones_visited: list[str]
+    attributes_summary: dict[str, str]
+
+    @classmethod
+    def from_model(cls, track: Track, *, dwell_s: float) -> TrackSummaryOut:
+        return cls(
+            track_id=track.track_id,
+            camera_id=track.camera_id,
+            category=track.category,
+            first_ts=track.first_ts,
+            last_ts=track.last_ts,
+            dwell_s=dwell_s,
+            zones_visited=list(track.zones_visited),
+            attributes_summary=dict(track.attributes_summary),
+        )
 
 
 class ZoneScheduleIn(BaseModel):

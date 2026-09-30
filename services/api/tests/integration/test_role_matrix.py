@@ -14,6 +14,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import async_sessionmaker
+from vms_db.models import Track
 
 pytestmark = pytest.mark.integration
 
@@ -44,6 +46,7 @@ ROUTER_TABLE: list[tuple[str, str, frozenset[str] | None]] = [
     ("GET", "/api/v1/recordings/{camera_id}/playlist.m3u8", None),
     ("GET", "/api/v1/recordings/{camera_id}/density", None),
     ("GET", "/api/v1/twin/{camera_id}/frames", None),
+    ("GET", "/api/v1/tracks/{track_id}", None),
     ("GET", "/api/v1/cameras/{target_id}/zones", None),
     ("POST", "/api/v1/cameras/{target_id}/zones", frozenset({"admin"})),
     ("PATCH", "/api/v1/zones/{target_id}", frozenset({"admin"})),
@@ -127,8 +130,34 @@ def _create_zone_id(client: TestClient, admin_headers: dict[str, str]) -> str:
     return created.json()["id"]
 
 
-def _path_kwargs_for(
-    path: str, client: TestClient, admin_headers: dict[str, str]
+async def _create_track(db_session_factory: async_sessionmaker, *, camera_code: str) -> str:
+    """Insert a `vision.tracks` row directly — tracks are only ever written
+    by the indexer (from `twinready.v1`), there's no API to create one, so
+    the role-matrix test has to seed it the way the real pipeline would.
+    """
+    track_id = f"{camera_code}-t{uuid.uuid4().hex[:6]}"
+    async with db_session_factory() as session:
+        session.add(
+            Track(
+                track_id=track_id,
+                camera_id=camera_code,
+                category="person",
+                first_ts=_WINDOW_START,
+                last_ts=_WINDOW_END,
+                zones_visited=[],
+                attributes_summary={},
+                best_crop_uri="s3://vms-twins/matrix-test-crop.jpg",
+            )
+        )
+        await session.commit()
+    return track_id
+
+
+async def _path_kwargs_for(
+    path: str,
+    client: TestClient,
+    admin_headers: dict[str, str],
+    db_session_factory: async_sessionmaker,
 ) -> dict[str, str]:
     kwargs: dict[str, str] = {}
     if "{target_id}" in path:
@@ -141,6 +170,9 @@ def _path_kwargs_for(
             kwargs["target_id"] = user_id
     if "{camera_id}" in path:
         kwargs["camera_id"] = _create_camera_code(client, admin_headers)
+    if "{track_id}" in path:
+        camera_code = _create_camera_code(client, admin_headers)
+        kwargs["track_id"] = await _create_track(db_session_factory, camera_code=camera_code)
     return kwargs
 
 
@@ -198,18 +230,21 @@ def _call(client: TestClient, method: str, path: str, headers: dict[str, str] | 
 
 @pytest.mark.parametrize("method,path,allowed_roles", ROUTER_TABLE)
 @pytest.mark.parametrize("role", ROLES)
-def test_router_table_role_matrix(
+async def test_router_table_role_matrix(
     client: TestClient,
     admin_access_token: str,
     role_tokens: dict[str, str],
     auth_headers: Callable[[str], dict[str, str]],
+    db_session_factory: async_sessionmaker,
     role: str,
     method: str,
     path: str,
     allowed_roles: frozenset[str] | None,
 ) -> None:
     admin_headers = auth_headers(admin_access_token)
-    resolved_path = path.format(**_path_kwargs_for(path, client, admin_headers))
+    resolved_path = path.format(
+        **await _path_kwargs_for(path, client, admin_headers, db_session_factory)
+    )
 
     status_code = _call(client, method, resolved_path, auth_headers(role_tokens[role]))
 
@@ -229,6 +264,8 @@ def test_router_table_rejects_unauthenticated(
 ) -> None:
     # Unauthenticated requests 401 before any resource lookup, so the
     # placeholder values themselves don't need to resolve to anything real.
-    resolved_path = path.format(target_id=str(uuid.uuid4()), camera_id="does-not-matter")
+    resolved_path = path.format(
+        target_id=str(uuid.uuid4()), camera_id="does-not-matter", track_id="does-not-matter"
+    )
     status_code = _call(client, method, resolved_path, None)
     assert status_code == 401
