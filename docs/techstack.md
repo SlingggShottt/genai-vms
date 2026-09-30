@@ -126,7 +126,7 @@ Deferred: CUHK Avenue, DCSASS, WTS (MP-PVIR's traffic dataset — a possible rep
 | Vectors | **Qdrant** | Payload-indexed filtering, named dense + sparse vectors, good Python client, Helm chart | pgvector (simpler, weaker hybrid/filtering at scale), FAISS (library, no server/filters) |
 | Relational | **PostgreSQL 16** | JSONB for reports, `timestamptz`, `SKIP LOCKED` queues | — |
 | Cache/locks | **Redis 7** (or Valkey 8) | GPU lease, LLM response cache, WS fan-out across API replicas, tracker checkpoints | — |
-| Objects | **S3-compatible**: MinIO (default) / SeaweedFS | Same API locally and in cloud | Verify MinIO community image distribution & console status before pinning |
+| Objects | **S3-compatible**: MinIO (default) / SeaweedFS | Same API locally and in cloud | Verified (2026-09-30): `quay.io/minio/minio` and `docker.io/minio/minio` are no longer pullable anonymously; `docker-compose.yml` now pins `bitnamilegacy/minio` (frozen Bitnami packaging, confirmed API/env-var compatible) as a stopgap — revisit if that legacy channel also disappears |
 
 ## 8. Frontend (JavaScript only)
 

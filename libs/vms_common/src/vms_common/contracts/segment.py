@@ -12,6 +12,7 @@ from typing import Literal
 from pydantic import AwareDatetime, Field, ValidationInfo, field_validator
 
 from vms_common.contracts.base import MessageEnvelope
+from vms_common.types import CameraCode
 
 
 class SegmentV1(MessageEnvelope):
@@ -20,7 +21,7 @@ class SegmentV1(MessageEnvelope):
     schema_version: Literal["segment.v1"] = "segment.v1"
 
     site_id: str
-    camera_id: str
+    camera_id: CameraCode
     segment_id: str = Field(description="{camera_id}_{start_utc}_{seq} (SRS §5)")
 
     start_ts: AwareDatetime

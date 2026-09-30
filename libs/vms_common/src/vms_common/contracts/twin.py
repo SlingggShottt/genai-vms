@@ -13,6 +13,8 @@ from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 
+from vms_common.types import CameraCode
+
 
 class FrameSize(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -121,7 +123,7 @@ class TwinV1(BaseModel):
     schema_version: Literal["twin.v1"] = "twin.v1"
 
     segment_id: str
-    camera_id: str
+    camera_id: CameraCode
     site_id: str
     start_ts: AwareDatetime
     end_ts: AwareDatetime
