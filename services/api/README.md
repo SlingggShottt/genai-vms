@@ -68,10 +68,13 @@ it's the real thing.
   end)`, each with a presigned GET url, interleaved with explicit `gap`
   markers for uncovered time (never a silent skip).
 - `GET /recordings/{camera_id}/playlist.m3u8` — the same timeline as an
-  HLS VOD playlist; a gap between two segments becomes
-  `#EXT-X-DISCONTINUITY`, every segment gets its own
-  `#EXT-X-PROGRAM-DATE-TIME`. No transcoding — a presigned url always
-  serves its segment's whole `.ts` file (`domain/recordings.py`).
+  HLS VOD playlist; every segment after the first is preceded by
+  `#EXT-X-DISCONTINUITY` (ingestion's segmenter uses `-reset_timestamps 1`,
+  so each `.ts` starts its own clock, and a recording gap is one too —
+  without it hls.js ends playback early on a seek past the buffered range),
+  and every segment gets its own `#EXT-X-PROGRAM-DATE-TIME`. No
+  transcoding — a presigned url always serves its segment's whole `.ts`
+  file (`domain/recordings.py`).
 - `GET /recordings/{camera_id}/density` — `vision.minute_counts` summed
   across categories and re-bucketed to the requested `bucket` seconds,
   zero-filled (a sparkline needs a continuous series, unlike the
