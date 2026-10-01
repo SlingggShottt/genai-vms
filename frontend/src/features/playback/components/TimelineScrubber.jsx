@@ -80,7 +80,10 @@ export function TimelineScrubber({ buckets, rangeStart, rangeEnd, playheadMs, on
           {buckets.map((bucket) => (
             <div
               key={bucket.start_ts}
-              className="min-h-[2px] flex-1 rounded-[1px] bg-text-muted/40"
+              // `opacity-40`, not `bg-text-muted/40`: the theme colours are
+              // plain `var(--…)` tokens, so Tailwind can't derive an alpha
+              // from them and the `/40` form emits no CSS — bars were invisible.
+              className="min-h-[2px] flex-1 rounded-[1px] bg-text-muted opacity-40"
               style={{ height: `${Math.max(2, (bucket.count / maxCount) * 100)}%` }}
             />
           ))}
