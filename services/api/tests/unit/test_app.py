@@ -7,7 +7,7 @@ middleware, and /health, /ready with an unreachable database
 from __future__ import annotations
 
 from api.main import create_app
-from api.settings import ApiSettings
+from api.settings import AdminSeedSettings, ApiSettings
 from fastapi.testclient import TestClient
 from vms_common.config import DatabaseSettings
 
@@ -15,7 +15,15 @@ from vms_common.config import DatabaseSettings
 def _unreachable_settings() -> ApiSettings:
     # Port 1 on localhost: nothing listens there, so the connection is
     # refused immediately instead of timing out against a real network call.
-    return ApiSettings(db=DatabaseSettings(dsn="postgresql+asyncpg://vms:vms@localhost:1/vms"))
+    #
+    # `admin` is pinned to "seeding disabled": settings otherwise read the
+    # repo-root `.env`, and a real VMS_ADMIN_PASSWORD there (as the README tells
+    # you to set) makes startup try to seed the admin against this dead
+    # database, failing every test in this module.
+    return ApiSettings(
+        db=DatabaseSettings(dsn="postgresql+asyncpg://vms:vms@localhost:1/vms"),
+        admin=AdminSeedSettings(password=""),
+    )
 
 
 def test_health_returns_ok() -> None:
