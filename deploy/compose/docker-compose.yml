@@ -323,3 +323,36 @@ services:
       VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
       VMS_QDRANT_URL: http://qdrant:6333
     restart: unless-stopped
+
+  # Rule engine over twinready.v1 -> events.candidates (P3-D1). Needs migration
+  # 0004 (`make migrate`). Zone names arrive in the twin from perception; this
+  # service looks the zones up again (type, schedule) from the same source —
+  # there is no api service in Compose yet, so the YAML fallback is used.
+  events:
+    profiles: [core]
+    container_name: vms-events
+    build:
+      context: ../.. # repo root — see services/events/Dockerfile
+      dockerfile: services/events/Dockerfile
+    networks: [vms-net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      VMS_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      VMS_STORAGE_ENDPOINT_URL: http://minio:9000
+      VMS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-vms-admin}
+      VMS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+      VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
+      VMS_REDIS_URL: redis://redis:6379/0
+      VMS_EVENTS_RULES_PATH: /app/config/rules.yaml
+      VMS_EVENTS_ZONES_YAML_FALLBACK: /app/config/zones.yaml
+    volumes:
+      - ../../config:/app/config:ro
+    restart: unless-stopped

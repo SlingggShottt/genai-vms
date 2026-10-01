@@ -1,0 +1,90 @@
+# Default event-rule thresholds for the events service
+# (docs/design_architecture.md §7.3, FR-EVT-01). Loaded at startup — restart
+# the service after editing. Everything here is validated when the file loads:
+# an unknown rule id, an unknown param name or an out-of-range value stops the
+# service with a clear error instead of being ignored.
+#
+# Each rule works on the *zones* defined for a camera (zone names as they
+# appear in the digital twin): a camera with no zones raises no candidates.
+#
+# Common to every rule
+#   enabled     false switches the rule off (default true; a rule left out of
+#               this file is ON with its built-in defaults).
+#   severity    low | medium | high | critical (default: the rule's own).
+#   verify      run the VLM verification gate on its candidates (P3-D4).
+#   params.debounce_s
+#               longest gap (s) between two hits that still count as the same
+#               candidate; a candidate stays open and extends while hits keep
+#               coming, and closes once it has been quiet this long.
+#
+# Rule-specific params
+#   intrusion.restricted   min_frames, categories
+#       a person or vehicle inside a zone of type `restricted`.
+#   intrusion.after_hours  min_frames, categories
+#       a person in any zone that has a schedule, outside that schedule
+#       (the schedule is the zone's normal hours, in site-local time).
+#   loitering              dwell_s, categories, zone_types
+#       the same track in a zone for at least dwell_s.
+#   crowding               max_persons, duration_s, categories, zone_types
+#       strictly more than max_persons people in a zone for at least duration_s.
+
+version: 1
+
+rules:
+  intrusion.restricted:
+    enabled: true
+    severity: high
+    verify: true
+    params:
+      min_frames: 2
+      debounce_s: 5
+      categories: [person, bicycle, car, motorcycle, bus, truck]
+
+  intrusion.after_hours:
+    enabled: true
+    severity: high
+    verify: true
+    params:
+      min_frames: 2
+      debounce_s: 5
+      categories: [person]
+
+  loitering:
+    enabled: true
+    severity: medium
+    verify: true
+    params:
+      dwell_s: 60
+      debounce_s: 5
+      categories: [person]
+      zone_types: [generic, restricted, entrance, exit]
+
+  crowding:
+    enabled: true
+    severity: medium
+    verify: true
+    params:
+      max_persons: 8
+      duration_s: 20
+      debounce_s: 5
+      categories: [person]
+      zone_types: [generic, restricted, entrance, exit]
+
+# Per-camera / per-zone overrides. Each entry names a rule and a `camera`
+# (camera code, e.g. cam02) and/or a `zone` (zone name) and may set `enabled`,
+# `severity`, `verify` and any of that rule's `params`. More specific entries
+# win: rule+camera, then rule+zone, then rule+camera+zone (later entries win a
+# tie). Examples:
+#
+# overrides:
+#   - rule: loitering          # tighter loitering on one camera
+#     camera: cam02
+#     params: {dwell_s: 30}
+#   - rule: crowding           # the lobby is meant to be busy
+#     camera: cam01
+#     zone: lobby
+#     params: {max_persons: 20}
+#   - rule: intrusion.after_hours   # switch a rule off for one zone
+#     zone: car-park
+#     enabled: false
+overrides: []

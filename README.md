@@ -80,7 +80,7 @@ make migrate && make topics && make qdrant-collections   # schema, Kafka topics,
 cp config/cameras.example.yaml config/cameras.yaml
 cp config/camera_sim.example.yaml config/camera_sim.yaml  # point `file:` at your video (see the notes below)
 
-make up PROFILE=infra,core,perception,tools   # ingestion, indexer, perception (GPU), camera simulator
+make up PROFILE=infra,core,perception,tools   # ingestion, indexer, events (rule engine), perception (GPU), camera simulator
 uv run --package vms-api uvicorn api.main:app --port 8000  # the API runs on the host for now (not a compose service yet)
 
 cd frontend && npm run dev              # dashboard on http://localhost:5173

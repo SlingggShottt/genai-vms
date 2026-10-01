@@ -320,6 +320,7 @@ Key columns (selected):
 - `core.zones(id, camera_id fk, name, zone_type enum(generic,restricted,entrance,exit), polygon jsonb /* normalized [[x,y],…] */, schedule jsonb null)`
 - `core.topology_edges(id, from_camera_id, to_camera_id, edge_type enum(overlap,transit), min_s, max_s, tolerance_s, bidirectional bool)`
 - `media.segments(segment_id text pk, camera_id, start_ts timestamptz, end_ts, uri, twin_uri, indexed_at)` — index `(camera_id, start_ts)`
+- `events.candidates(id uuid pk, site_id, camera_id, rule_id, event_type, severity, zone_id text, zone_name text, track_ids text[], segment_ids text[], start_ts, end_ts, rule_score float, status text CHECK in (open, closed), details jsonb, created_at, updated_at)` — written by the events service (P3-D1). `id` is a deterministic UUIDv5 of `camera|rule|zone|track|start_ts`, so replays upsert; `zone_id` is text (the YAML fallback's ids aren't `core.zones` UUIDs); `status` only moves open → closed. Indexes `(camera_id, start_ts)` and `(status)`.
 - `events.events(id, camera_id, event_type, severity, start_ts, end_ts, rule_id, rule_score, zone_id, track_ids text[], verification jsonb, group_id null, status enum(open,acknowledged,resolved))`
 - `reasoning.incidents(id, group_id, status enum(generating,generated,failed,reviewed,closed), severity, title, report jsonb, report_uri, pdf_uri, provenance jsonb, created_at)`
 
@@ -406,6 +407,12 @@ Bboxes are normalized `[x1, y1, x2, y2]`. Masks are **not** in the twin; they ar
 | `running` | person speed > S for ≥ k samples | S = 0.35 /s, k = 3 | low |
 
 Candidates are debounced per `(camera, rule, track)`; an open candidate extends while the condition holds.
+
+**As implemented (P3-D1, `services/events`)** — details the table above leaves open:
+- A rule judges **one frame in one zone** ("who satisfies my condition right now?"); the engine folds consecutive hits of the same `(camera, rule, zone, track)` into an *episode* — extended while the next hit is within `debounce_s` (default 5 s), promoted to a *candidate* once it spans the rule's `min_frames` / duration (≥, inclusive), `open` while it keeps extending and `closed` after `debounce_s` of quiet; a closed candidate is never reopened. State is per camera, survives restarts (Redis checkpoint) and the engine skips twins it has already applied, so Kafka redelivery is harmless.
+- Rules act on the camera's **zones** (the twin carries zone *names*; the service re-reads zone type/schedule from the same source). No zones → no candidates. `crowding` counts distinct person tracks in the zone (strictly more than N for ≥ T); `loitering` is one track's continuous presence in a zone (any zone type by default).
+- `intrusion.after_hours`: a zone's `schedule` is its **normal hours** (site-local `HH:MM`, may cross midnight, days refer to the day the window opens); a person there outside them triggers. Zones with no schedule never do. It also takes `min_frames` (default 2), not in the table, so one stray detection can't raise a high-severity candidate.
+- `config/rules.yaml` holds per-rule `enabled / severity / verify / params` plus `overrides` keyed by `camera` and/or `zone` name; precedence is rule < camera < zone < camera+zone (later entries win ties). It is validated at startup. Unlisted rules stay enabled with built-in defaults. `abandoned_object` and `running` arrive with P3-D2.
 
 ### 7.4 VLM verification gate (owner: D)
 - Input: up to 4 keyframes spanning the candidate window, bbox of involved tracks drawn as coloured boxes, rule description.
