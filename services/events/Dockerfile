@@ -1,12 +1,18 @@
-# events service image — placeholder.
+# events image — rule engine over twinready.v1 -> events.candidates (P3-D1).
 #
-# Completed when this service's backlog story lands (see docs/backlog.md
-# and docs/design_architecture.md §4). Build pattern: uv-based Python 3.11
-# image, non-root user, multi-stage (builder installs deps, runtime copies
-# the synced venv + src/). See docs/techstack.md §9 for base image policy.
+# Build context is the REPO ROOT (see deploy/compose/docker-compose.yml:
+# `build.context: ../..`) — uv needs the whole workspace visible to resolve
+# the vms-common/vms-db dependencies. Same shape as services/indexer/Dockerfile
+# (a plain consumer: no GPU, no ffmpeg). `config/` is mounted read-only by
+# Compose, so rules.yaml / zones.yaml edits don't need an image rebuild.
 
-FROM python:3.11-slim AS base
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir uv
+
 WORKDIR /app
+COPY . /app
 
-# TODO: install uv, copy pyproject.toml + uv.lock, `uv sync --frozen --no-dev`,
-# copy src/, set non-root USER, set CMD/ENTRYPOINT.
+RUN uv sync --package vms-events --no-dev
+
+ENTRYPOINT ["uv", "run", "--package", "vms-events", "events"]
