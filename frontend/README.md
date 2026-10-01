@@ -41,11 +41,16 @@ redirects to `/login` when there's no refresh token or refresh itself fails.
 - **P1-J4** — shell: routing, auth, layout chrome, design tokens.
 - **P1-J5** — live camera wall (`features/live-wall`) and camera settings
   (`features/cameras`): WHEP-first playback with hls.js fallback
-  (`lib/mediamtx.js`, `components/VideoTile.jsx`).
+  (`lib/mediamtx.js`, `components/VideoTile.jsx`). The fallback also fires
+  when WebRTC negotiates but never shows a frame (5 s) or the connection
+  fails/closes afterwards — e.g. MediaMTX drops the session of an H.264
+  stream with B-frames, which WebRTC can't carry (HLS handles it, ~15 s to
+  start on a 5 s keyframe interval).
 - **P2-J5** — playback page (`features/playback`): camera + date/time range
   picker, hls.js loading `services/api`'s generated `.m3u8` playlist (auth
-  header injected via hls.js's `xhrSetup`, since it loads the manifest
-  directly rather than through `lib/apiClient.js`), and the timeline
+  header injected via hls.js's `xhrSetup` for the manifest only — segment
+  URLs are presigned and S3 rejects a second auth type — since it loads the
+  manifest directly rather than through `lib/apiClient.js`), and the timeline
   scrubber v1 (`components/TimelineScrubber.jsx`, docs/style_guide.md
   §B.6 reduced to one lane — no events/phases/correlation links yet, those
   need data phase 3+ stories haven't built): density sparkline, 2px accent

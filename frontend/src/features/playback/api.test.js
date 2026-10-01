@@ -1,6 +1,15 @@
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createElement } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { apiClient } from '@/lib/apiClient';
 import { clearTokens, setTokens } from '@/lib/tokenStore';
-import { hlsAuthConfig, isPresignedUrl } from './api';
+import { hlsAuthConfig, isPresignedUrl, useTwinFrames } from './api';
+
+vi.mock('@/lib/apiClient', async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, apiClient: { ...actual.apiClient, get: vi.fn() } };
+});
 
 // Same shape services/api puts in the generated playlist: a SigV4
 // query-string presigned MinIO URL.
@@ -64,5 +73,66 @@ describe('hlsAuthConfig().xhrSetup', () => {
     hlsAuthConfig().xhrSetup(xhr, MANIFEST_ABSOLUTE);
 
     expect(xhr.setRequestHeader).not.toHaveBeenCalled();
+  });
+});
+
+function twinFramesResponse(startIso, trackId) {
+  return {
+    camera_id: 'cam01',
+    start: startIso,
+    end: startIso,
+    frames: [
+      {
+        ts: startIso,
+        objects: [{ track_id: trackId, category: 'person', bbox: [0.1, 0.2, 0.3, 0.4] }],
+      },
+    ],
+  };
+}
+
+describe('useTwinFrames', () => {
+  const WINDOW_1 = ['2026-10-01T07:04:00.000Z', '2026-10-01T07:05:00.000Z'];
+  const WINDOW_2 = ['2026-10-01T07:05:00.000Z', '2026-10-01T07:06:00.000Z'];
+
+  function renderTwinFrames() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+    return renderHook(({ window }) => useTwinFrames('cam01', window[0], window[1]), {
+      wrapper,
+      initialProps: { window: WINDOW_1 },
+    });
+  }
+
+  // Regression: the window key changes every 60 s of playback. Without
+  // `keepPreviousData` the hook returned no data for the length of the next
+  // window's fetch, so the detection boxes blinked out once a minute.
+  it('keeps the previous window while the next one is still loading', async () => {
+    let finishSecondWindow;
+    apiClient.get
+      .mockResolvedValueOnce(twinFramesResponse(WINDOW_1[0], 'cam01-t1'))
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishSecondWindow = () => resolve(twinFramesResponse(WINDOW_2[0], 'cam01-t2'));
+          }),
+      );
+
+    const { result, rerender } = renderTwinFrames();
+    await waitFor(() =>
+      expect(result.current.data?.frames[0].objects[0].track_id).toBe('cam01-t1'),
+    );
+
+    rerender({ window: WINDOW_2 });
+
+    // Next window is in flight: the old boxes are still there, flagged as placeholder.
+    expect(result.current.isPlaceholderData).toBe(true);
+    expect(result.current.data?.frames[0].objects[0].track_id).toBe('cam01-t1');
+
+    finishSecondWindow();
+    await waitFor(() =>
+      expect(result.current.data?.frames[0].objects[0].track_id).toBe('cam01-t2'),
+    );
+    expect(result.current.isPlaceholderData).toBe(false);
   });
 });

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { apiClient, apiUrl } from '@/lib/apiClient';
 import { getAccessToken } from '@/lib/tokenStore';
 import { densityResponseSchema, trackSummarySchema, twinFramesResponseSchema } from './schemas';
@@ -84,6 +84,11 @@ export function useTwinFrames(cameraCode, windowStartIso, windowEndIso) {
     },
     enabled: Boolean(cameraCode && windowStartIso && windowEndIso),
     staleTime: Infinity, // recorded footage is immutable once indexed
+    // The window key changes every 60 s of playback. Keep drawing the previous
+    // window's boxes until the next one arrives instead of blinking them out
+    // for the length of the fetch (DetectionOverlay already ignores any frame
+    // more than STALE_FRAME_MS from the playhead, so stale boxes can't linger).
+    placeholderData: keepPreviousData,
   });
 }
 
