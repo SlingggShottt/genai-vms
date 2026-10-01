@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=rules.schema.json
 # Default event-rule thresholds for the events service
 # (docs/design_architecture.md §7.3, FR-EVT-01). Loaded at startup — restart
 # the service after editing. Everything here is validated when the file loads:
