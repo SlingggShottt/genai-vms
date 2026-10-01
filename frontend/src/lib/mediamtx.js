@@ -24,11 +24,28 @@ function whepUrl(cameraCode) {
  * Throws if the offer/answer exchange fails (camera not publishing, network
  * error, non-2xx response) — callers should catch this and fall back to
  * `hlsUrl()` + hls.js, per FR-LIVE-01.
+ *
+ * A session that negotiated fine can still die afterwards — MediaMTX closes
+ * it straight away for an H.264 stream with B-frames (WebRTC can't carry
+ * them), and the browser only reports the connection `failed` ~15 s later.
+ * `onConnectionLost` is called once if the connection reaches `failed` or
+ * `closed` on its own (never after the caller's own `close()`), so the caller
+ * can fall back to HLS here too.
  */
-export async function connectWhep(videoEl, cameraCode, { signal } = {}) {
+export async function connectWhep(videoEl, cameraCode, { signal, onConnectionLost } = {}) {
   const pc = new RTCPeerConnection({ iceServers: [] });
   const stream = new MediaStream();
   videoEl.srcObject = stream;
+
+  let closed = false;
+  let lostReported = false;
+  pc.onconnectionstatechange = () => {
+    if (closed || lostReported) return;
+    if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+      lostReported = true;
+      onConnectionLost?.();
+    }
+  };
 
   pc.ontrack = (event) => {
     stream.addTrack(event.track);
@@ -62,12 +79,14 @@ export async function connectWhep(videoEl, cameraCode, { signal } = {}) {
 
   await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
 
-  let closed = false;
   return function close() {
     if (closed) return;
     closed = true;
     pc.close();
-    videoEl.srcObject = null;
+    // Only release the element if it's still ours: after a fallback to HLS the
+    // caller has already cleared it, and clearing `srcObject` again would
+    // reset whatever is playing now.
+    if (videoEl.srcObject === stream) videoEl.srcObject = null;
     if (resourceUrl) {
       // Best-effort: the session will also expire server-side on its own,
       // this just frees it immediately. Never block teardown on it.
