@@ -82,8 +82,7 @@ export function DetectionOverlay({ videoRef, fragmentsRef, frames, enabled, onSe
     resizeObserver.observe(canvas);
     resizeCanvas();
 
-    const accentColor =
-      getComputedStyle(canvas).getPropertyValue('--accent').trim() || '#5ec4cf';
+    const accentColor = getComputedStyle(canvas).getPropertyValue('--accent').trim() || '#5ec4cf';
     const accentInk = getComputedStyle(canvas).getPropertyValue('--accent-ink').trim() || '#0e2a2e';
 
     function draw() {

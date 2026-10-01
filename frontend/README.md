@@ -71,6 +71,7 @@ redirects to `/login` when there's no refresh token or refresh itself fails.
   failed" fallback for that case instead of crashing. Verify the full
   happy path once real footage exists (`make sim` + the ingestion/
   perception/indexer pipeline actually running for a while).
+
 - **P2-J6** — detection overlay on the same page
   (`components/DetectionOverlay.jsx`, `components/TrackSummaryPanel.jsx`):
   a canvas drawn on a `requestAnimationFrame` loop (not React state, which
