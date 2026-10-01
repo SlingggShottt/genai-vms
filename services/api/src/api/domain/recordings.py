@@ -56,12 +56,17 @@ def build_timeline(
 
 
 def build_playlist_m3u8(timeline: Sequence[TimelineItem]) -> str:
-    """HLS VOD playlist. `#EXT-X-DISCONTINUITY` marks an *interior* gap
-    (between two segments) per the HLS spec — a leading or trailing gap has
-    no adjacent segment to be discontinuous from, so gets no marker, it
-    just isn't part of the playlist. `#EXT-X-PROGRAM-DATE-TIME` precedes
-    every segment (not just the first) so the UI can map player time to
-    wall clock across a playlist that may itself contain gaps.
+    """HLS VOD playlist. `#EXT-X-DISCONTINUITY` precedes every segment after
+    the first: ingestion's segmenter runs ffmpeg with `-reset_timestamps 1`,
+    so each stored `.ts` starts its own timestamp clock, and a recording gap
+    is a discontinuity too. Without the marker hls.js assumes one continuous
+    timeline and, on a seek past the buffered range, places the fetched
+    segment at the wrong time — the player ends early and `duration` collapses
+    to the buffered length. A leading or trailing gap has no adjacent segment
+    to be discontinuous from, so it gets no marker; it just isn't part of the
+    playlist. `#EXT-X-PROGRAM-DATE-TIME` precedes every segment (not just the
+    first) so the UI can map player time to wall clock across a playlist that
+    may itself contain gaps.
     """
     segment_durations = [
         (item.end_ts - item.start_ts).total_seconds()
@@ -76,20 +81,15 @@ def build_playlist_m3u8(timeline: Sequence[TimelineItem]) -> str:
         "#EXT-X-PLAYLIST-TYPE:VOD",
         f"#EXT-X-TARGETDURATION:{target_duration}",
     ]
-    # A gap only earns a marker if a segment actually follows it — a
-    # trailing gap has nothing left to be "discontinuous" from, so the
-    # marker is deferred until we know a segment comes next, and dropped
-    # entirely if the timeline ends first.
+    # Gaps carry no playlist entry of their own: the discontinuity marker
+    # goes before the segment that follows, so a gap between two segments and
+    # a plain segment boundary both come out as exactly one marker.
     seen_a_segment = False
-    pending_discontinuity = False
     for item in timeline:
         if isinstance(item, Gap):
-            if seen_a_segment:
-                pending_discontinuity = True
             continue
-        if pending_discontinuity:
+        if seen_a_segment:
             lines.append("#EXT-X-DISCONTINUITY")
-            pending_discontinuity = False
         duration = (item.end_ts - item.start_ts).total_seconds()
         lines.append(f"#EXT-X-PROGRAM-DATE-TIME:{item.start_ts.isoformat()}")
         lines.append(f"#EXTINF:{duration:.3f},")

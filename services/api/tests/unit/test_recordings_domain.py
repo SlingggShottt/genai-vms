@@ -100,6 +100,30 @@ def test_playlist_marks_an_interior_gap_with_discontinuity() -> None:
     assert playlist.index("#EXT-X-DISCONTINUITY") < playlist.index("presigned/30")
 
 
+def test_playlist_marks_every_segment_boundary_with_discontinuity() -> None:
+    # Ingestion's segmenter runs ffmpeg with `-reset_timestamps 1`, so even
+    # back-to-back segments each start their own timestamp clock. Without a
+    # marker hls.js treats them as one continuous timeline and a seek past the
+    # buffered range ends the player early (duration collapses to the buffer).
+    segments = [_seg(0), _seg(10), _seg(20)]
+    timeline = build_timeline(segments, range_start=T0, range_end=T0 + timedelta(seconds=30))
+    lines = build_playlist_m3u8(timeline).splitlines()
+
+    assert lines.count("#EXT-X-DISCONTINUITY") == 2
+    # none before the first segment…
+    assert "#EXT-X-DISCONTINUITY" not in lines[: lines.index("https://presigned/0")]
+    # …and one directly ahead of each later segment's PROGRAM-DATE-TIME/EXTINF/URI.
+    for uri in ("https://presigned/10", "https://presigned/20"):
+        assert lines[lines.index(uri) - 3] == "#EXT-X-DISCONTINUITY"
+
+
+def test_playlist_gap_and_segment_boundary_yield_a_single_marker() -> None:
+    timeline = build_timeline(
+        [_seg(0), _seg(30)], range_start=T0, range_end=T0 + timedelta(seconds=40)
+    )
+    assert build_playlist_m3u8(timeline).count("#EXT-X-DISCONTINUITY") == 1
+
+
 def test_playlist_does_not_mark_leading_or_trailing_gaps() -> None:
     segments = [_seg(10)]
     timeline = build_timeline(segments, range_start=T0, range_end=T0 + timedelta(seconds=40))

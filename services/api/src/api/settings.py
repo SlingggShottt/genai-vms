@@ -6,7 +6,8 @@ os.environ directly (docs/style_guide.md §A.1).
 
 from __future__ import annotations
 
-from pydantic import Field, field_validator
+from email_validator import EmailNotValidError, validate_email
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 from vms_common.config import (
     DatabaseSettings,
@@ -25,7 +26,7 @@ class AdminSeedSettings(VMSBaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="VMS_ADMIN_", env_file=".env", extra="ignore")
 
-    email: str = Field(default="admin@genai-vms.local")
+    email: str = Field(default="admin@genai-vms.dev")
     password: str = Field(default="")
 
     @field_validator("password")
@@ -40,6 +41,23 @@ class AdminSeedSettings(VMSBaseSettings):
                 "VMS_ADMIN_PASSWORD must be empty (skip seeding) or at least 8 characters."
             )
         return value
+
+    @model_validator(mode="after")
+    def _seeded_admin_email_must_be_able_to_log_in(self) -> AdminSeedSettings:
+        # POST /auth/login validates the email with `EmailStr`, which rejects
+        # reserved/special-use domains (.local, .test, .invalid, ...). Seeding
+        # such an address would create an admin nobody can ever log in as —
+        # and the 400 at login gives no hint why — so fail at startup instead.
+        # Only checked when seeding is enabled (a non-empty password).
+        if self.password:
+            try:
+                validate_email(self.email, check_deliverability=False)
+            except EmailNotValidError as exc:
+                raise ValueError(
+                    f"VMS_ADMIN_EMAIL {self.email!r} cannot be used to log in ({exc}). "
+                    "Use a normal domain, e.g. admin@genai-vms.dev."
+                ) from exc
+        return self
 
 
 class ApiSettings(VMSBaseSettings):

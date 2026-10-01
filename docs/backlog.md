@@ -300,6 +300,11 @@
       be discontinuous from, so gets no marker). Found and fixed a real bug here during testing: the first playlist
       implementation marked a trailing gap too; fixed with a deferred-marker approach (only emit
       `#EXT-X-DISCONTINUITY` once a segment is actually known to follow), now unit-tested for exactly that case.
+      Follow-up (first end-to-end demo run, 2026-10-01): marking only gaps was not enough. Ingestion's segmenter
+      writes each `.ts` with `-reset_timestamps 1`, so *every* segment boundary is a timestamp discontinuity;
+      without a marker hls.js placed a segment fetched after a seek past the buffered range at the wrong time and
+      the player ended early (duration collapsed to the buffered length). The playlist now emits
+      `#EXT-X-DISCONTINUITY` before every segment after the first (a gap plus a boundary still yields one marker).
 
       Role × endpoint matrix (`test_role_matrix.py`) extended to cover all four new endpoints (all roles read).
 

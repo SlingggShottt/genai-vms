@@ -10,6 +10,13 @@ const STATUS_DOT_CLASS = {
   offline: 'bg-text-muted',
 };
 
+// A WHEP exchange can succeed and still never deliver video — MediaMTX closes
+// the session of an H.264 stream with B-frames (WebRTC can't carry them), and
+// the browser reports the connection `failed` only ~15 s later. A healthy
+// session shows its first frame within a second, so give it this long, then
+// fall back to HLS (which handles B-frames).
+const FIRST_FRAME_TIMEOUT_MS = 5000;
+
 /** A single camera feed per docs/style_guide.md §B.7: black background,
  * 2px radius, camera name + status dot overlay top-left, wall-clock
  * bottom-left, no gradients over the video. Tries WebRTC (WHEP) first for
@@ -32,10 +39,20 @@ export function VideoTile({ camera, focused = false, onDoubleClick }) {
     let cancelled = false;
     let closeWhep = null;
     let hls = null;
+    let fellBack = false;
+    let frameTimer = null;
     const controller = new AbortController();
 
+    function onFirstFrame() {
+      clearTimeout(frameTimer);
+    }
+
     function startHlsFallback() {
-      if (cancelled) return;
+      if (cancelled || fellBack) return;
+      fellBack = true;
+      // A media element plays its `srcObject` in preference to `src`, which is
+      // what hls.js attaches — so the (dead) WebRTC MediaStream must go first.
+      videoEl.srcObject = null;
       if (Hls.isSupported()) {
         hls = new Hls();
         hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -54,15 +71,32 @@ export function VideoTile({ camera, focused = false, onDoubleClick }) {
       }
     }
 
+    // WebRTC negotiated but isn't usable (no frame in time, or the connection
+    // failed/closed on its own): release it and play HLS instead.
+    function dropWebrtcForHls() {
+      if (cancelled || fellBack) return;
+      clearTimeout(frameTimer);
+      videoEl.removeEventListener('loadeddata', onFirstFrame);
+      closeWhep?.();
+      closeWhep = null;
+      startHlsFallback();
+    }
+
     setPlaybackState('connecting');
-    connectWhep(videoEl, camera.code, { signal: controller.signal })
+    connectWhep(videoEl, camera.code, {
+      signal: controller.signal,
+      onConnectionLost: dropWebrtcForHls,
+    })
       .then((close) => {
-        if (cancelled) {
+        if (cancelled || fellBack) {
           close();
           return;
         }
         closeWhep = close;
         setPlaybackState('webrtc');
+        if (videoEl.readyState >= 2) return; // a frame is already showing
+        videoEl.addEventListener('loadeddata', onFirstFrame, { once: true });
+        frameTimer = setTimeout(dropWebrtcForHls, FIRST_FRAME_TIMEOUT_MS);
       })
       .catch(() => {
         startHlsFallback();
@@ -70,6 +104,8 @@ export function VideoTile({ camera, focused = false, onDoubleClick }) {
 
     return () => {
       cancelled = true;
+      clearTimeout(frameTimer);
+      videoEl.removeEventListener('loadeddata', onFirstFrame);
       controller.abort();
       closeWhep?.();
       hls?.destroy();
