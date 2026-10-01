@@ -2,7 +2,7 @@
 
 Local dev and demo stack. Profiles per `docs/design_architecture.md §12.1`.
 Available so far: `infra` (P1-D3), `tools` (camera simulator), `core`
-(ingestion, indexer) and `perception` (GPU). `genai`, `obs` and `lite` land
+(ingestion, indexer, events) and `perception` (GPU). `genai`, `obs` and `lite` land
 with the stories that build those services, and `docker-compose.prod.yml`
 (cloud VM) lands in P7-J2. The API is not a compose service yet — run it on
 the host (`uv run --package vms-api uvicorn api.main:app --port 8000`).

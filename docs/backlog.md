@@ -410,10 +410,33 @@
 ## Divyansh — 23 pts
 
 ### P3-D1 · Events service & core rules — 5 pts · Must · E07 · FR-EVT-01
-- [ ] Consumes `twinready.v1`, maintains per-camera sliding state (tracks, dwell, zone occupancy).
-- [ ] Rules: `intrusion.restricted`, `intrusion.after_hours`, `loitering`, `crowding` with thresholds from `config/rules.yaml` overridable per camera/zone.
-- [ ] Candidate debounce/extension logic; candidates persisted in `events.candidates` (migration included).
-- [ ] Unit tests with synthetic twin sequences for every rule (positive + negative).
+- [x] Consumes `twinready.v1`, maintains per-camera sliding state (tracks, dwell, zone occupancy).
+      `EventsConsumer` fetches the twin and runs the pure engine (`domain/engine.py`); the sliding state is a set of
+      per-(rule, zone, track) *episodes* (first/last seen, frames, tracks) — i.e. dwell and zone-occupancy runs —
+      checkpointed to Redis after the candidates are written, so a restart resumes a half-finished stay and a
+      redelivered twin is skipped. Verified on the real stack: container restart left all 175 candidates and the
+      open ones intact, 0 duplicate/split episodes, lag 0.
+- [x] Rules: `intrusion.restricted`, `intrusion.after_hours`, `loitering`, `crowding` with thresholds from `config/rules.yaml` overridable per camera/zone.
+      `@rule("<id>")` registry with a typed params model per rule; `config/rules.yaml` is validated at startup
+      (unknown rule/param, bad value or unscoped override stops the service). Overrides resolve rule < camera < zone <
+      camera+zone. Run for real on cam01 with demo zones: restricted-yard → `intrusion.restricted`, a scheduled zone →
+      `intrusion.after_hours`, plaza → `crowding` (peak 15 vs limit 8, 99 distinct tracks, 80 s, 8 segments) and,
+      with a scratch `dwell_s: 8` override, `loitering` incl. stays spanning two segments. **Not verified:** loitering
+      at its 60 s default (nobody lingers that long in the demo footage), more than one camera live, zones from the
+      API (the YAML fallback was used — the API isn't a Compose service yet). Semantics the design left open (decided
+      here, documented in `design_architecture.md §7.3` and the service README): a zone's schedule is its normal hours;
+      `intrusion.after_hours` also takes `min_frames` (default 2); thresholds are inclusive; unlisted rules stay on.
+- [x] Candidate debounce/extension logic; candidates persisted in `events.candidates` (migration included).
+      Migration `0004` (generated, then hand-fixed: the autogenerate draft would have dropped `alembic_version`).
+      Deterministic UUIDv5 ids (`camera|rule|zone|track|start_ts`) + a monotonic upsert (end/score only grow, ids
+      unioned, `closed` final) make replays no-ops: two independent live runs over the same twins produced the same 324
+      ids; integration tests (real Postgres) cover redelivery, crash between write and checkpoint, state loss, restart.
+- [x] Unit tests with synthetic twin sequences for every rule (positive + negative).
+      128 unit tests (`services/events/tests/unit`) over multi-segment synthetic sequences; a 15-variant mutation check
+      (break the engine/rules/config/id on purpose) found one hole — a gap longer than the debounce *inside* one
+      segment — which now has its own test. Plus 18 consumer/repository integration tests (Postgres via
+      testcontainers) and 5 + 1 for the model/migration in `libs/vms_db`.
+      Open: the VLM gate (P3-D4) and `events.events` / `event.v1` publication are not part of this story.
 
 ### P3-D2 · Advanced rules — 5 pts · Must · E07 · FR-EVT-01
 - [ ] `abandoned_object` (static bag + owner distance/time logic) and `running`.
