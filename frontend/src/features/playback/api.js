@@ -40,13 +40,28 @@ export function playlistUrl(cameraCode, startIso, endIso) {
   return apiUrl(`/recordings/${cameraCode}/playlist.m3u8?${params.toString()}`);
 }
 
-/** hls.js config fragment that attaches the bearer token to every request
- * it makes (the manifest; segment URIs are presigned S3 links and need no
- * auth of their own). Spread into `new Hls({ ...hlsAuthConfig() })`.
+/** True for an S3 presigned (SigV4 query-string) URL — the segment URIs in
+ * the generated playlist.
+ */
+export function isPresignedUrl(url) {
+  try {
+    return new URL(url, window.location.href).searchParams.has('X-Amz-Signature');
+  } catch {
+    return false;
+  }
+}
+
+/** hls.js config fragment that attaches the bearer token to the requests
+ * that need it (the manifest). Segment URIs are presigned S3 links that
+ * authenticate themselves, and S3/MinIO rejects a request carrying both a
+ * presigned signature and an `Authorization` header ("multiple
+ * authentication types", HTTP 400) — so those go out without one. Spread
+ * into `new Hls({ ...hlsAuthConfig() })`.
  */
 export function hlsAuthConfig() {
   return {
-    xhrSetup: (xhr) => {
+    xhrSetup: (xhr, url) => {
+      if (isPresignedUrl(url)) return;
       const token = getAccessToken();
       if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
     },
