@@ -1,6 +1,12 @@
 .DEFAULT_GOAL := help
 
 COMPOSE_FILE := deploy/compose/docker-compose.yml
+# Compose reads `.env` from the directory of the compose file (deploy/compose/),
+# not the repo root — so the root `.env` that .env.example tells you to create
+# would be silently ignored ("required variable POSTGRES_PASSWORD is missing").
+# Pass it explicitly.
+ENV_FILE ?= .env
+COMPOSE := docker compose --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
 PROFILE ?=
 SVC ?=
 
@@ -19,11 +25,13 @@ setup: ## Install Python + Node dependencies and pre-commit hooks
 up: ## Start docker compose profiles, e.g. make up PROFILE=infra,core
 	@if [ -z "$(PROFILE)" ]; then echo "usage: make up PROFILE=infra[,core,perception,genai,tools,obs,lite]"; exit 1; fi
 	@if [ ! -f $(COMPOSE_FILE) ]; then echo "$(COMPOSE_FILE) not created yet (lands in P1-D3)"; exit 1; fi
-	COMPOSE_PROFILES=$(PROFILE) docker compose -f $(COMPOSE_FILE) up -d
+	@if [ ! -f $(ENV_FILE) ]; then echo "$(ENV_FILE) not found — run: cp .env.example .env, then fill in the secrets"; exit 1; fi
+	COMPOSE_PROFILES=$(PROFILE) $(COMPOSE) up -d
 
 down: ## Stop and remove docker compose services
 	@if [ ! -f $(COMPOSE_FILE) ]; then echo "$(COMPOSE_FILE) not created yet (lands in P1-D3)"; exit 1; fi
-	docker compose -f $(COMPOSE_FILE) down
+	@if [ ! -f $(ENV_FILE) ]; then echo "$(ENV_FILE) not found — run: cp .env.example .env, then fill in the secrets"; exit 1; fi
+	$(COMPOSE) down
 
 migrate: ## Apply DB migrations (alembic upgrade head) — needs VMS_DB_DSN reachable
 	uv run --package vms-db alembic -c libs/vms_db/alembic.ini upgrade head

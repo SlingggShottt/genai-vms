@@ -6,7 +6,13 @@
 set -euo pipefail
 
 COMPOSE_FILE="$(dirname "$0")/../docker-compose.yml"
-EXEC=(docker compose -f "$COMPOSE_FILE" exec -T kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092)
+# Compose reads `.env` from the compose file's directory, not the repo root, and
+# even `exec` must interpolate the file's required variables — so pass the repo
+# root `.env` (what .env.example tells you to create) explicitly.
+ENV_FILE="${ENV_FILE:-$(dirname "$0")/../../../.env}"
+ENV_ARGS=()
+if [ -f "$ENV_FILE" ]; then ENV_ARGS=(--env-file "$ENV_FILE"); fi
+EXEC=(docker compose ${ENV_ARGS[@]+"${ENV_ARGS[@]}"} -f "$COMPOSE_FILE" exec -T kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092)
 
 create_topic() {
   local name="$1" partitions="$2" retention_ms="$3"
