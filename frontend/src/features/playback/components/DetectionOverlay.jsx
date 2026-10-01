@@ -172,10 +172,14 @@ export function DetectionOverlay({ videoRef, fragmentsRef, frames, enabled, onSe
       // when overlays are on — the canvas would otherwise sit on top and
       // swallow play/pause/seek/volume clicks. When overlays are off the
       // canvas is fully click-through.
+      //
+      // Explicit w/h, not just `inset-*`: <canvas> is a replaced element, so
+      // `left/right/top/bottom` alone don't stretch it — it would stay at its
+      // intrinsic 300x150 and every box would be drawn into that corner.
       className={
         enabled
-          ? 'absolute inset-x-0 top-0 bottom-10 cursor-pointer'
-          : 'absolute inset-0 pointer-events-none'
+          ? 'absolute inset-x-0 top-0 h-[calc(100%-2.5rem)] w-full cursor-pointer'
+          : 'absolute inset-0 h-full w-full pointer-events-none'
       }
       aria-hidden="true"
     />
