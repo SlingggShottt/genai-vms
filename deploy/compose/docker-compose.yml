@@ -117,6 +117,13 @@ services:
       - "6334:6334" # gRPC
     volumes:
       - qdrant_data:/qdrant/storage
+    # Docker 29 / containerd 2.x start containers with a 1024 soft nofile limit;
+    # Qdrant exhausts it after a few dozen segments ("Too many open files",
+    # HTTP stops accepting, upserts time out). Qdrant's docs recommend 65535.
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/6333' || exit 1"]
       interval: 10s
