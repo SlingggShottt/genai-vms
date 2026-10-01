@@ -1,18 +1,27 @@
 # Compose deployment
 
 Local dev and demo stack. Profiles per `docs/design_architecture.md §12.1`.
-Only `infra` exists so far (P1-D3); `core`, `perception`, `genai`, `tools`,
-`obs`, `lite` land with the stories that build those services, and
-`docker-compose.prod.yml` (cloud VM) lands in P7-J2.
+Available so far: `infra` (P1-D3), `tools` (camera simulator), `core`
+(ingestion, indexer) and `perception` (GPU). `genai`, `obs` and `lite` land
+with the stories that build those services, and `docker-compose.prod.yml`
+(cloud VM) lands in P7-J2. The API is not a compose service yet — run it on
+the host (`uv run --package vms-api uvicorn api.main:app --port 8000`).
 
 ## Run
 
 ```bash
 cp ../../.env.example ../../.env   # fill in secrets first — see .env.example
 make up PROFILE=infra              # from the repo root
-make topics                        # create the vms.* Kafka topics
+make migrate && make topics && make qdrant-collections
 make down
 ```
+
+Use `make` rather than calling `docker compose` by hand: Compose reads `.env`
+from this directory, not the repo root, so `make` passes the root `.env`
+explicitly (`--env-file`). Without it you get "required variable
+POSTGRES_PASSWORD is missing a value". Calling Compose directly:
+`docker compose --env-file .env -f deploy/compose/docker-compose.yml …` from
+the repo root.
 
 | Service | URL |
 |---|---|
@@ -21,18 +30,60 @@ make down
 | Postgres | `localhost:5432` |
 | Qdrant | http://localhost:6333/dashboard |
 | Redis | `localhost:6379` |
-| MinIO API / console | http://localhost:9000 / http://localhost:9001 |
+| MinIO API | http://localhost:9000 (S3 only — see the note below on the console) |
 | MediaMTX RTSP / HLS / WebRTC | `rtsp://localhost:8554/<path>` / http://localhost:8888 / http://localhost:8889 |
 
 ## Troubleshooting
 
-**MediaMTX shows "unhealthy" but streams work fine.** The healthcheck in
-`docker-compose.yml` calls `wget` inside the `bluenviron/mediamtx` image,
-which may ship without a shell/wget (unverified — this repo's dev
-environment had no Docker daemon available when P1-D3 was written). If
-`docker compose ps` shows it permanently unhealthy despite RTSP/HLS/WebRTC
-actually working, replace that service's `healthcheck:` block with
-`disable: true` and note it in this file.
+**MediaMTX "unhealthy", or `dependency failed to start: container
+vms-mediamtx is unhealthy`.** Plain `bluenviron/mediamtx:latest` is a scratch
+image with no shell and no `wget`, so a compose healthcheck can never pass —
+and `ingestion` / `camera-sim` wait for MediaMTX to be healthy, so they refuse
+to start. `docker-compose.yml` therefore uses the Alpine-based
+`bluenviron/mediamtx:latest-ffmpeg` (same MediaMTX version, ships `wget`);
+verified healthy. If you ever switch back to the plain image, also change
+those `depends_on` conditions.
+
+**No MinIO web console on :9001.** The pinned `bitnamilegacy/minio:latest` is
+a `DEVELOPMENT.2025-05-24` build that serves no console (verified: only
+`:9000` listens inside the container, and the binary has no WebUI code — it
+looks like MinIO dropped the console from its community builds in 2025). Port
+9001 is mapped but nothing answers. Inspect storage with the bundled client:
+
+```bash
+docker exec vms-minio mc ls local/                          # buckets
+docker exec vms-minio mc ls local/vms-segments/cam01/       # objects
+docker exec vms-minio mc du local/vms-keyframes             # size, object count
+```
+
+**Qdrant: "Too many open files (os error 24)", HTTP stops answering, indexer
+messages dead-lettered.** Docker 29 / containerd 2.x start containers with a
+1024 soft `nofile` limit, which Qdrant exhausts after a few dozen indexed
+segments (the container still reports healthy). The `qdrant` service sets
+`ulimits.nofile` to 65535. Segments that were dead-lettered meanwhile can be
+re-indexed by stopping the indexer, waiting until its consumer group is
+inactive (Kafka refuses the reset while the stopped member is still counted —
+it can take a minute or two), then rewinding it
+(`kafka-consumer-groups.sh --bootstrap-server localhost:9092 --group indexer
+--topic vms.twin.v1 --reset-offsets --to-earliest --execute`, run inside the
+`vms-kafka` container) and starting it again — the indexer is idempotent. Give
+any other service the same `ulimits:` block if it shows this on a long run.
+
+**No `nvidia` runtime in Docker** (`--gpus all` fails with `could not select
+device driver "nvidia"`). Confirmed missing on a native-Ubuntu dev laptop
+without the NVIDIA Container Toolkit — host driver and `nvidia-smi` fine,
+`docker info` lists only `runc` — which blocks the `perception` profile. (The
+exact error text wasn't captured there; it's the standard message for this
+state.) Either install the toolkit
+(https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html,
+then `sudo nvidia-ctk runtime configure --runtime=docker` and restart Docker),
+or run perception on the host instead — verified working with the repo's
+CUDA PyTorch, with everything else in Compose:
+
+```bash
+make up PROFILE=infra,core,tools   # then, in another terminal:
+uv run --package vms-perception python -m perception.main
+```
 
 **`nvidia-smi` inside a container** (needed before running the `perception`
 profile in later phases — P2 onward):

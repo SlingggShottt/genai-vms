@@ -117,6 +117,13 @@ services:
       - "6334:6334" # gRPC
     volumes:
       - qdrant_data:/qdrant/storage
+    # Docker 29 / containerd 2.x start containers with a 1024 soft nofile limit;
+    # Qdrant exhausts it after a few dozen segments ("Too many open files",
+    # HTTP stops accepting, upserts time out). Qdrant's docs recommend 65535.
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/6333' || exit 1"]
       interval: 10s
@@ -178,7 +185,12 @@ services:
       start_period: 10s
 
   mediamtx:
-    image: bluenviron/mediamtx:latest
+    # `-ffmpeg` is the Alpine-based variant (same MediaMTX version as `latest`)
+    # and ships /bin/sh + wget. Plain `latest` is a scratch image with neither,
+    # so the exec healthcheck below could never pass: the container sat
+    # "unhealthy" forever and everything gating on `service_healthy`
+    # (ingestion, camera-sim) refused to start.
+    image: bluenviron/mediamtx:latest-ffmpeg
     profiles: [infra]
     container_name: vms-mediamtx
     networks: [vms-net]
@@ -192,12 +204,10 @@ services:
       - ./mediamtx.yml:/mediamtx.yml:ro
       - mediamtx_recordings:/recordings
     healthcheck:
-      # Compose healthchecks always exec *inside* the container, and
-      # bluenviron/mediamtx may be a scratch image with no shell/wget —
-      # unverified here (no Docker daemon in this environment, see
-      # README troubleshooting). If `docker compose up` reports this
-      # container "unhealthy" forever despite MediaMTX actually working,
-      # replace this with `disable: true`.
+      # Compose healthchecks always exec *inside* the container, so the image
+      # needs wget (see the image comment above). Localhost callers may use
+      # MediaMTX's control API without credentials; the published :9997 from
+      # the host does require them.
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:9997/v3/config/global/get"]
       interval: 10s
       timeout: 5s

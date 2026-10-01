@@ -71,17 +71,27 @@ Rationale and alternatives: [`docs/techstack.md`](docs/techstack.md).
 
 ```bash
 git clone <repo-url> genai-vms && cd genai-vms
-cp .env.example .env                    # set admin password; cloud API keys are optional
+cp .env.example .env                    # set VMS_ADMIN_PASSWORD (8+ chars) and the other secrets; cloud API keys are optional
 make setup                              # python + node deps, pre-commit hooks
 
-make up PROFILE=infra                   # Kafka, Postgres, Qdrant, Redis, object storage, MediaMTX
-make migrate && make topics             # database schema + Kafka topics
+make up PROFILE=infra                   # Kafka, Postgres, Qdrant, Redis, MinIO, MediaMTX
+make migrate && make topics && make qdrant-collections   # schema, Kafka topics, vector collections
 
-make up PROFILE=infra,core,perception   # api, ingestion, indexer, correlation, perception
-make sim                                # replay dataset videos as live RTSP cameras
+cp config/cameras.example.yaml config/cameras.yaml
+cp config/camera_sim.example.yaml config/camera_sim.yaml  # point `file:` at your video (see the notes below)
+
+make up PROFILE=infra,core,perception,tools   # ingestion, indexer, perception (GPU), camera simulator
+uv run --package vms-api uvicorn api.main:app --port 8000  # the API runs on the host for now (not a compose service yet)
 
 cd frontend && npm run dev              # dashboard on http://localhost:5173
 ```
+
+Notes from running this end to end (4 GB RTX 3050 laptop, Ubuntu, Docker 29):
+
+- The simulator's video must be H.264 **without B-frames**, or the live-wall tile stays black (WebRTC cannot carry them). How to check and re-encode a clip: [`tools/camera_sim/README.md`](tools/camera_sim/README.md).
+- Compose's `perception` service needs the NVIDIA Container Toolkit. Without it, start `PROFILE=infra,core,tools` and run perception on the host instead: `uv run --package vms-perception python -m perception.main`. Details in [`deploy/compose/README.md`](deploy/compose/README.md).
+- The live wall and playback match cameras by **code**: in Settings → Cameras, register a camera whose code equals its RTSP path (e.g. `cam01` for `rtsp://mediamtx:8554/cam01`).
+- Log in with `VMS_ADMIN_EMAIL` / `VMS_ADMIN_PASSWORD` from your `.env`.
 
 Enable GenAI features (events verification, search reasoning, incident reports, assistant):
 
