@@ -439,9 +439,31 @@
       Open: the VLM gate (P3-D4) and `events.events` / `event.v1` publication are not part of this story.
 
 ### P3-D2 · Advanced rules — 5 pts · Must · E07 · FR-EVT-01
-- [ ] `abandoned_object` (static bag + owner distance/time logic) and `running`.
-- [ ] Rules pluggable via a registry (`@rule("id")`), each with a JSON-schema for its params.
+- [x] `abandoned_object` (static bag + owner distance/time logic) and `running`.
+      Both are camera-wide rules (new `CameraRule` kind: no zones needed, NULL zone on the candidate, a
+      JSON `memory` scratchpad saved with the camera state so a restart mid-wait loses nothing; `Hit.since`
+      lets `abandoned_object` date its candidate from when the owner walked away). Defaults per design §7.3
+      (T 30 s, r 0.08, T2 20 s; S 0.35/s, k 3); `static_epsilon` defaults to 0.03 (the design names ε but gives no
+      value). 74 new unit tests (35 `abandoned_object`, 15 `running`, 23 schema, 1 registry), 4 integration
+      tests through the real consumer + Postgres; a 32-variant mutation check over the whole engine found two
+      holes in the new code (a bag lost across a gap with no frames at all; frames with nothing detected), both now
+      tested. Verified on the real stack: the live container (design defaults) raised **no** `running` or
+      `abandoned_object` candidate from the busy-street demo footage (fastest walker 0.175/s vs the 0.35 limit;
+      nothing static and unattended) — the right answer; with deliberately relaxed thresholds in an isolated scratch
+      run they fired (175 abandoned, 341 running, all NULL-zone), which is plumbing evidence, not accuracy evidence.
+      The state saved by the P3-D1 build (no `memory` field) loaded into the new build without complaint.
+- [x] Rules pluggable via a registry (`@rule("id")`), each with a JSON-schema for its params.
+      The registry came with P3-D1; each `Params` model now yields a JSON Schema (`rule_param_schemas()`), and
+      `config/rules.schema.json` — generated from the registry by `python -m events.schema_export`, kept honest by
+      a drift test, validated with the real `jsonschema` library against the shipped `rules.yaml` and against the 12
+      mistakes the loader rejects — lets editors validate/autocomplete `rules.yaml` (added `jsonschema` as a dev dep).
 - [ ] Precision/recall quick check on 20 labelled ShanghaiTech/MEVA clips recorded in results.
+      **Not done.** Neither dataset is on this machine (`ml/datasets/` holds only the download scripts) and there are
+      no labelled clips, so any number reported here would be invented. It needs: the clips downloaded
+      (`ml/datasets/download/`), a ground-truth label per clip for running / abandoned object, perception run over
+      them to produce twins, then a harness in `ml/evaluation/` that replays the twins through
+      `events.domain.engine.process_twin` with the rule configuration under test and scores candidates against the
+      labels. The engine is pure and deterministic, so the replay half is straightforward once the data exists.
 
 ### P3-D3 · LLM gateway & model registry — 5 pts · Must · E09 · FR-CFG-01…03
 - [ ] `LLMGateway.chat` / `.vision` over LiteLLM for ollama, gemini, groq, openrouter; `response_model` validation + retry; fallbacks; timeouts.
