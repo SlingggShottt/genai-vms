@@ -83,8 +83,8 @@
 ### 5.1 Local (Ollama / transformers)
 | Task | Model | Quantization | Est. VRAM | Verify |
 |---|---|---|---|---|
-| Event verification, JIT VQA | Qwen2.5-VL-3B-Instruct (`qwen2.5vl:3b`) | Q4_K_M | ~3.2–3.6 GB with ≤ 4 small images | Ollama tag; consider newer small Qwen-VL releases if they fit better |
-| Query decomposition, rerank, synthesis, assistant | Qwen2.5-3B-Instruct (`qwen2.5:3b`) | Q4_K_M | ~2.2 GB | Tool-calling support in Ollama |
+| Event verification, JIT VQA | Qwen2.5-VL-3B-Instruct (`qwen2.5vl:3b`) | Q4_K_M | ~3.2 GB total, but only ~53 % of the model fits on a 4 GB GPU, the rest runs on the CPU (measured, P3-D3) | Tag verified 2026-10-01 (Ollama 0.35). ≈ 1,050 prompt tokens per image whatever its pixel size, so `num_ctx` ≥ 6144 for 4 images; see the benchmark note |
+| Query decomposition, rerank, synthesis, assistant | Qwen2.5-3B-Instruct (`qwen2.5:3b`) | Q4_K_M | ~2.4 GB (2,402 MiB), 100 % on GPU (measured) | Tag verified 2026-10-01. Tool-calling support in Ollama |
 | Phase grounding (TG) & phase captioning/VQA (PhaVR) | Qwen2.5-VL-3B-Instruct + 2 LoRA adapters | bitsandbytes NF4 | ~2.8–3.4 GB | transformers/PEFT versions matching training |
 
 Local 3B text models are adequate for development and schema-constrained tasks, but weak at long-context reranking and multi-step tool use; the `hybrid` profile exists for demo quality. Evaluation reports both profiles.
@@ -93,7 +93,7 @@ Local 3B text models are adequate for development and schema-constrained tasks, 
 | Provider | Use | Why | Verify |
 |---|---|---|---|
 | Google Gemini API (Flash) | Hybrid/cloud reasoning; cloud vision | Multimodal, generous free tier | Current free models + rate limits; data-use terms of free tier |
-| Groq | Fast text fallback; evaluation judge (Llama 3.3 70B) | Very low latency; different model family from generator | Model ids + limits |
+| Groq | Fast text fallback; evaluation judge (`openai/gpt-oss-120b`) | Very low latency; different model family from generator | Model ids + limits. `llama-3.3-70b-versatile`, the original pick, is listed as deprecated from 2026-08-16 in LiteLLM's catalogue (not confirmed against the live API — no key at P3-D3 time) |
 | OpenRouter (`:free` models) | Extra fallback | Many free models | Availability changes frequently |
 
 **Do not** train on outputs from proprietary APIs without checking their terms. Pseudo-labels for training come from open models.
