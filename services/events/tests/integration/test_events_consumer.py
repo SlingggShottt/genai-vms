@@ -255,3 +255,93 @@ async def test_each_camera_is_evaluated_with_its_own_state(session_factory, make
     rows = await _candidates(session_factory)
     assert sorted(r.camera_id for r in rows) == ["cam01", "cam02"]
     assert {(await store.load(c)).camera_id for c in ("cam01", "cam02")} == {"cam01", "cam02"}
+
+
+# --- camera-wide rules (P3-D2): no zones, a back-dated start, a scratchpad in the state ---------
+
+
+def _bag_and_owner(make, seconds: float, owner_leaves_at: float) -> list[tuple[float, list]]:
+    """A backpack at rest in the middle of the frame; its owner stands beside it, then walks off."""
+    specs = []
+    for i in range(round(seconds * 2) + 1):
+        t = i / 2
+        owner_at = (0.52, 0.5) if t < owner_leaves_at else (0.9, 0.5)
+        specs.append(
+            (
+                t,
+                [
+                    make.obj("cam01-t50", "backpack", zones=(), center=(0.5, 0.5)),
+                    make.obj("cam01-t1", "person", zones=(), center=owner_at),
+                ],
+            )
+        )
+    return specs
+
+
+@pytest.mark.asyncio
+async def test_an_abandoned_bag_becomes_a_candidate_with_no_zone(session_factory, make) -> None:
+    s3, store = FakeS3(), MemoryStateStore()
+    consumer = _consumer(session_factory, s3, store, [], make)  # no zones configured at all
+    twins = make.twins(_bag_and_owner(make, 45, owner_leaves_at=10), total_s=70)
+
+    await _deliver(consumer, s3, twins)
+
+    rows = [r for r in await _candidates(session_factory) if r.rule_id == "abandoned_object"]
+    (row,) = rows
+    assert (row.event_type, row.severity) == ("abandoned_object", "high")
+    assert (row.zone_id, row.zone_name) == (None, None)  # NULL columns round-trip
+    assert row.track_ids == ["cam01-t50"]
+    assert row.start_ts == make.T0 + timedelta(seconds=10)  # back-dated to when the owner left
+    assert row.end_ts == make.T0 + timedelta(seconds=45)
+    assert row.status == "closed"
+    assert row.details["peak_unattended_s"] >= 20
+
+
+@pytest.mark.asyncio
+async def test_a_restart_mid_wait_keeps_the_bags_clock_through_the_saved_state(
+    session_factory, make
+) -> None:
+    s3, store = FakeS3(), MemoryStateStore()  # the store outlives the consumer, like Redis
+    twins = make.twins(_bag_and_owner(make, 75, owner_leaves_at=10), total_s=100)
+
+    await _deliver(_consumer(session_factory, s3, store, [], make), s3, twins[:2])  # 20 s in
+    saved = await store.load("cam01")
+    assert saved is not None and "abandoned_object" in saved.memory  # the scratchpad was saved
+    assert await _count(session_factory) == 0
+
+    await _deliver(_consumer(session_factory, s3, store, [], make), s3, twins[2:])  # "restart"
+
+    (row,) = [r for r in await _candidates(session_factory) if r.rule_id == "abandoned_object"]
+    assert row.start_ts == make.T0 + timedelta(seconds=10)  # not 20: the restart didn't reset it
+
+
+@pytest.mark.asyncio
+async def test_running_needs_no_zones_and_is_stored_without_one(session_factory, make) -> None:
+    s3, store = FakeS3(), MemoryStateStore()
+    consumer = _consumer(session_factory, s3, store, [], make)
+    runner = [make.obj("cam01-t9", zones=(), speed=0.6)]
+    twins = make.twins(make.frames(3, runner), total_s=30)
+
+    await _deliver(consumer, s3, twins)
+
+    (row,) = [r for r in await _candidates(session_factory) if r.rule_id == "running"]
+    assert (row.event_type, row.severity) == ("running", "low")
+    assert (row.zone_id, row.zone_name) == (None, None)
+    assert row.details["peak_speed"] == 0.6
+
+
+@pytest.mark.asyncio
+async def test_replaying_camera_wide_candidates_does_not_duplicate_them(
+    session_factory, make
+) -> None:
+    s3 = FakeS3()
+    twins = make.twins(_bag_and_owner(make, 45, owner_leaves_at=10), total_s=70)
+    await _deliver(_consumer(session_factory, s3, MemoryStateStore(), [], make), s3, twins)
+    before = {r.id: (r.start_ts, r.end_ts, r.status) for r in await _candidates(session_factory)}
+
+    # everything replays from nothing, e.g. Redis flushed and the consumer group reset
+    await _deliver(_consumer(session_factory, s3, MemoryStateStore(), [], make), s3, twins)
+
+    assert {
+        r.id: (r.start_ts, r.end_ts, r.status) for r in await _candidates(session_factory)
+    } == before

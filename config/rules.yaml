@@ -4,8 +4,11 @@
 # an unknown rule id, an unknown param name or an out-of-range value stops the
 # service with a clear error instead of being ignored.
 #
-# Each rule works on the *zones* defined for a camera (zone names as they
-# appear in the digital twin): a camera with no zones raises no candidates.
+# The zone rules (intrusion.*, loitering, crowding) work on the *zones* defined
+# for a camera (zone names as they appear in the digital twin): a camera with no
+# zones raises no candidates from them. The camera-wide rules (abandoned_object,
+# running) look at the whole view, need no zones, and can only be overridden per
+# camera, not per zone.
 #
 # Common to every rule
 #   enabled     false switches the rule off (default true; a rule left out of
@@ -27,6 +30,15 @@
 #       the same track in a zone for at least dwell_s.
 #   crowding               max_persons, duration_s, categories, zone_types
 #       strictly more than max_persons people in a zone for at least duration_s.
+#   abandoned_object       static_s, unattended_s, owner_radius, static_epsilon,
+#                          categories, owner_categories          (camera-wide)
+#       a bag-like object that stayed within static_epsilon of where it came to
+#       rest for static_s while no person was within owner_radius for
+#       unattended_s. Distances are fractions of the frame. The candidate starts
+#       when the object became unattended.
+#   running                speed, min_samples, categories         (camera-wide)
+#       a person faster than `speed` (frame fractions per second, as measured by
+#       perception) in at least min_samples samples.
 
 version: 1
 
@@ -70,8 +82,31 @@ rules:
       categories: [person]
       zone_types: [generic, restricted, entrance, exit]
 
+  abandoned_object:
+    enabled: true
+    severity: high
+    verify: true
+    params:
+      static_s: 30
+      unattended_s: 20
+      owner_radius: 0.08
+      static_epsilon: 0.03
+      debounce_s: 5
+      categories: [backpack, handbag, suitcase]
+      owner_categories: [person]
+
+  running:
+    enabled: true
+    severity: low
+    verify: true
+    params:
+      speed: 0.35
+      min_samples: 3
+      debounce_s: 2
+      categories: [person]
+
 # Per-camera / per-zone overrides. Each entry names a rule and a `camera`
-# (camera code, e.g. cam02) and/or a `zone` (zone name) and may set `enabled`,
+# (camera code, e.g. cam02) and/or a `zone` (zone name; zone rules only) and may set `enabled`,
 # `severity`, `verify` and any of that rule's `params`. More specific entries
 # win: rule+camera, then rule+zone, then rule+camera+zone (later entries win a
 # tie). Examples:

@@ -14,7 +14,7 @@ from vms_common.contracts.twin import FrameObject
 from vms_common.contracts.zones import ZoneInternal
 from vms_common.logging import get_logger
 
-from events.domain.rules.base import FrameContext, Hit, Rule, RuleParams, Severity, rule
+from events.domain.rules.base import FrameContext, Hit, RuleParams, Severity, ZoneRule, rule
 from events.domain.schedule import is_within_schedule
 
 log = get_logger(__name__)
@@ -31,7 +31,7 @@ class IntrusionAfterHoursParams(RuleParams):
 
 
 @rule("intrusion.after_hours")
-class IntrusionAfterHours(Rule):
+class IntrusionAfterHours(ZoneRule):
     event_type = "intrusion"
     default_severity: Severity = "high"
     Params = IntrusionAfterHoursParams

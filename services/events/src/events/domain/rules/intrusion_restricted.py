@@ -13,9 +13,9 @@ from events.domain.rules.base import (
     VEHICLE_CATEGORIES,
     FrameContext,
     Hit,
-    Rule,
     RuleParams,
     Severity,
+    ZoneRule,
     rule,
 )
 
@@ -31,7 +31,7 @@ class IntrusionRestrictedParams(RuleParams):
 
 
 @rule("intrusion.restricted")
-class IntrusionRestricted(Rule):
+class IntrusionRestricted(ZoneRule):
     event_type = "intrusion"
     default_severity: Severity = "high"
     Params = IntrusionRestrictedParams

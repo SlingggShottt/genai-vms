@@ -28,7 +28,7 @@ class Episode(BaseModel):
     event_type: str
     severity: str
     zone_id: str | None
-    zone_name: str
+    zone_name: str | None = Field(description="None for a camera-wide rule's episode")
     hit_key: str = Field(description="track id for per-track rules, '*' for zone-wide ones")
 
     first_ts: AwareDatetime
@@ -61,3 +61,7 @@ class CameraState(BaseModel):
         description="End of the last twin applied; older/equal twins are replays and are skipped.",
     )
     episodes: dict[str, Episode] = Field(default_factory=dict)
+    memory: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Per-rule scratchpad of camera-wide rules (rule id -> their own JSON data)",
+    )

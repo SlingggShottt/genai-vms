@@ -4,9 +4,18 @@ from __future__ import annotations
 
 import pytest
 from events.domain.rules import base, get_rule, registered_rules
-from events.domain.rules.base import Rule, RuleParams, rule
+from events.domain.rules.base import CameraRule, RuleParams, ZoneRule, rule
 
-BUILT_IN = {"intrusion.restricted", "intrusion.after_hours", "loitering", "crowding"}
+BUILT_IN = {
+    "intrusion.restricted",
+    "intrusion.after_hours",
+    "loitering",
+    "crowding",
+    "abandoned_object",
+    "running",
+}
+ZONE_RULES = {"intrusion.restricted", "intrusion.after_hours", "loitering", "crowding"}
+CAMERA_RULES = {"abandoned_object", "running"}
 
 
 def test_every_built_in_rule_is_registered_under_its_id() -> None:
@@ -18,6 +27,15 @@ def test_every_built_in_rule_is_registered_under_its_id() -> None:
         assert instance.event_type
         assert instance.default_severity in {"low", "medium", "high", "critical"}
         assert issubclass(instance.Params, RuleParams)
+
+
+def test_rules_declare_whether_they_look_at_a_zone_or_the_whole_camera() -> None:
+    rules = registered_rules()
+
+    assert {rid for rid, r in rules.items() if r.scope == "zone"} == ZONE_RULES
+    assert {rid for rid, r in rules.items() if r.scope == "camera"} == CAMERA_RULES
+    assert all(isinstance(rules[rid], ZoneRule) for rid in ZONE_RULES)
+    assert all(isinstance(rules[rid], CameraRule) for rid in CAMERA_RULES)
 
 
 def test_get_rule_returns_the_registered_instance() -> None:
@@ -33,7 +51,7 @@ def test_registering_a_duplicate_id_is_refused() -> None:
     with pytest.raises(ValueError, match="already registered"):
 
         @rule("loitering")
-        class Impostor(Rule):  # pragma: no cover - never instantiated
+        class Impostor(ZoneRule):  # pragma: no cover - never instantiated
             event_type = "loitering"
             default_severity = "low"
             Params = RuleParams
@@ -46,7 +64,7 @@ def test_a_new_rule_can_be_added_with_the_decorator(monkeypatch: pytest.MonkeyPa
     monkeypatch.setattr(base, "_REGISTRY", dict(base._REGISTRY))  # isolate from other tests
 
     @rule("test.always")
-    class Always(Rule):
+    class Always(ZoneRule):
         event_type = "test"
         default_severity = "low"
         Params = RuleParams

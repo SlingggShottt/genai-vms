@@ -19,9 +19,9 @@ from events.domain.rules.base import (
     ALL_ZONE_TYPES,
     FrameContext,
     Hit,
-    Rule,
     RuleParams,
     Severity,
+    ZoneRule,
     ZoneType,
     rule,
 )
@@ -39,7 +39,7 @@ class LoiteringParams(RuleParams):
 
 
 @rule("loitering")
-class Loitering(Rule):
+class Loitering(ZoneRule):
     event_type = "loitering"
     default_severity: Severity = "medium"
     Params = LoiteringParams
