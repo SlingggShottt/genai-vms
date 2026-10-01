@@ -20,8 +20,11 @@ uv run --package vms-api uvicorn api.main:app --reload --port 8000
 `GET /health` (liveness), `GET /ready` (checks Postgres), `GET /metrics`.
 
 Set `VMS_ADMIN_PASSWORD` (and optionally `VMS_ADMIN_EMAIL`) before first
-start to seed the admin account; leave it empty to skip seeding.
-`VMS_JWT_SECRET` and `VMS_API_SERVICE_TOKEN` must both be set to real values
+start to seed the admin account; leave it empty to skip seeding. The
+password must be at least 8 characters, and the email must be a normal
+address: `POST /auth/login` rejects reserved domains (`.local`, `.test`,
+`.invalid`, …) as invalid, so startup refuses to seed one rather than create
+an admin nobody can log in as. `VMS_JWT_SECRET` and `VMS_API_SERVICE_TOKEN` must both be set to real values
 — empty rejects everything rather than accepting anything (see
 `vms_common.auth` and `api.api.security.require_service_token`).
 
