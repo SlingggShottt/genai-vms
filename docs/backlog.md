@@ -82,10 +82,21 @@
 - [x] Healthchecks on every container; `.env.example` documented.
       Two healthchecks (mediamtx, qdrant) are best-effort guesses at what's in the pulled image — unverified, see
       `deploy/compose/README.md` Troubleshooting.
+      Update 2026-10-01 (first real run): the mediamtx guess was wrong — `bluenviron/mediamtx:latest` is a scratch
+      image with no `wget`, so it was "unhealthy" forever and blocked `ingestion`/`camera-sim` (`depends_on:
+      service_healthy`); switched to the `-ffmpeg` variant (same version), now healthy and gating works. The qdrant
+      check passes but cannot see file-descriptor exhaustion (container "healthy" while HTTP was dead) — fixed with
+      `ulimits.nofile`, not by a better probe.
 - [x] Topic bootstrap script creates topics from `design_architecture.md §5.2`.
 - [ ] `nvidia-smi` works inside a test GPU container on both laptops (documented in README troubleshooting).
       **Doc written** (`deploy/compose/README.md`); **not run on real hardware** — needs Divyansh and Jatin to each
       confirm on their own laptop and update the note with what worked.
+      Update 2026-10-01 (Divyansh's laptop: RTX 3050 4 GB, driver 595.91, Ubuntu, Docker 29): host `nvidia-smi` works
+      but Docker has no `nvidia` runtime (NVIDIA Container Toolkit not installed; `docker info` lists only `runc`),
+      so the GPU container check is expected to fail and the Compose `perception` profile can't start there. Still
+      open: install the toolkit and re-run. Verified fallback meanwhile: perception on the host with the repo's CUDA
+      PyTorch (`uv run --package vms-perception python -m perception.main`; VRAM ~0.85 GiB after model load, up to
+      ~1.4 GiB observed while processing; kept up with one 1080p camera in real time) with everything else in Compose.
 
 ### P1-D4 · Camera simulator — 3 pts · Must · E02 · FR-ING-06
 - [x] `tools/camera_sim` reads a YAML (camera id → video file, start offset) and publishes looping RTSP streams to MediaMTX at real-time rate.
