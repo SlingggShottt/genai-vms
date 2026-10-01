@@ -19,9 +19,9 @@ from events.domain.rules.base import (
     ALL_ZONE_TYPES,
     FrameContext,
     Hit,
-    Rule,
     RuleParams,
     Severity,
+    ZoneRule,
     ZoneType,
     rule,
 )
@@ -38,7 +38,7 @@ class CrowdingParams(RuleParams):
 
 
 @rule("crowding")
-class Crowding(Rule):
+class Crowding(ZoneRule):
     event_type = "crowding"
     default_severity: Severity = "medium"
     Params = CrowdingParams

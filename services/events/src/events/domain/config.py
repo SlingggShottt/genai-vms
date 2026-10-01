@@ -90,7 +90,11 @@ class RulesConfig(BaseModel):
         for rule_id in self.rules:
             get_rule(rule_id)  # ValueError (-> ValidationError) naming the known rules
         for override in self.overrides:
-            get_rule(override.rule)
+            if override.zone is not None and get_rule(override.rule).scope == "camera":
+                raise ValueError(
+                    f"rule {override.rule!r} looks at the whole camera view, so it cannot be "
+                    f"overridden for zone {override.zone!r} — scope the override to a camera"
+                )
         # Resolve every rule's defaults and every override's own scope once, so a
         # bad param name or value surfaces here instead of on the first frame.
         for rule_id in registered_rules():

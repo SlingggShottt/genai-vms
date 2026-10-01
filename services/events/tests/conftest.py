@@ -18,7 +18,7 @@ from events.domain.candidates import CandidateUpdate
 from events.domain.config import RulesConfig
 from events.domain.engine import process_twin
 from events.domain.state import CameraState
-from vms_common.contracts.twin import Frame, FrameObject, FrameSize, TwinV1
+from vms_common.contracts.twin import Frame, FrameObject, FrameSize, ObjectMotion, TwinV1
 from vms_common.contracts.zones import ZoneInternal, ZoneSchedule
 
 # 2026-10-01 07:00:00 UTC == 12:30 IST, a Thursday.
@@ -54,13 +54,21 @@ def obj(
     *,
     zones: Sequence[str] = ("yard",),
     conf: float = 0.9,
+    center: tuple[float, float] | None = None,
+    speed: float | None = None,
 ) -> FrameObject:
+    """`center` places a small box (0.1 x 0.1) there; `speed` sets motion.speed."""
+    bbox = (0.4, 0.4, 0.5, 0.8)
+    if center is not None:
+        cx, cy = center
+        bbox = (cx - 0.05, cy - 0.05, cx + 0.05, cy + 0.05)
     return FrameObject(
         track_id=track_id,
         category=category,
         conf=conf,
-        bbox=(0.4, 0.4, 0.5, 0.8),
+        bbox=bbox,
         zones=list(zones),
+        motion=ObjectMotion(speed=speed, direction_deg=0.0) if speed is not None else None,
     )
 
 

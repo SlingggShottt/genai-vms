@@ -1,13 +1,22 @@
 """Rule abstraction and registry (design_architecture.md §7.3, CLAUDE.md
 "New event rule": `@rule("<id>")` + a params schema).
 
-A rule answers one narrow question about *one sampled frame* and *one zone*:
-"which things in this zone satisfy my condition right now?" — a list of
-`Hit`s. Everything temporal (needs to hold for N frames / T seconds,
-debouncing, extending an open candidate across segments) is the engine's job
+A rule answers one narrow question about *one sampled frame*: "which things
+satisfy my condition right now?" — a list of `Hit`s. There are two kinds:
+
+* a `ZoneRule` is asked once per zone that has objects in it, and judges only
+  those objects (intrusion, loitering, crowding);
+* a `CameraRule` is asked once per frame about the whole view, with a small
+  persistent `memory` it may use to remember things between frames (`running`,
+  `abandoned_object`).
+
+Everything temporal (needs to hold for N frames / T seconds, debouncing,
+extending an open candidate across segments) is the engine's job
 (`events.domain.engine`), driven by the thresholds each rule's params expose
-through `required_frames()` / `required_duration_s()` / `debounce_s`. That
-keeps each rule a few lines of pure logic that is trivial to test.
+through `required_frames()` / `required_duration_s()` / `debounce_s`. A rule that
+tracks its own timing in `memory` simply reports a hit once its condition holds
+and tells the engine when that condition began (`Hit.since`). That keeps each
+rule a few lines of pure logic that is trivial to test.
 
 Pure — no I/O.
 """
@@ -18,7 +27,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, tzinfo
-from typing import ClassVar, Literal, TypeVar
+from typing import Any, ClassVar, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 from vms_common.contracts.twin import FrameObject
@@ -78,21 +87,36 @@ class Hit:
     per-track rules, `"*"` for a whole-zone condition such as crowding.
     `metrics` are numbers whose per-episode peak the engine keeps (e.g. the
     head count), stored under `peak_<name>` in the candidate's details.
+    `since`, if set, is when the condition began — earlier than this frame for a
+    rule that only reports a hit once it has held for a while (an object left
+    unattended); the candidate then starts there instead of at the first hit.
     """
 
     key: str
     track_ids: tuple[str, ...]
     score: float
     metrics: dict[str, float] = field(default_factory=dict)
+    since: datetime | None = None
+
+
+Scope = Literal["zone", "camera"]
 
 
 class Rule(ABC):
-    """One event rule. Subclass, set the class attributes, register with `@rule`."""
+    """Common shape of an event rule. Subclass `ZoneRule` or `CameraRule`, set the
+    class attributes and register it with `@rule("<id>")`."""
 
     id: ClassVar[str]
     event_type: ClassVar[str]
     default_severity: ClassVar[Severity]
     Params: ClassVar[type[RuleParams]]
+    scope: ClassVar[Scope]
+
+
+class ZoneRule(Rule):
+    """A rule about the things inside one zone."""
+
+    scope: ClassVar[Scope] = "zone"
 
     @abstractmethod
     def evaluate(
@@ -105,6 +129,29 @@ class Rule(ABC):
         """Hits in `zone` for this frame. `objects` is everything the twin puts in
         this zone in this frame (any category) — filter by `params` yourself.
         Return `[]` when the rule doesn't apply to this zone."""
+
+
+class CameraRule(Rule):
+    """A rule about the whole camera view, independent of zones (so it works on a
+    camera with no zones configured). Candidates have no zone."""
+
+    scope: ClassVar[Scope] = "camera"
+
+    @abstractmethod
+    def evaluate_camera(
+        self,
+        objects: Sequence[FrameObject],
+        params: RuleParams,
+        ctx: FrameContext,
+        memory: dict[str, Any],
+    ) -> list[Hit]:
+        """Hits for this frame, given every object in it.
+
+        Called for every sampled frame (also when `objects` is empty, so time can
+        pass). `memory` is this rule's scratchpad for this camera: it is saved with
+        the camera's state and handed back on the next frame, even after a restart,
+        so it must stay JSON-serialisable (string keys; numbers, strings, lists,
+        dicts, None). Drop entries you no longer need — nothing else will."""
 
 
 _REGISTRY: dict[str, Rule] = {}

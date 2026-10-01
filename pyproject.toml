@@ -21,6 +21,7 @@ dev = [
     "pre-commit>=3.8",
     "testcontainers[kafka,postgres]>=4.8",
     "httpx>=0.27",
+    "jsonschema>=4.21",
 ]
 
 # --- Ruff (style_guide.md §A.1: line length 100, rules E,F,W,I,B,UP,SIM,ASYNC,S,N) ---

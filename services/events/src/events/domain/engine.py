@@ -33,7 +33,7 @@ from vms_common.contracts.zones import ZoneInternal
 
 from events.domain.candidates import CandidateStatus, CandidateUpdate, candidate_id
 from events.domain.config import EffectiveRule, RulesConfig
-from events.domain.rules import FrameContext, Hit, registered_rules
+from events.domain.rules import CameraRule, FrameContext, Hit, ZoneRule, registered_rules
 from events.domain.state import CameraState, Episode
 
 
@@ -65,7 +65,8 @@ def process_twin(
 
     work = state.model_copy(deep=True)
     zones_by_name = {z.name: z for z in zones if z.camera_id == twin.camera_id}
-    rules = registered_rules()
+    zone_rules = {rid: r for rid, r in registered_rules().items() if isinstance(r, ZoneRule)}
+    camera_rules = {rid: r for rid, r in registered_rules().items() if isinstance(r, CameraRule)}
     touched: set[str] = set()
     closed: list[CandidateUpdate] = []
 
@@ -73,17 +74,28 @@ def process_twin(
         ctx = FrameContext(camera_id=twin.camera_id, ts=frame.ts, site_tz=site_tz)
         for zone_name, objects in _objects_by_zone(frame.objects, zones_by_name).items():
             zone = zones_by_name[zone_name]
-            for rule_id, rule in rules.items():
+            for rule_id, rule in zone_rules.items():
                 effective = config.resolve(rule_id, twin.camera_id, zone_name)
                 if not effective.enabled:
                     continue
                 for hit in rule.evaluate(zone, objects, effective.params, ctx):
                     _record_hit(work, hit, effective, zone, ctx.ts, twin, closed, touched)
 
+        # Camera-wide rules see every frame (even an empty one, so time can pass).
+        for rule_id, camera_rule in camera_rules.items():
+            effective = config.resolve(rule_id, twin.camera_id, "")
+            if not effective.enabled:
+                continue
+            memory = work.memory.setdefault(rule_id, {})
+            for hit in camera_rule.evaluate_camera(frame.objects, effective.params, ctx, memory):
+                _record_hit(work, hit, effective, None, ctx.ts, twin, closed, touched)
+            if not memory:
+                del work.memory[rule_id]
+
     # Episodes quiet for longer than their debounce window are over (a later hit
     # could no longer extend them) — this also handles segments with no detections.
     for key, episode in list(work.episodes.items()):
-        effective = config.resolve(episode.rule_id, twin.camera_id, episode.zone_name)
+        effective = config.resolve(episode.rule_id, twin.camera_id, episode.zone_name or "")
         quiet_s = (twin.end_ts - episode.last_ts).total_seconds()
         if not effective.enabled or quiet_s > effective.params.debounce_s:
             _finish(work, key, twin, closed, touched)
@@ -116,7 +128,7 @@ def _record_hit(
     work: CameraState,
     hit: Hit,
     effective: EffectiveRule,
-    zone: ZoneInternal,
+    zone: ZoneInternal | None,
     ts: datetime,
     twin: TwinV1,
     closed: list[CandidateUpdate],
@@ -124,7 +136,8 @@ def _record_hit(
 ) -> None:
     rule = effective.rule
     params = effective.params
-    key = f"{rule.id}|{zone.name}|{hit.key}"
+    zone_name = zone.name if zone is not None else ""  # camera-wide rules have no zone
+    key = f"{rule.id}|{zone_name}|{hit.key}"
 
     episode = work.episodes.get(key)
     if episode is not None and (ts - episode.last_ts).total_seconds() > params.debounce_s:
@@ -135,10 +148,10 @@ def _record_hit(
             rule_id=rule.id,
             event_type=rule.event_type,
             severity=effective.severity,
-            zone_id=zone.id,
-            zone_name=zone.name,
+            zone_id=zone.id if zone is not None else None,
+            zone_name=zone.name if zone is not None else None,
             hit_key=hit.key,
-            first_ts=ts,
+            first_ts=min(ts, hit.since) if hit.since is not None else ts,
             last_ts=ts,
             frames=0,
         )
@@ -163,7 +176,7 @@ def _record_hit(
         and episode.duration_s >= params.required_duration_s()
     ):
         episode.candidate_id = str(
-            candidate_id(twin.camera_id, rule.id, zone.name, hit.key, episode.first_ts)
+            candidate_id(twin.camera_id, rule.id, zone_name, hit.key, episode.first_ts)
         )
     touched.add(key)
 
