@@ -1,7 +1,6 @@
 """ORM models for the `core` schema — accounts, roles, cameras, zones, audit
-(design_architecture.md §6.1). Owner: J. `core.topology_edges`,
-`core.alerts`, `core.cases` land with the stories that need them
-(P3-J1, P3-J3, P6-J4).
+(design_architecture.md §6.1). Owner: J. `core.alerts`, `core.cases`
+land with the stories that need them (P3-J3, P6-J4).
 """
 
 from __future__ import annotations
@@ -10,7 +9,20 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from vms_common.ids import uuid7
@@ -157,6 +169,85 @@ class Zone(Base):
     )
     polygon: Mapped[list] = mapped_column(JSONB, nullable=False)
     schedule: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class EdgeType(enum.StrEnum):
+    """FR-CAM-04 / design_architecture.md §7.5. `overlap`: the two cameras see the
+    same area, so their events link when the time windows intersect (after
+    widening each by `tolerance_s`). `transit`: B is reachable from A in
+    `min_s..max_s` seconds, so an event on B that *starts* that long after an event
+    on A *ends* links to it.
+    """
+
+    OVERLAP = "overlap"
+    TRANSIT = "transit"
+
+
+class TopologyEdge(Base):
+    """`core.topology_edges` — the camera graph the correlation service (P3-J2)
+    links events across. Field names match `TopologyEdgeInternal`
+    (`vms_common.contracts.topology`), the shape `GET /internal/v1/topology` returns.
+
+    The table refuses a malformed edge itself, not just the API: an overlap edge
+    carries only `tolerance_s` and is always bidirectional (overlap is symmetric);
+    a transit edge carries only a `min_s..max_s` window; a camera never links to
+    itself; and a given directed pair has at most one edge of each type.
+    """
+
+    __tablename__ = "topology_edges"
+    __table_args__ = (
+        CheckConstraint("from_camera_id <> to_camera_id", name="distinct_cameras"),
+        CheckConstraint(
+            "(edge_type = 'overlap' AND tolerance_s IS NOT NULL AND tolerance_s >= 0"
+            " AND min_s IS NULL AND max_s IS NULL AND bidirectional)"
+            " OR (edge_type = 'transit' AND tolerance_s IS NULL"
+            " AND min_s IS NOT NULL AND max_s IS NOT NULL AND min_s >= 0 AND max_s >= min_s)",
+            name="edge_parameters",
+        ),
+        UniqueConstraint(
+            "from_camera_id", "to_camera_id", "edge_type", name="uq_topology_edges_pair"
+        ),
+        # Overlap is symmetric, so A->B and B->A are the same edge: one row per unordered pair.
+        Index(
+            "uq_topology_edges_overlap_pair",
+            func.least(text("from_camera_id"), text("to_camera_id")),
+            func.greatest(text("from_camera_id"), text("to_camera_id")),
+            unique=True,
+            postgresql_where=text("edge_type = 'overlap'"),
+        ),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    from_camera_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.cameras.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    to_camera_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.cameras.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    edge_type: Mapped[EdgeType] = mapped_column(
+        Enum(
+            EdgeType,
+            name="edge_type",
+            schema=SCHEMA,
+            native_enum=True,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+        ),
+        nullable=False,
+    )
+    min_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    max_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    tolerance_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    bidirectional: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
