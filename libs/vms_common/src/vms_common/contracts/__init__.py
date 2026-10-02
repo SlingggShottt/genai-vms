@@ -7,11 +7,13 @@ docs/design_architecture.md §16 for the freeze schedule.
 
 from vms_common.contracts.base import MessageEnvelope
 from vms_common.contracts.camera import CameraInternal, CamerasInternalResponse
+from vms_common.contracts.correlation import CorrelationLink, CorrelationV1
 from vms_common.contracts.embeddings import (
     InvalidEmbeddingsError,
     build_embeddings_npz,
     load_embeddings_npz,
 )
+from vms_common.contracts.event import EventV1, Verification
 from vms_common.contracts.segment import SegmentV1
 from vms_common.contracts.topology import TopologyEdgeInternal, TopologyInternalResponse
 from vms_common.contracts.twin import (
@@ -30,6 +32,9 @@ from vms_common.contracts.zones import ZoneInternal, ZoneSchedule, ZonesInternal
 __all__ = [
     "CameraInternal",
     "CamerasInternalResponse",
+    "CorrelationLink",
+    "CorrelationV1",
+    "EventV1",
     "Frame",
     "FrameObject",
     "FrameSize",
@@ -44,6 +49,7 @@ __all__ = [
     "TrackSummary",
     "TwinReadyV1",
     "TwinV1",
+    "Verification",
     "ZoneInternal",
     "ZoneSchedule",
     "ZonesInternalResponse",
