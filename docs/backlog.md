@@ -506,9 +506,35 @@
       integration test validates the live response against the contract). Not done here: the editor UI (P3-J5).
 
 ### P3-J2 · Correlation service — 5 pts · Must · E08 · FR-COR-01…04
-- [ ] Consumes `event.v1`; implements linking + union-find grouping + close rule (design §7.5) with `config/correlation.yaml` compatibility matrix.
-- [ ] Persists `events.correlation_groups` / `correlation_links`; publishes `correlation.v1` (throttled updates + close).
-- [ ] Unit tests: overlap link, transit link in window, out-of-window no link, incompatible types, group merge, single-event group close.
+- [x] Consumes `event.v1`; implements linking + union-find grouping + close rule (design §7.5) with `config/correlation.yaml` compatibility matrix.
+      `services/correlation` (README has the algorithm as built; design §7.5 "As built"). A new event is scored against
+      the events of the site's open groups — camera-graph edge window, then `0.7·fit + 0.3·compat ≥ 0.5` — and joins or
+      merges the groups it links (the oldest survives); `max_group_events` caps runaway chains; a group closes when its
+      last event ended more than *longest transit window of its cameras + 30 s* ago. `config/correlation.yaml` is
+      validated at startup (a typo stops the service). The camera graph comes from `GET /internal/v1/topology` with a
+      `config/topology.yaml` fallback (the api is not a Compose service yet, so the fallback is what runs).
+      Contracts defined here because nothing else had: `event.v1` (provided by D, P3-D4, built against fixtures) and
+      `correlation.v1` (adds `merged` status + `merged_into`, `revision`, `event_types` to the design's sketch).
+- [x] Persists `events.correlation_groups` / `correlation_links`; publishes `correlation.v1` (throttled updates + close).
+      Migration `0006`; revision-guarded upserts; an event already in any group is ignored on redelivery; a change stays
+      `publish_pending` until Kafka acknowledges it, so a crash or outage costs a duplicate, never a lost message. Open
+      groups are announced at creation then at most every 5 s; closed/merged at once. One instance per consumer group
+      (a lock serialises the consumer and the sweeper).
+- [x] Unit tests: overlap link, transit link in window, out-of-window no link, incompatible types, group merge, single-event group close.
+      101 unit tests (scoring incl. both fit curves and every edge direction, engine, config, topology, adapters) plus
+      37 integration tests on real Postgres/Kafka: repository, consumer and sweeper flows (all six arrival orders of the
+      fixture scenario, redelivery, restart, Kafka outage, a crashed publish, 20 concurrent deliveries beside sweeps) and
+      one end to end over a Kafka container (a poison message is dead-lettered and does not stop the consumer). The
+      fixture scenario is replayed and must reproduce `correlation_v1.json`. A 54-variant mutation check kills 53; the
+      survivor is an equivalent mutant (the same-camera guard, which a validated graph can never reach).
+      **Verified live:** the real service against the dev Kafka with a scratch database/topics — three events became two
+      groups, the third bridged them (links 23 s / 0.5365 and 53 s / 0.6973, exactly the fixtures'), five messages came
+      out keyed by site; killed and restarted it (lag 0, nothing replayed or re-announced) and the restarted instance
+      closed the group 150 s after its last event ended, as the rule says. **Not verified:** the real events producer
+      (P3-D4 does not exist yet — events were produced from the fixtures), the api topology endpoint live, a second replica.
+      Found on the way: tests caught that `ON DELETE SET NULL` on `merged_into` contradicts the table's own CHECK (now
+      CASCADE); UUIDv7 ids are not ordered within one millisecond, so the survivor is chosen by creation time; link rows
+      came back in random order after a reload, so the message order is now canonical.
 
 ### P3-J3 · Alerts backend & notifier plugins — 5 pts · Must · E08 · FR-ALR-01…03
 - [ ] API consumer for `event.v1`, `correlation.v1` creates/updates `core.alerts` per severity threshold.
