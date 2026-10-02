@@ -9,9 +9,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from vms_common.contracts.camera import CameraInternal, CamerasInternalResponse
+from vms_common.contracts.topology import TopologyEdgeInternal, TopologyInternalResponse
 from vms_common.contracts.zones import ZoneInternal, ZoneSchedule, ZonesInternalResponse
 
 from api.adapters.cameras import list_all_cameras
+from api.adapters.topology import list_all_edges
 from api.adapters.zones import list_all_zones
 from api.api.deps import get_session
 from api.api.security import require_service_token
@@ -73,5 +75,34 @@ async def internal_zones_endpoint(
             )
             for z in zones
             if z.camera_id in camera_codes
+        ]
+    )
+
+
+@router.get("/topology", response_model=TopologyInternalResponse)
+async def internal_topology_endpoint(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TopologyInternalResponse:
+    """Matches `libs/vms_common/fixtures/topology_internal.json` — `from_camera_id` /
+    `to_camera_id` are the cameras' **codes** (e.g. `cam03`), not the UUIDs the public
+    `/topology/edges` router uses: correlation only ever sees codes (from `event.v1`).
+    """
+    cameras = await list_all_cameras(session)
+    camera_codes = {c.id: c.code for c in cameras}
+    edges = await list_all_edges(session)
+    return TopologyInternalResponse(
+        edges=[
+            TopologyEdgeInternal(
+                id=str(e.id),
+                from_camera_id=camera_codes[e.from_camera_id],
+                to_camera_id=camera_codes[e.to_camera_id],
+                edge_type=e.edge_type.value,
+                min_s=e.min_s,
+                max_s=e.max_s,
+                tolerance_s=e.tolerance_s,
+                bidirectional=e.bidirectional,
+            )
+            for e in edges
+            if e.from_camera_id in camera_codes and e.to_camera_id in camera_codes
         ]
     )
