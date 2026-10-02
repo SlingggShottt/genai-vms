@@ -76,7 +76,8 @@ it is first created and then at most every `publish_throttle_s` (5 s) as it chan
 ## Limits
 
 - **One instance per consumer group.** The consumer and the sweeper share a lock, which is what
-  keeps a close from interleaving with a join. A second replica would need a database-level lock
+  keeps a close from interleaving with a join (announcing happens *outside* it, so a slow or hung
+  Kafka cannot stall event handling). A second replica would need a database-level lock
   (`SELECT … FOR UPDATE` on the open groups) first.
 - An event arriving again with a *later* end time or a higher severity (an updated verdict) is
   treated as a duplicate and ignored: links are decided when an event first arrives.

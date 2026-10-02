@@ -256,6 +256,27 @@ async def test_the_sweep_loop_outlives_failures_and_counts_them(rig, event) -> N
     assert sample("vms_correlation_sweep_errors_total") == errors_before + 3
 
 
+async def test_a_hung_kafka_does_not_stall_event_handling(rig, event) -> None:
+    await rig.deliver(event("intrusion"))
+    release = asyncio.Event()
+    entered = asyncio.Event()
+
+    async def hang(message) -> None:
+        entered.set()
+        await release.wait()  # the broker never answers
+
+    rig.publisher.publish = hang  # type: ignore[method-assign]
+    sweep = asyncio.create_task(rig.sweeper.sweep())
+    try:
+        await asyncio.wait_for(entered.wait(), timeout=5)  # the sweeper is stuck mid-send
+        # events still flow: grouping only needs the database
+        await asyncio.wait_for(rig.deliver(event("running_skipped")), timeout=5)
+        assert len(await groups(rig, "open")) == 1  # joined the first event's group
+    finally:
+        release.set()
+        await asyncio.gather(sweep, return_exceptions=True)
+
+
 async def test_closing_publishes_immediately_even_right_after_an_open_announcement(
     rig, event
 ) -> None:

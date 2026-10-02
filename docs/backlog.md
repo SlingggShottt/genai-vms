@@ -522,10 +522,11 @@
       (a lock serialises the consumer and the sweeper).
 - [x] Unit tests: overlap link, transit link in window, out-of-window no link, incompatible types, group merge, single-event group close.
       101 unit tests (scoring incl. both fit curves and every edge direction, engine, config, topology, adapters) plus
-      37 integration tests on real Postgres/Kafka: repository, consumer and sweeper flows (all six arrival orders of the
-      fixture scenario, redelivery, restart, Kafka outage, a crashed publish, 20 concurrent deliveries beside sweeps) and
+      38 integration tests on real Postgres/Kafka: repository, consumer and sweeper flows (all six arrival orders of the
+      fixture scenario, redelivery, restart, Kafka outage, a crashed publish, a hung Kafka not stalling event handling,
+      20 concurrent deliveries beside sweeps) and
       one end to end over a Kafka container (a poison message is dead-lettered and does not stop the consumer). The
-      fixture scenario is replayed and must reproduce `correlation_v1.json`. A 54-variant mutation check kills 53; the
+      fixture scenario is replayed and must reproduce `correlation_v1.json`. A 55-variant mutation check kills 54; the
       survivor is an equivalent mutant (the same-camera guard, which a validated graph can never reach).
       **Verified live:** the real service against the dev Kafka with a scratch database/topics — three events became two
       groups, the third bridged them (links 23 s / 0.5365 and 53 s / 0.6973, exactly the fixtures'), five messages came
