@@ -221,9 +221,13 @@ describe('AlertTray', () => {
       await screen.findByRole('list');
       expect(screen.getAllByRole('listitem')[0].className).not.toMatch(/alert-pulse/);
 
-      await push(
-        created({ ...open, id: '0192f3d1-a007-7000-8000-000000000007', severity: 'medium' }),
-      );
+      // pushCreated, not push: the tray refetches after a push, and a server that has never heard of
+      // the alert takes it away again as soon as that settles (it did, on a slower machine)
+      await pushCreated({
+        ...open,
+        id: '0192f3d1-a007-7000-8000-000000000007',
+        severity: 'medium',
+      });
       const medium = screen.getAllByRole('listitem').find((li) => li.dataset.alertId.endsWith('7'));
       expect(medium.className).not.toMatch(/alert-pulse/);
     });
