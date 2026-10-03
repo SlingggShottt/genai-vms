@@ -1,0 +1,101 @@
+# Model registry for the LLM gateway (design_architecture.md §11.2, story P3-D3).
+#
+# Every LLM/VLM call names a *task*; this file says which model serves it under the active
+# profile (VMS_LLM_PROFILE=local|hybrid|cloud). Services never name a model in code.
+# Adding a task: declare it under `tasks:`, give it an entry in EVERY profile, add a prompt
+# file under libs/vms_common/llm/prompts/<task>/ — the loader refuses a registry where a
+# profile misses a task.
+#
+# Model tags rot (free tiers especially), so they are checked by hand when they change:
+#   ollama      verified 2026-10-01 against registry.ollama.ai (both tags exist) and run on the
+#               target 4 GB GPU — numbers in ml/evaluation/results/p3-d3-llm-benchmark.md.
+#   gemini/groq NOT verified against the live APIs (no keys on the build machine). Checked only
+#               against LiteLLM's model catalogue (litellm 1.103.1) on 2026-10-01: gemini-2.5-flash
+#               is listed with vision + JSON-schema support; Groq's llama-3.3-70b-versatile, which
+#               the original design named, is listed as deprecated from 2026-08-16, so Groq entries
+#               use openai/gpt-oss-120b (listed, no deprecation date, schema + tools support).
+#               It is also a different model family from the Qwen/Gemini generators, which is what
+#               the evaluation judge needs. If a call fails with "model not found", fix the tag here.
+
+# Provider-independent behaviour of each task. A profile entry may override any of these keys
+# except `modality` (a task either takes images or it does not, whatever model serves it).
+#   modality          vision tasks accept images (LLMGateway.vision); text tasks do not
+#   max_images/edge   hard caps the gateway applies before any VLM call (4 GB GPU, CLAUDE.md)
+#   cache_ttl_s       Redis response cache; 0 = off. Only for tasks whose answer depends solely
+#                     on the request — free-tier quotas are small, so cache what repeats
+#   validation_retries  extra tries when a reply does not validate against response_model
+tasks:
+  event_verify:
+    modality: vision
+    max_tokens: 400
+    max_images: 4
+    max_image_edge: 448
+    cache_ttl_s: 86400
+  jit_vqa:
+    modality: vision
+    max_tokens: 300
+    max_images: 4
+    max_image_edge: 448
+    cache_ttl_s: 86400
+  query_decompose:
+    max_tokens: 600
+    cache_ttl_s: 86400
+  rerank:
+    max_tokens: 800
+    cache_ttl_s: 3600
+  phase_tg:
+    modality: vision
+    max_tokens: 600
+    max_images: 16        # design §11.3: ≤ 16 frames at ≤ 360 p on the hf_local path
+    max_image_edge: 360
+  phase_vr:
+    modality: vision
+    max_tokens: 600
+    max_images: 16
+    max_image_edge: 360
+  incident_synthesis:
+    max_tokens: 2000
+    temperature: 0.1
+  assistant:
+    max_tokens: 1024
+    temperature: 0.2
+  daily_narrative:
+    max_tokens: 1500
+    temperature: 0.2
+
+# num_ctx (ollama only) is the context window in tokens: prompt + images + reply. Ollama sizes
+# it from free VRAM (4096 here), and on this build ONE IMAGE COSTS ~1,050 tokens whatever its
+# pixel size (measured 2026-10-01, ml/evaluation/results/p3-d3-llm-benchmark.md), so 4 images
+# need ~4,200 — at 4096 Ollama answers HTTP 400 "exceeds the available context size". Vision
+# tasks get 6144 (4 images + prompt + reply), text tasks 8192 (rerank / synthesis prompts are
+# long; the KV cache for it is ~0.3 GB). Give every task on one model the SAME num_ctx: Ollama
+# reloads a model when its context size changes between requests.
+profiles:
+  local:
+    event_verify:       {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 6144}
+    jit_vqa:            {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 6144}
+    query_decompose:    {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
+    rerank:             {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
+    phase_tg:           {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/tg/v1"}
+    phase_vr:           {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/phavr/v1"}
+    incident_synthesis: {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
+    assistant:          {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
+    daily_narrative:    {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
+
+  hybrid:               # local vision, cloud text reasoning
+    extends: local
+    query_decompose:    {provider: gemini, model: "gemini-2.5-flash", fallback: ["groq/openai/gpt-oss-120b"]}
+    rerank:             {provider: gemini, model: "gemini-2.5-flash", fallback: ["groq/openai/gpt-oss-120b"]}
+    incident_synthesis: {provider: gemini, model: "gemini-2.5-flash"}
+    assistant:          {provider: gemini, model: "gemini-2.5-flash", fallback: ["groq/openai/gpt-oss-120b"]}
+    daily_narrative:    {provider: groq,   model: "openai/gpt-oss-120b"}
+
+  cloud:                # as hybrid, with the vision tasks in the cloud too
+    extends: hybrid
+    event_verify:       {provider: gemini, model: "gemini-2.5-flash"}
+    jit_vqa:            {provider: gemini, model: "gemini-2.5-flash"}
+
+# The evaluation judge must be a different family from the generator (EV-03), so it is a
+# fixed cloud model in every profile. Callable through the gateway as task "eval_judge".
+evaluation:
+  judge:                {provider: groq, model: "openai/gpt-oss-120b"}

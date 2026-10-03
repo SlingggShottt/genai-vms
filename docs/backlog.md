@@ -466,11 +466,47 @@
       labels. The engine is pure and deterministic, so the replay half is straightforward once the data exists.
 
 ### P3-D3 · LLM gateway & model registry — 5 pts · Must · E09 · FR-CFG-01…03
-- [ ] `LLMGateway.chat` / `.vision` over LiteLLM for ollama, gemini, groq, openrouter; `response_model` validation + retry; fallbacks; timeouts.
-- [ ] `config/models.yaml` with `local`, `hybrid`, `cloud` profiles; `VMS_LLM_PROFILE` switch.
-- [ ] Redis GPU lease (acquire/heartbeat/release, Ollama unload on family switch) and Redis response cache.
-- [ ] `FakeGateway` for tests; metrics `vms_llm_request_seconds`, `vms_llm_tokens_total`.
+- [x] `LLMGateway.chat` / `.vision` over LiteLLM for ollama, gemini, groq, openrouter; `response_model` validation + retry; fallbacks; timeouts.
+      `libs/vms_common/llm/` (design §11.1 documents the behaviour as built): per model of a task in order — cache →
+      GPU lease → provider call → validate (a malformed reply is shown its errors and re-asked, `validation_retries`
+      default 2; fenced / prose-wrapped / `<think>` JSON needs no retry) → cache. Any provider failure moves to the
+      next model; the exception type follows the primary (`LLMUnavailableError` → 503, `LLMOutputError` → 422,
+      `LLMRequestError` = caller bug). Streaming and tool calls included; `vision()` enforces `max_images` and shrinks
+      to `max_image_edge`. **Verified live only for ollama**: the real gateway → LiteLLM → Ollama → `qwen2.5:3b` and
+      `qwen2.5vl:3b` on the RTX 3050 (structured plan, vision verdict on an image, repeat served from the cache,
+      lease unloading the displaced model). Gemini / Groq / OpenRouter run through the same LiteLLM path but were
+      **not called live** (no keys here) — only their missing-key and error-mapping paths are tested.
+      Two things only the real run showed: litellm makes a *blocking* `/api/show` call to Ollama while pricing a call
+      (and `register_model()` does too, at the wrong host) — avoided by declaring the models in its price map; and
+      Ollama refuses 4-image requests at its default 4096-token context, so `num_ctx` is now a registry setting.
+- [x] `config/models.yaml` with `local`, `hybrid`, `cloud` profiles; `VMS_LLM_PROFILE` switch.
+      The design's registry plus a `tasks:` block for provider-independent behaviour; all three profiles are validated
+      at load for completeness (a profile missing a task, an unknown key, a bad fallback, an `extends` cycle all stop
+      startup). Switching `VMS_LLM_PROFILE` re-resolves every task with no code change (tested for rerank and
+      event_verify across the three profiles). Groq entries use `openai/gpt-oss-120b`: LiteLLM's catalogue lists the
+      design's `llama-3.3-70b-versatile` as deprecated since 2026-08-16.
+- [x] Redis GPU lease (acquire/heartbeat/release, Ollama unload on family switch) and Redis response cache.
+      Lease = Lua on Redis's clock: same family shares, a different family waits, a queued family goes first, a waiter
+      that gives up withdraws its place, a crashed holder lapses after its TTL, Redis down ⇒ no unleased local run (the
+      fallback answers instead). Cache key = task + model + messages (incl. image data) + schema + params; only
+      validated results; an outage is a miss. 24 lease + 9 cache unit tests on fakeredis and 10 on a real Redis container
+      (`make test-int`); the lease caught one design bug in testing (a waiter that timed out left a ghost queue
+      marker that refused new calls for 2 s).
+- [x] `FakeGateway` for tests; metrics `vms_llm_request_seconds`, `vms_llm_tokens_total`.
+      `vms_common.llm.testing.FakeGateway` (scripted queues, bare values, exceptions, callables, JSON recordings with
+      recorded failures; same JSON extraction/validation as production; running out of answers fails loudly) and
+      `ScriptedBackend` for the gateway's own tests. Metrics as designed plus retries, fallbacks, cache and lease-wait
+      series (design §15). 320 unit tests; a 66-variant mutation check (break the gateway/lease/registry/cache/parser/
+      adapter on purpose) kills all 66. Its first pass had 7 survivors: five were real test gaps (now covered), one was
+      a redundant cache-key input (removed), one an equivalent mutant (dropped).
 - [ ] Benchmark note: latency + VRAM for `qwen2.5vl:3b` and `qwen2.5:3b` on 4 GB; model tags verified.
+      **Benchmark done, tag verification half done.** `ml/evaluation/results/p3-d3-llm-benchmark.md` (harness:
+      `ml/evaluation/llm_benchmark.py`): the text model is 100 % on the GPU (2.4 GB, 0.25 s warm); the vision model
+      is only ~53 % on the GPU (rest on CPU; 18–31 % beside perception) — 1 / 2 / 4 images ≈ 3 / 5 / 11 s warm,
+      8–14 s cold — and each image costs ≈ 1,050 tokens at any pixel size. Both Ollama tags verified (exist, pulled, run).
+      **Open:** the Gemini and Groq ids were checked only against LiteLLM's catalogue, never against the live APIs.
+      With keys in `.env`, `VMS_LLM_PROFILE=cloud` plus one call per `models.yaml` entry closes this; fix any tag
+      that answers "model not found" in `config/models.yaml`.
 
 ### P3-D4 · VLM verification gate — 3 pts · Must · E07 · FR-EVT-02…05
 - [ ] Builds ≤ 4 keyframes with drawn boxes; prompt `event_verify/1.0`; verdict JSON validated.
