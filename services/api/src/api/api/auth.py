@@ -17,7 +17,7 @@ from api.adapters.refresh_tokens import (
     revoke_refresh_token,
 )
 from api.adapters.users import get_user_by_email, get_user_by_id
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 from api.api.security import get_current_user
 from api.domain.security import verify_password
@@ -52,7 +52,7 @@ async def _issue_token_pair(
 async def login(
     body: LoginRequest,
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
 ) -> TokenResponse:
     user = await get_user_by_email(session, body.email)
     # Argon2id is deliberately slow (CPU-bound) — never call it directly
@@ -90,7 +90,7 @@ async def login(
 async def refresh(
     body: RefreshRequest,
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
 ) -> TokenResponse:
     existing = await get_valid_refresh_token(session, body.refresh_token)
     if existing is None:
@@ -125,7 +125,7 @@ async def logout(
     body: LogoutRequest,
     request: Request,
     current_user: Annotated[User, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
 ) -> None:
     # Only revoke if the token belongs to the caller — an unrelated or
     # already-invalid token still 204s (idempotent "you're logged out"),

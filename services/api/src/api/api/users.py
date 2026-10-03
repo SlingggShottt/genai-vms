@@ -7,7 +7,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 from vms_db.models import User, UserRole
 
 from api.adapters.audit import write_audit_log
@@ -19,7 +18,7 @@ from api.adapters.users import (
     list_users,
     update_user,
 )
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 from api.api.security import require_role
 from api.schemas import UserCreateRequest, UserOut, UsersPage, UserUpdateRequest
@@ -40,7 +39,7 @@ def _parse_user_id(value: str) -> uuid.UUID:
 
 @router.get("", response_model=UsersPage)
 async def list_users_endpoint(
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _admin: Annotated[User, Depends(_admin_only)],
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     cursor: str | None = None,
@@ -57,7 +56,7 @@ async def list_users_endpoint(
 async def create_user_endpoint(
     body: UserCreateRequest,
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     admin: Annotated[User, Depends(_admin_only)],
 ) -> UserOut:
     if await get_user_by_email(session, body.email) is not None:
@@ -101,7 +100,7 @@ async def update_user_endpoint(
     user_id: str,
     body: UserUpdateRequest,
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     admin: Annotated[User, Depends(_admin_only)],
 ) -> UserOut:
     target = await get_user_by_id(session, _parse_user_id(user_id))
@@ -135,7 +134,7 @@ async def update_user_endpoint(
 async def delete_user_endpoint(
     user_id: str,
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     admin: Annotated[User, Depends(_admin_only)],
 ) -> None:
     target = await get_user_by_id(session, _parse_user_id(user_id))
