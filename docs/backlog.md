@@ -549,8 +549,9 @@
   - Scope note: the page lists events that raised an alert (`GET /alerts`); it switches to `GET /events` (every verified event) when P3-D4's `events.events` lands. See `frontend/README.md`.
 
 ### P3-J5 · Zone & camera-link editors — 3 pts · Must · E03 · FR-CAM-03, FR-CAM-04
-- [ ] Polygon editor over a camera snapshot (add/move/delete points, name, type, schedule).
-- [ ] Camera links editor (table + simple node diagram) for overlap/transit edges.
+- [x] Polygon editor over a camera snapshot (add/move/delete points, name, type, schedule).
+  - Scope note: `GET /cameras/{id}/snapshot` (design §9) was never built, so the still is captured from the camera's live view in the browser; zones can only be drawn while the camera streams. See `frontend/README.md`.
+- [x] Camera links editor (table + simple node diagram) for overlap/transit edges.
 
 ### P3-J6 · Caption & VQA annotation kit — 5 pts · Must · E10 · FR-RSN-03
 - [ ] `config/vqa_bank.yaml`: 5–8 questions per event type.

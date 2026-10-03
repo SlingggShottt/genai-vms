@@ -635,6 +635,15 @@ Base path `/api/v1`. JSON errors use the envelope in `style_guide.md §A.5`.
 
 **WebSocket message types:** `alert.created`, `alert.updated`, `camera.status`, `job.progress`, `incident.ready`.
 
+**Not built:** `GET /cameras/{id}/snapshot` (listed above). The zone editor (P3-J5) takes its still from the
+camera's live view in the browser instead (`frontend/src/features/zones/captureFrame.js`), so zones can only be drawn
+while the camera is streaming. An api snapshot (the latest keyframe, presigned) would remove that limit.
+
+**Writes are committed before the response is sent.** Endpoints take `SessionDep` (`api/api/deps.py`), not a bare
+`Depends(get_session)`: FastAPI runs a `yield` dependency's exit code (the commit) *after* the response by default, so a
+client that re-reads at once (a UI refetch) could get the old data, and a failed commit would follow a success
+response. `tests/unit/test_session_commits_before_response.py` guards it.
+
 **Alerts & the live channel (P3-J3).**
 - An alert is one row per verified `event.v1` whose severity is at or above `VMS_ALERTS_MIN_SEVERITY` (default `medium`); lower-severity events are still stored and searchable, they just do not interrupt anyone. The api consumes `vms.events.v1` (group `api-alerts`) and `vms.correlations.v1` (group `api-alerts-correlations`) itself; each consumer runs under a supervisor that restarts it with backoff, so Kafka being down at start-up, or going away later, never takes the HTTP API down. `VMS_ALERTS_CONSUMERS_ENABLED=false` makes a replica serve HTTP/WS only.
 - Lifecycle: `open → acknowledged → resolved`; an operator may resolve straight from `open` (false alarm). Each move is one conditional `UPDATE`, so of two operators acting at once exactly one wins and the other gets `409` with `details.status`. Both write an audit entry (`alert.acknowledged` / `alert.resolved`, the note in `details`).
