@@ -19,7 +19,7 @@ from vms_db.models.core import (
     ZoneType,
 )
 from vms_db.models.correlation import CorrelationGroup, CorrelationLinkRow
-from vms_db.models.events import Candidate
+from vms_db.models.events import Candidate, Event
 from vms_db.models.media import Segment
 from vms_db.models.vision import MinuteCount, Track, TrackSegment
 
@@ -32,6 +32,7 @@ __all__ = [
     "CorrelationGroup",
     "CorrelationLinkRow",
     "EdgeType",
+    "Event",
     "MinuteCount",
     "RefreshToken",
     "Segment",
