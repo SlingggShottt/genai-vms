@@ -51,6 +51,10 @@ ROUTER_TABLE: list[tuple[str, str, frozenset[str] | None]] = [
     ("POST", "/api/v1/cameras/{target_id}/zones", frozenset({"admin"})),
     ("PATCH", "/api/v1/zones/{target_id}", frozenset({"admin"})),
     ("DELETE", "/api/v1/zones/{target_id}", frozenset({"admin"})),
+    ("GET", "/api/v1/topology/edges", None),
+    ("POST", "/api/v1/topology/edges", frozenset({"admin"})),
+    ("PATCH", "/api/v1/topology/edges/{target_id}", frozenset({"admin"})),
+    ("DELETE", "/api/v1/topology/edges/{target_id}", frozenset({"admin"})),
 ]
 
 
@@ -130,6 +134,27 @@ def _create_zone_id(client: TestClient, admin_headers: dict[str, str]) -> str:
     return created.json()["id"]
 
 
+def _create_edge_id(client: TestClient, admin_headers: dict[str, str]) -> str:
+    """Create two cameras (same site) and a transit edge between them as admin; returns its id."""
+    created = client.post(
+        "/api/v1/topology/edges",
+        json=_topology_body(client, admin_headers),
+        headers=admin_headers,
+    )
+    assert created.status_code == 201, created.text
+    return created.json()["id"]
+
+
+def _topology_body(client: TestClient, admin_headers: dict[str, str]) -> dict[str, object]:
+    return {
+        "from_camera_id": _create_camera(client, admin_headers),
+        "to_camera_id": _create_camera(client, admin_headers),
+        "edge_type": "transit",
+        "min_s": 5,
+        "max_s": 90,
+    }
+
+
 async def _create_track(db_session_factory: async_sessionmaker, *, camera_code: str) -> str:
     """Insert a `vision.tracks` row directly — tracks are only ever written
     by the indexer (from `twinready.v1`), there's no API to create one, so
@@ -161,7 +186,9 @@ async def _path_kwargs_for(
 ) -> dict[str, str]:
     kwargs: dict[str, str] = {}
     if "{target_id}" in path:
-        if "/cameras/" in path:
+        if "/topology/edges/" in path:
+            kwargs["target_id"] = _create_edge_id(client, admin_headers)
+        elif "/cameras/" in path:
             kwargs["target_id"] = _create_camera(client, admin_headers)
         elif "/zones/" in path:
             kwargs["target_id"] = _create_zone_id(client, admin_headers)
@@ -186,7 +213,23 @@ def role_tokens(
     return {"admin": admin_access_token, "operator": operator_token, "viewer": viewer_token}
 
 
-def _body_for(method: str, path: str) -> dict[str, object] | None:
+def _body_for(
+    method: str,
+    path: str,
+    client: TestClient | None = None,
+    admin_headers: dict[str, str] | None = None,
+) -> dict[str, object] | None:
+    if method == "POST" and path == "/api/v1/topology/edges":
+        if client is not None and admin_headers is not None:
+            return _topology_body(client, admin_headers)
+        # Unauthenticated calls 401 before validation, so unresolvable ids are fine.
+        return {
+            "from_camera_id": str(uuid.uuid4()),
+            "to_camera_id": str(uuid.uuid4()),
+            "edge_type": "overlap",
+        }
+    if method == "PATCH" and "/topology/edges/" in path:
+        return {"max_s": 80}
     if method == "POST" and path == "/api/v1/users":
         return {
             "email": _unique_email("target"),
@@ -222,8 +265,14 @@ def _params_for(path: str) -> dict[str, str] | None:
     return None
 
 
-def _call(client: TestClient, method: str, path: str, headers: dict[str, str] | None) -> int:
-    body = _body_for(method, path)
+def _call(
+    client: TestClient,
+    method: str,
+    path: str,
+    headers: dict[str, str] | None,
+    admin_headers: dict[str, str] | None = None,
+) -> int:
+    body = _body_for(method, path, client, admin_headers)
     params = _params_for(path)
     return client.request(method, path, json=body, params=params, headers=headers).status_code
 
@@ -246,7 +295,9 @@ async def test_router_table_role_matrix(
         **await _path_kwargs_for(path, client, admin_headers, db_session_factory)
     )
 
-    status_code = _call(client, method, resolved_path, auth_headers(role_tokens[role]))
+    status_code = _call(
+        client, method, resolved_path, auth_headers(role_tokens[role]), admin_headers
+    )
 
     if allowed_roles is None or role in allowed_roles:
         assert status_code < 400, (

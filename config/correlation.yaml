@@ -1,0 +1,49 @@
+# Multi-camera event correlation (docs/design_architecture.md §7.5, FR-COR-01…04).
+# Loaded at startup — restart the correlation service after editing. Validated on load:
+# an unknown key, a weight outside 0..1 or a compatibility pair given two different
+# weights stops the service with the reason instead of silently changing what links.
+#
+# Two events on different cameras link when
+#   1. the camera graph (Settings → camera links, `core.topology_edges`) joins their cameras
+#      and their timing fits the edge — overlap: windows within 2 x tolerance of each other;
+#      transit: start(later camera's event) - end(earlier camera's event) inside min..max — and
+#   2. score = fit_weight * temporal_fit + compat_weight * compatibility >= link_threshold,
+#      where temporal_fit is 1 in the middle of the edge's window and 0 at its bounds.
+# Linked events form a group; a group is closed (and handed to reasoning) once its last event
+# ended more than (the longest transit window of its cameras + grace_s) ago.
+
+version: 1
+
+link_threshold: 0.5
+fit_weight: 0.7
+compat_weight: 0.3
+
+grace_s: 30            # extra wait after the longest transit window before a group closes
+publish_throttle_s: 5  # an open group is re-announced at most this often
+max_group_events: 50   # safety valve: a link that would grow a group past this is not made
+
+# How well two kinds of event belong in one story, 0..1. Symmetric: list each pair once.
+# A pair that is NOT listed is incompatible and never links, whatever the timing.
+# Event types are the `event_type` of event.v1: intrusion, loitering, crowding,
+# abandoned_object, running (a new rule's type needs entries here to take part).
+compatibility:
+  intrusion:
+    intrusion: 1.0
+    running: 0.8
+    loitering: 0.7
+    abandoned_object: 0.7
+    crowding: 0.5
+  running:
+    running: 1.0
+    loitering: 0.6
+    crowding: 0.6
+    abandoned_object: 0.5
+  loitering:
+    loitering: 1.0
+    abandoned_object: 0.7
+    crowding: 0.5
+  abandoned_object:
+    abandoned_object: 1.0
+    crowding: 0.3
+  crowding:
+    crowding: 1.0

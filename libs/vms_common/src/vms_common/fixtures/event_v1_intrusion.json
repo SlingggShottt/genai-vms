@@ -1,0 +1,28 @@
+{
+  "schema_version": "event.v1",
+  "message_id": "0192f3d1-1111-7000-8000-0000000000a1",
+  "produced_at": "2026-10-05T10:15:48.310Z",
+  "event_id": "0192f3d1-0001-7000-8000-000000000001",
+  "site_id": "rvce-campus",
+  "camera_id": "cam02",
+  "event_type": "intrusion",
+  "severity": "high",
+  "start_ts": "2026-10-05T10:15:20.000Z",
+  "end_ts": "2026-10-05T10:15:42.000Z",
+  "rule_id": "intrusion.after_hours",
+  "rule_score": 0.91,
+  "zone_id": "01929e6c-0001-7000-8000-000000000001",
+  "track_ids": ["cam02-t88"],
+  "segment_ids": ["cam02_20261005T101510Z_000120", "cam02_20261005T101520Z_000121"],
+  "keyframe_uris": [
+    "s3://vms-keyframes/cam02/2026/10/05/10/000120/0004.jpg",
+    "s3://vms-keyframes/cam02/2026/10/05/10/000121/0002.jpg"
+  ],
+  "verification": {
+    "status": "verified",
+    "confidence": 0.84,
+    "caption": "A person in a dark jacket climbs over the gate into the fenced area.",
+    "model": "ollama/qwen2.5vl:3b",
+    "latency_ms": 5210
+  }
+}

@@ -1,0 +1,25 @@
+# Camera graph fallback for the correlation service (docs/design_architecture.md §7.5, §16).
+# Used only when the api's GET /internal/v1/topology is unreachable or not configured
+# (VMS_CORRELATION_API_BASE_URL). Copy to config/topology.yaml (gitignored) and edit; same
+# shape as the API response (libs/vms_common/fixtures/topology_internal.json). With no file
+# the graph is empty and every event becomes its own group.
+#
+# Camera ids are camera *codes* (cam02), not database ids.
+#   overlap  the cameras see the same area: always two-way, needs tolerance_s.
+#   transit  `to` is reachable from `from` in min_s..max_s seconds: one-way unless
+#            bidirectional.
+edges:
+  - id: cam01-cam02-overlap
+    from_camera_id: cam01
+    to_camera_id: cam02
+    edge_type: overlap
+    tolerance_s: 3.0
+    bidirectional: true
+
+  - id: cam01-cam03-transit
+    from_camera_id: cam01
+    to_camera_id: cam03
+    edge_type: transit
+    min_s: 5.0
+    max_s: 90.0
+    bidirectional: false

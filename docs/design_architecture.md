@@ -263,6 +263,21 @@ genai-vms/
 }
 ```
 
+*Notes on `event.v1` (fixtures `fixtures/event_v1_*.json`):* only **verified** events are published —
+`verification.status` is `verified`, or `skipped` (a `verify: false` rule, or the gateway being down for a
+low-severity event); rejected candidates are stored but never sent. `event_type` is an open string
+(intrusion, loitering, crowding, abandoned_object, running today) so a new rule cannot break a consumer's
+parser; `event_id` is a UUID; `camera_id` is the camera's code.
+
+*Notes on `correlation.v1` (fixtures `fixtures/correlation_v1*.json`):* every message carries the group's whole
+current state, so a consumer needs only the newest. `status` is `open` (still collecting; re-sent as it grows,
+at most every 5 s), `closed` (final — reasoning runs on this) or `merged` (final for *this* id: a later event
+bridged it with another group and `merged_into` names the survivor, which now holds its events; `merged_into` is
+set if and only if the status is `merged`). `revision` rises with every change so a consumer can drop an older or
+duplicated message. `event_types` lists the distinct event types. For a `transit` link `delta_s` is
+`start(event on the to-camera) − end(event on the from-camera)`; for `overlap` it is the gap between the two
+windows (0 when they intersect). Links are in a canonical order (by event ids).
+
 **`incidentready.v1`** — reasoning → indexer, api
 ```json
 {
@@ -322,6 +337,7 @@ Key columns (selected):
 - `media.segments(segment_id text pk, camera_id, start_ts timestamptz, end_ts, uri, twin_uri, indexed_at)` — index `(camera_id, start_ts)`
 - `events.candidates(id uuid pk, site_id, camera_id, rule_id, event_type, severity, zone_id text, zone_name text, track_ids text[], segment_ids text[], start_ts, end_ts, rule_score float, status text CHECK in (open, closed), details jsonb, created_at, updated_at)` — written by the events service (P3-D1). `id` is a deterministic UUIDv5 of `camera|rule|zone|track|start_ts`, so replays upsert; `zone_id` is text (the YAML fallback's ids aren't `core.zones` UUIDs); `status` only moves open → closed. Indexes `(camera_id, start_ts)` and `(status)`.
 - `events.events(id, camera_id, event_type, severity, start_ts, end_ts, rule_id, rule_score, zone_id, track_ids text[], verification jsonb, group_id null, status enum(open,acknowledged,resolved))`
+- `events.correlation_groups(id uuid pk, site_id, status CHECK in (open, closed, merged), revision int, start_ts, end_ts, max_severity, camera_ids text[], event_types text[], event_ids text[] /* GIN-indexed: "which group holds this event?" */, members jsonb /* snapshot of what linking needs */, merged_into uuid null FK→self ON DELETE CASCADE, publish_pending bool, last_published_at, closed_at, created_at, updated_at)` and `events.correlation_links(id, group_id fk CASCADE, from_event, to_event, edge_type, delta_s, score)` with `(from_event, to_event)` unique — written by the correlation service (P3-J2). A merged group is only history of its survivor (`merged_into` is required for status `merged`, hence the cascade); `publish_pending` stays true from a change until its `correlation.v1` is acknowledged, which is what makes a crash between storing and sending recoverable. A group row is replaced only by a newer `revision`.
 - `reasoning.incidents(id, group_id, status enum(generating,generated,failed,reviewed,closed), severity, title, report jsonb, report_uri, pdf_uri, provenance jsonb, created_at)`
 
 ### 6.2 Qdrant collections (owner: J; query side: D)
@@ -444,6 +460,14 @@ close group when now − last_event_end > max_transit(group cameras) + grace (de
 publish correlation.v1 on open→update (throttled 5 s) and on close
 ```
 Events with no links become single-event groups (still closed and published, so reasoning can run on them if severe enough). Appearance similarity is **future work** (ADR-008).
+
+**As built (P3-J2, `services/correlation`).** The sketch above is implemented literally; what it left open:
+- *Overlap fit.* Each event's window is widened by τ on both sides, so events link when the gap between the real windows is ≤ 2τ; fit is 1 when they intersect and falls linearly to 0 at 2τ. *Transit fit* is 1 at the centre of `[min, max]` and 0 at its bounds (a zero-width window fits only exactly).
+- *Compatibility* is a symmetric matrix in `config/correlation.yaml`; an unlisted pair of event types is incompatible and never links. Events on one camera never link. If several edges join two cameras the best-scoring link is kept; every link of a new event to an open group's events is recorded.
+- *Merge.* Groups are ordered by creation time (not by id: UUIDv7 is only ordered across milliseconds); the oldest survives and absorbs the others' events and links; each absorbed group is announced once as `merged`. `max_group_events` (default 50) is a safety valve: a link that would grow a group past it is not made.
+- *Close.* A group closes when `now − last_event_end > window + grace`, where `window` is the longest transit `max_s` — or twice the largest overlap tolerance — over the edges touching the group's cameras (0 for a camera with no edges). `now` is the wall clock; a replayed backlog therefore closes immediately.
+- *Publish.* An open group is announced when created and then at most every 5 s; closed and merged groups at once. Delivery is at-least-once with a durable `publish_pending` flag; duplicates are told apart by `group_id` + `revision`.
+- *Scope.* One instance per consumer group (a lock keeps closing and joining from interleaving). An event re-sent with a later end time is treated as a duplicate.
 
 ### 7.6 Event lifecycle
 ```mermaid
@@ -837,6 +861,7 @@ Contracts are **frozen on day 1 of the phase that needs them** (a 1-hour joint s
 | MediaMTX path naming `rtsp://…/cam{n}`, HLS/WebRTC URLs | D | J (live wall) | P1 day 1 | `docs` + compose |
 | `twin.v1` + `twinready.v1` + `.npz` layout | D (perception) | J (indexer, playback overlay) | P2 day 1 | `fixtures/twin_v1.json`, `fixtures/embeddings.npz` |
 | Zones internal API | J (api) | D (perception, events) — YAML fallback | P2 day 1 | `fixtures/zones_internal.json` |
+| Topology internal API `/internal/v1/topology` | J (api) | J (correlation) — YAML fallback | P3 day 1 | `fixtures/topology_internal.json` |
 | `event.v1` | D (events) | J (correlation, alerts, indexer) | P3 day 1 | `fixtures/event_v1_*.json` |
 | `correlation.v1` | J (correlation) | D (reasoning orchestrator, P5) | P3 day 1 | `fixtures/correlation_v1.json` |
 | `LLMGateway` interface + `models.yaml` | D | J (JIT, evidence, daily narrative) | P3 day 1 | stub `FakeGateway` in `vms_common.llm.testing` |
