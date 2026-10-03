@@ -108,6 +108,7 @@ class Rule(ABC):
 
     id: ClassVar[str]
     event_type: ClassVar[str]
+    description: ClassVar[str]  # what the VLM gate is asked to confirm: one visible claim
     default_severity: ClassVar[Severity]
     Params: ClassVar[type[RuleParams]]
     scope: ClassVar[Scope]

@@ -25,6 +25,7 @@ def test_every_built_in_rule_is_registered_under_its_id() -> None:
     for rule_id, instance in rules.items():
         assert instance.id == rule_id
         assert instance.event_type
+        assert instance.description.endswith("."), "one sentence the VLM gate can check by eye"
         assert instance.default_severity in {"low", "medium", "high", "critical"}
         assert issubclass(instance.Params, RuleParams)
 

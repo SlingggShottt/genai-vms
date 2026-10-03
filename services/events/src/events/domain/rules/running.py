@@ -43,6 +43,7 @@ class RunningParams(RuleParams):
 @rule("running")
 class Running(CameraRule):
     event_type = "running"
+    description = "A person is running."
     default_severity: Severity = "low"
     Params = RunningParams
 

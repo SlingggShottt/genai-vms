@@ -41,6 +41,7 @@ class LoiteringParams(RuleParams):
 @rule("loitering")
 class Loitering(ZoneRule):
     event_type = "loitering"
+    description = "A person stays in the same area without moving on."
     default_severity: Severity = "medium"
     Params = LoiteringParams
 

@@ -18,6 +18,8 @@ from typing import Any
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
+from events.domain.evidence import EvidenceFrame
+
 
 class Episode(BaseModel):
     """One run of hits of one rule on one subject in one zone."""
@@ -39,6 +41,11 @@ class Episode(BaseModel):
     segment_ids: list[str] = Field(default_factory=list)
     peaks: dict[str, float] = Field(default_factory=dict, description="per-episode maxima")
     params: dict[str, Any] = Field(default_factory=dict, description="effective params, last frame")
+
+    evidence: list[EvidenceFrame] = Field(
+        default_factory=list,
+        description="A thinned sample of the hit frames (keyframe + boxes) for the VLM gate",
+    )
 
     candidate_id: str | None = Field(
         default=None,

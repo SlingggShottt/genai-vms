@@ -26,13 +26,14 @@ import uuid
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime, tzinfo
+from datetime import tzinfo
 
-from vms_common.contracts.twin import FrameObject, TwinV1
+from vms_common.contracts.twin import Frame, FrameObject, TwinV1
 from vms_common.contracts.zones import ZoneInternal
 
 from events.domain.candidates import CandidateStatus, CandidateUpdate, candidate_id
 from events.domain.config import EffectiveRule, RulesConfig
+from events.domain.evidence import add_evidence, frame_evidence
 from events.domain.rules import CameraRule, FrameContext, Hit, ZoneRule, registered_rules
 from events.domain.state import CameraState, Episode
 
@@ -79,7 +80,7 @@ def process_twin(
                 if not effective.enabled:
                     continue
                 for hit in rule.evaluate(zone, objects, effective.params, ctx):
-                    _record_hit(work, hit, effective, zone, ctx.ts, twin, closed, touched)
+                    _record_hit(work, hit, effective, zone, frame, twin, closed, touched)
 
         # Camera-wide rules see every frame (even an empty one, so time can pass).
         for rule_id, camera_rule in camera_rules.items():
@@ -88,7 +89,7 @@ def process_twin(
                 continue
             memory = work.memory.setdefault(rule_id, {})
             for hit in camera_rule.evaluate_camera(frame.objects, effective.params, ctx, memory):
-                _record_hit(work, hit, effective, None, ctx.ts, twin, closed, touched)
+                _record_hit(work, hit, effective, None, frame, twin, closed, touched)
             if not memory:
                 del work.memory[rule_id]
 
@@ -129,11 +130,12 @@ def _record_hit(
     hit: Hit,
     effective: EffectiveRule,
     zone: ZoneInternal | None,
-    ts: datetime,
+    frame: Frame,
     twin: TwinV1,
     closed: list[CandidateUpdate],
     touched: set[str],
 ) -> None:
+    ts = frame.ts
     rule = effective.rule
     params = effective.params
     zone_name = zone.name if zone is not None else ""  # camera-wide rules have no zone
@@ -166,6 +168,9 @@ def _record_hit(
             episode.track_ids.append(track_id)
     if twin.segment_id not in episode.segment_ids:
         episode.segment_ids.append(twin.segment_id)
+    episode.evidence = add_evidence(
+        episode.evidence, frame_evidence(frame, twin.segment_id, hit.track_ids)
+    )
     for name, value in hit.metrics.items():
         peak = f"peak_{name}"
         episode.peaks[peak] = max(episode.peaks.get(peak, value), value)
@@ -217,5 +222,6 @@ def _to_update(episode: Episode, twin: TwinV1, *, status: CandidateStatus) -> Ca
             "duration_s": round(episode.duration_s, 3),
             **episode.peaks,
             "params": episode.params,
+            "evidence": [item.model_dump(mode="json") for item in episode.evidence],
         },
     )
