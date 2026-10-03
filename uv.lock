@@ -4721,7 +4721,7 @@ dependencies = [
     { name = "httpx" },
     { name = "pyyaml" },
     { name = "tzdata" },
-    { name = "vms-common" },
+    { name = "vms-common", extra = ["llm"] },
     { name = "vms-db" },
 ]
 
@@ -4730,7 +4730,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "tzdata", specifier = ">=2024.1" },
-    { name = "vms-common", editable = "libs/vms_common" },
+    { name = "vms-common", extras = ["llm"], editable = "libs/vms_common" },
     { name = "vms-db", editable = "libs/vms_db" },
 ]
 
