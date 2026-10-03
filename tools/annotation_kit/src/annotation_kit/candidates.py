@@ -13,7 +13,9 @@ shares one, because two incidents a minute apart on the same cameras are near-du
 
 from __future__ import annotations
 
+import json
 import re
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal, Self
 
@@ -72,6 +74,18 @@ class PhaseCandidate(_Strict):
     @property
     def duration_s(self) -> float:
         return self.views[0].duration_s
+
+
+def write_candidates(candidates: Sequence[PhaseCandidate], path: str | Path) -> None:
+    payload = [candidate.model_dump(mode="json") for candidate in candidates]
+    Path(path).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def read_candidates(path: str | Path) -> list[PhaseCandidate]:
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(data, list):
+        raise ValueError(f"{path}: expected a JSON list of candidates")
+    return [PhaseCandidate.model_validate(item) for item in data]
 
 
 def safe_id(candidate_id: str) -> str:

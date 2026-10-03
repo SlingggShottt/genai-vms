@@ -127,3 +127,10 @@ class TestCutting:
     def test_overwrites_and_does_not_read_the_terminal(self) -> None:
         argv = cut_command(view(), "o.mp4")
         assert "-y" in argv and "-nostdin" in argv
+
+
+class TestTolerance:
+    def test_a_tenth_of_a_second_difference_in_length_is_refused_but_a_hair_is_not(self) -> None:
+        with pytest.raises(ValidationError, match="same length"):
+            candidate(views=[view("G420", 10, 50), view("G419", 20, 60.2)])
+        assert candidate(views=[view("G420", 10, 50), view("G419", 20, 60.04)])
