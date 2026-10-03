@@ -30,7 +30,23 @@ export function formatDateTime(date) {
   return dateFormatter.format(date);
 }
 
-/** `2 min ago` — always paired with an absolute time alongside it per
+const dayKeyFormatter = new Intl.DateTimeFormat('en-CA', {
+  timeZone: IST_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/** The clock time (`10:15:04`) for something that happened today in IST, the dated form
+ * (`5 Oct, 10:15`) for anything older — §B.8.
+ */
+export function formatAbsolute(date, now = new Date()) {
+  return dayKeyFormatter.format(date) === dayKeyFormatter.format(now)
+    ? formatClock(date)
+    : formatDateTime(date);
+}
+
+/** `2 min ago`  — always paired with an absolute time alongside it per
  * style_guide.md §B.8, never shown alone.
  */
 export function formatRelative(date, now = new Date()) {
