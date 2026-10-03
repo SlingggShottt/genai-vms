@@ -547,3 +547,71 @@ def test_on_the_real_annotations_the_defaults_give_enough_candidates() -> None:
     selection = load_selection(os.environ["MEVA_REPO"])
     assert len(selection.candidates) >= 250
     assert all(len(c.views) >= 2 for c in selection.candidates)
+
+
+class TestEdgesOfTheFormats:
+    def test_a_clip_whose_start_and_end_are_the_same_instant_is_zero_length_not_a_day(self) -> None:
+        parsed = parse_clip_name("2018-03-05.09-50-00.09-50-00.school.G420")
+        assert parsed is not None and parsed["end_s"] == parsed["start_s"]
+
+    def test_when_both_status_fields_are_present_src_status_wins(self, tmp_path: Path) -> None:
+        path = tmp_path / "x.activities.yml"
+        path.write_text(
+            "- {act: {act2: {a_b: 1.0}, id2: 1, timespan: [{tsr0: [1, 2]}], "
+            "src_status: good, src: truth, actors: []}}\n"
+        )
+        assert read_activities(path)[0].status == "good"
+
+
+class TestMergingTheSameActivity:
+    """Instances of one activity in different views are one episode when they overlap enough."""
+
+    def pick(self, table, by_clip):  # noqa: ANN001, ANN201
+        return select_candidates(
+            by_clip, table, MevaConfig(per_activity_cap=None, per_slot_cap=None)
+        )
+
+    def test_instances_that_overlap_by_half_are_the_same_episode(self, table) -> None:  # noqa: ANN001
+        # B's 2880-3480 is the same moment as A's 3000-3600; 150 frames later, the overlap is
+        # 450 of 750 frames (IoU 0.6)
+        shifted = {A: [act(start=3000, end=3600)], B: [act(start=2880 + 150, end=3480 + 150)]}
+        assert len(self.pick(table, shifted).candidates) == 1
+
+    def test_instances_that_overlap_by_a_fifth_are_two_episodes(self, table) -> None:  # noqa: ANN001
+        apart = {
+            A: [act(start=3000, end=3600)],
+            B: [act(start=2880 + 480, end=3480 + 480)],
+        }  # IoU 120/1080
+        assert len(self.pick(table, apart).candidates) == 2
+
+
+class TestCapsAcrossActivities:
+    def test_the_slot_cap_counts_candidates_of_every_activity_together(self, table) -> None:  # noqa: ANN001
+        activities = [
+            act("vehicle_drops_off_person", start=1000, end=1300, id2=1),
+            act("vehicle_picks_up_person", start=3000, end=3300, id2=2),
+            act("person_embraces_person", start=5000, end=5300, id2=3),
+        ]
+        capped = select_candidates(
+            {A: activities}, table, MevaConfig(per_slot_cap=1, per_activity_cap=None)
+        )
+        assert len(capped.candidates) == 1  # one scene: three activities share it
+        free = select_candidates(
+            {A: activities}, table, MevaConfig(per_slot_cap=None, per_activity_cap=None)
+        )
+        assert len(free.candidates) == 3
+
+
+class TestTheSummaryOrder:
+    def test_the_most_common_activity_is_listed_first(self, table) -> None:  # noqa: ANN001
+        activities = [
+            act("person_embraces_person", start=1000, end=1300, id2=1),
+            act("vehicle_drops_off_person", start=3000, end=3300, id2=2),
+            act("vehicle_drops_off_person", start=5000, end=5300, id2=3),
+        ]
+        text = summarise(
+            select_candidates(
+                {A: activities}, table, MevaConfig(per_slot_cap=None, per_activity_cap=None)
+            )
+        )
+        assert text.index("vehicle_drops_off_person") < text.index("person_embraces_person")

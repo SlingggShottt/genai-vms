@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -204,3 +205,80 @@ def test_the_summary_lists_each_class_and_what_was_noted() -> None:
     text = summarise(sel)
     assert "| Abuse | 2 | 1 |" in text and "| **all** | 2 | 1 |" in text
     assert "Noted: 1 too_short" in text
+
+
+class TestEdgesOfTheFormat:
+    def test_a_span_that_starts_at_the_first_frame_is_a_span(self, tmp_path: Path) -> None:
+        path = tmp_path / "a.txt"
+        path.write_text("Abuse001_x264.mp4 Abuse 0 150 -1 -1\n")
+        assert read_temporal_annotations(path)["Abuse001_x264.mp4"][1] == [Span(0.0, 5.0)]
+
+    def test_a_row_with_only_three_fields_is_not_a_row(self, tmp_path: Path) -> None:
+        path = tmp_path / "a.txt"
+        path.write_text("Abuse001_x264.mp4 Abuse 100\nAbuse002_x264.mp4 Abuse 100 200\n")
+        assert list(read_temporal_annotations(path)) == ["Abuse002_x264.mp4"]
+
+
+class TestEdgesOfTheWindow:
+    def pick(self, videos, annotations, **config):  # noqa: ANN001, ANN003, ANN201
+        return select_candidates(videos, annotations, UcfConfig(per_class_cap=None, **config))
+
+    def test_a_window_exactly_as_long_as_the_cap_is_not_shortened(self, tmp_path: Path) -> None:
+        path = tmp_path / "a.txt"
+        path.write_text(
+            "Fighting001_x264.mp4 Fighting 300 2100 -1 -1\n"
+        )  # 10 s to 70 s, +10 s each side
+        sel = self.pick(
+            [video("Fighting001_x264.mp4", "Fighting", None)], read_temporal_annotations(path)
+        )
+        assert (sel.candidates[0].views[0].start_s, sel.candidates[0].views[0].end_s) == (0.0, 80.0)
+        sel90 = self.pick(
+            [video("Fighting001_x264.mp4", "Fighting", None)],
+            read_temporal_annotations(path),
+            max_window_s=80.0,
+        )
+        assert sel90.skipped["window_shortened"] == 0 and sel90.candidates[0].views[0].end_s == 80.0
+
+    def test_a_video_exactly_one_second_long_is_kept_and_a_hair_less_is_not(self) -> None:
+        assert len(self.pick([video(duration=1.0)], {}).candidates) == 1
+        assert self.pick([video(duration=0.99)], {}).candidates == []
+
+
+class TestProbing2:
+    def fake(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        *,
+        returncode: int = 0,
+        stdout: str = "12.5\n",
+        error: Exception | None = None,
+    ):  # noqa: ANN202
+        monkeypatch.setattr("annotation_kit.ucf.shutil.which", lambda name: "/usr/bin/ffprobe")
+
+        def run(argv, **kwargs):  # noqa: ANN001, ANN003, ANN202
+            if error:
+                raise error
+            return type("R", (), {"returncode": returncode, "stdout": stdout})()
+
+        monkeypatch.setattr("annotation_kit.ucf.subprocess.run", run)
+
+    def test_reads_the_duration_ffprobe_prints(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        self.fake(monkeypatch)
+        assert probe_duration("a.mp4") == 12.5
+
+    def test_a_failing_ffprobe_is_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        self.fake(monkeypatch, returncode=1, stdout="12.5\n")
+        assert probe_duration("a.mp4") is None
+
+    @pytest.mark.parametrize(
+        "error", [OSError("no"), ValueError("bad"), subprocess.TimeoutExpired("x", 1)]
+    )
+    def test_trouble_running_it_is_none(
+        self, monkeypatch: pytest.MonkeyPatch, error: Exception
+    ) -> None:
+        self.fake(monkeypatch, error=error)
+        assert probe_duration("a.mp4") is None
+
+    def test_no_ffprobe_at_all_is_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr("annotation_kit.ucf.shutil.which", lambda name: None)
+        assert probe_duration("a.mp4") is None
