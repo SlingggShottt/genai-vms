@@ -81,6 +81,6 @@ model's `pseudo` draft with `edits` (what changed), so a reader can see what a p
 
 ## Input contract
 
-`phase_labels.jsonl` is one `phase_labels.v1` clip per line; see `../phase_export_example.json`. **This shape is
-a proposal** from this kit: the phase annotation kit (P3-D5) owns the export and should confirm or extend it
-(adding optional fields is fine).
+`phase_labels.jsonl` is one `phase_labels.v1` clip per line; see `../phase_export_example.json`. The shape is
+frozen: the phase annotation kit (P3-D5) produces it with `annotation-kit phase-convert` (see
+`../phase_guideline.md`), and adding an optional field is fine but anything else needs a new version.

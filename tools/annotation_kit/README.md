@@ -19,5 +19,25 @@ uv run annotation-kit convert export.json --out phavr_labels.jsonl [--report-jso
 | `prelabel.py` | prompt (`prompts/prelabel_1.0.md`), tolerant reply parser, Label Studio predictions; the model is a plain callable |
 | `convert.py`, `report.py` | export -> labels; how far people moved the drafts |
 
+The phase annotation kit (P3-D5; `ml/annotation/phase_guideline.md`) is in the same package:
+
+```bash
+uv run annotation-kit meva-candidates --repo <meva-data-repo> --out candidates.json
+uv run annotation-kit ucf-candidates --videos <dir> --annotations <txt> --out candidates.json
+uv run annotation-kit cut candidates.json --out-dir clips --source-prefix s3://b/=/data/ [--run]
+uv run annotation-kit phase-config --out ml/annotation/phase
+uv run annotation-kit phase-tasks candidates.json --clip-prefix s3://b/clips/ --out-dir tasks
+uv run annotation-kit phase-convert export.json --out phase_labels.jsonl
+uv run annotation-kit phase-agreement k.jsonl p.jsonl
+```
+
+| Module | Does |
+|---|---|
+| `candidates.py` | a candidate clip: its views, cut in sync; the ffmpeg cut commands |
+| `meva.py` | MEVA multi-view episodes from the clip table and the KPF annotations (verified on the real annotation repo) |
+| `ucf.py` | UCF-Crime candidates (**not verified against the real files**) |
+| `phaseconfig.py`, `phasetasks.py` | the timeline labelling config; candidates -> tasks and cut scripts |
+| `phaseconvert.py`, `agreement.py` | export -> `phase_labels.jsonl`; inter-annotator agreement |
+
 The model call itself runs in `ml/annotation/caption_vqa/prelabel_kaggle.ipynb` (it needs a GPU); everything
 else, including the notebook's pipeline with a placeholder model, is covered by `tests/unit`.
