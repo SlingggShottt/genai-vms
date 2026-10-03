@@ -13,6 +13,7 @@ dependencies = [
     "redis>=5.0",
     "numpy>=1.26",
     "pyjwt>=2.9",
+    "pyyaml>=6.0",
     # Pinned close to deploy/compose/docker-compose.yml's qdrant/qdrant:v1.11.5
     # server — qdrant-client warns above a 1-minor gap from the server it
     # talks to (verified: 1.19 against a v1.16 test container warns, though

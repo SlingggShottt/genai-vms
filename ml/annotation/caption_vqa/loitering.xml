@@ -1,0 +1,61 @@
+<View>
+  <Header value="Loitering: $phase phase, view $view" />
+  <Video name="video" value="$video" framerate="25" />
+  <Header value="Caption" />
+  <Header value="Describe only what is visible in this view during this phase, in one or two sentences. Say what people and objects do, not who they are or what they intend. If the draft is right, keep it; if not, rewrite it." />
+  <TextArea name="caption" toName="video" rows="3" editable="true" required="true" maxSubmissions="1" placeholder="What happens in this view during this phase?" />
+  <Header value="Is the person staying in roughly the same place?" />
+  <Choices name="loitering.staying_in_place" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the person looking around, or watching people or the area?" />
+  <Choices name="loitering.looking_around" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the person pacing back and forth?" />
+  <Choices name="loitering.pacing" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the person talking to, or waiting for, someone?" />
+  <Choices name="loitering.with_others" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the person carrying anything?" />
+  <Choices name="loitering.carrying_item" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the person near a door, gate or other entrance?" />
+  <Choices name="loitering.near_entrance" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="How many people are staying in the area?" />
+  <Choices name="loitering.person_count" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="1" />
+    <Choice value="2" />
+    <Choice value="3 or more" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Does anyone approach the person and speak to them?" />
+  <Choices name="loitering.approached" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is this clip usable? Choose No if this phase cannot be seen in this view." />
+  <Choices name="usable" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+  </Choices>
+</View>
