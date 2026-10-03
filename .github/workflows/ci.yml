@@ -37,6 +37,7 @@ jobs:
       retrieval: ${{ steps.filter.outputs.retrieval }}
       reasoning: ${{ steps.filter.outputs.reasoning }}
       camera_sim: ${{ steps.filter.outputs.camera_sim }}
+      annotation_kit: ${{ steps.filter.outputs.annotation_kit }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +52,8 @@ jobs:
               - '.github/workflows/ci.yml'
             vms_common:
               - 'libs/vms_common/**'
+              - 'config/vqa_bank.yaml'  # its tests check the bank against rules.yaml
+              - 'config/rules.yaml'
             vms_db:
               - 'libs/vms_db/**'
             api:
@@ -71,6 +74,11 @@ jobs:
               - 'services/reasoning/**'
             camera_sim:
               - 'tools/camera_sim/**'
+            annotation_kit:
+              - 'tools/annotation_kit/**'
+              - 'ml/annotation/**'
+              - 'config/vqa_bank.yaml'
+              - 'config/rules.yaml'
             frontend:
               - 'frontend/**'
 
@@ -278,6 +286,26 @@ jobs:
       - run: uv run ruff format --check tools/camera_sim
       - run: uv run pytest tools/camera_sim -m "not integration" || [ "$?" -eq 5 ]  # exit 5 = no tests collected yet (story not built)
 
+  lint-test-annotation-kit:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.annotation_kit == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      # ml/annotation holds the generated Label Studio configs and the pre-annotation notebook,
+      # which ruff lints and formats like any other code.
+      - run: uv run ruff check tools/annotation_kit ml/annotation
+      - run: uv run ruff format --check tools/annotation_kit ml/annotation
+      - run: uv run pytest tools/annotation_kit -m "not integration"
+
   # --- Frontend --------------------------------------------------------------
 
   frontend:
@@ -399,6 +427,7 @@ jobs:
       - lint-test-retrieval
       - lint-test-reasoning
       - lint-test-camera-sim
+      - lint-test-annotation-kit
       - frontend
       - docker-build-api
       - docker-build-ingestion

@@ -840,7 +840,7 @@ Contracts are **frozen on day 1 of the phase that needs them** (a 1-hour joint s
 | `event.v1` | D (events) | J (correlation, alerts, indexer) | P3 day 1 | `fixtures/event_v1_*.json` |
 | `correlation.v1` | J (correlation) | D (reasoning orchestrator, P5) | P3 day 1 | `fixtures/correlation_v1.json` |
 | `LLMGateway` interface + `models.yaml` | D | J (JIT, evidence, daily narrative) | P3 day 1 | stub `FakeGateway` in `vms_common.llm.testing` |
-| Phase label schema (annotation export) | D | J (caption/VQA builder) | P3 day 1 | `ml/annotation/phase_export_example.json` |
+| Phase label schema (annotation export) | D | J (caption/VQA builder) | P3 day 1 | `ml/annotation/phase_export_example.json` (**proposed by P3-J6; P3-D5 to confirm or extend**) |
 | `queryplan.v1`, `candidate.v1`, search response | D (text search) | J (JIT, image UI, eval harness) | P4 day 1 | `fixtures/search_*.json` |
 | Grounding + image-search response | J | D (search UI) | P4 day 1 | `fixtures/grounding_v1.json` |
 | `phasetimeline.v1` | D (orchestrator) | J (evidence) | P5 day 1 | `fixtures/phasetimeline_v1.json` |

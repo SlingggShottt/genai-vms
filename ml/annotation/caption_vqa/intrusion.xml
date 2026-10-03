@@ -1,0 +1,63 @@
+<View>
+  <Header value="Intrusion: $phase phase, view $view" />
+  <Video name="video" value="$video" framerate="25" />
+  <Header value="Caption" />
+  <Header value="Describe only what is visible in this view during this phase, in one or two sentences. Say what people and objects do, not who they are or what they intend. If the draft is right, keep it; if not, rewrite it." />
+  <TextArea name="caption" toName="video" rows="3" editable="true" required="true" maxSubmissions="1" placeholder="What happens in this view during this phase?" />
+  <Header value="Is anyone crossing a barrier such as a fence, gate or door?" />
+  <Choices name="intrusion.crossing_barrier" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is a person inside the restricted area?" />
+  <Choices name="intrusion.inside_restricted_area" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the person carrying anything?" />
+  <Choices name="intrusion.carrying_item" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is any staff member or guard visible?" />
+  <Choices name="intrusion.staff_visible" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Which way does the person move?" />
+  <Choices name="intrusion.direction" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Toward the restricted area" />
+    <Choice value="Away from it" />
+    <Choice value="Along its edge" />
+    <Choice value="Staying in place" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="How many people are involved?" />
+  <Choices name="intrusion.person_count" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="1" />
+    <Choice value="2" />
+    <Choice value="3 or more" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the area well lit?" />
+  <Choices name="intrusion.area_lit" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Does the person leave the camera's view?" />
+  <Choices name="intrusion.leaves_view" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is this clip usable? Choose No if this phase cannot be seen in this view." />
+  <Choices name="usable" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+  </Choices>
+</View>
