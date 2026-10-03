@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { connectWhep, hlsUrl } from '@/lib/mediamtx';
 import { formatClock } from '@/lib/time';
@@ -22,8 +22,16 @@ const FIRST_FRAME_TIMEOUT_MS = 5000;
  * bottom-left, no gradients over the video. Tries WebRTC (WHEP) first for
  * low latency, falls back to HLS via hls.js on failure (FR-LIVE-01).
  */
-export function VideoTile({ camera, focused = false, onDoubleClick }) {
+export function VideoTile({ camera, focused = false, onDoubleClick, videoElRef }) {
   const videoRef = useRef(null);
+  // `videoElRef` lets a parent reach the <video> (the zone editor captures a frame from it).
+  const setVideoEl = useCallback(
+    (element) => {
+      videoRef.current = element;
+      if (videoElRef) videoElRef.current = element;
+    },
+    [videoElRef],
+  );
   const [playbackState, setPlaybackState] = useState('connecting');
   const [now, setNow] = useState(() => new Date());
 
@@ -120,7 +128,7 @@ export function VideoTile({ camera, focused = false, onDoubleClick }) {
         focused && 'ring-2 ring-accent',
       )}
     >
-      <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+      <video ref={setVideoEl} autoPlay playsInline muted className="h-full w-full object-cover" />
 
       {playbackState === 'error' && (
         <div className="pointer-events-none absolute inset-0 flex select-none items-center justify-center bg-video-bg text-sm text-text-muted">

@@ -16,6 +16,7 @@ export default {
         'text-muted': 'var(--text-muted)',
         accent: 'var(--accent)',
         'accent-ink': 'var(--accent-ink)',
+        'accent-tint': 'var(--accent-tint)',
         'sev-low': 'var(--sev-low)',
         'sev-medium': 'var(--sev-medium)',
         'sev-high': 'var(--sev-high)',

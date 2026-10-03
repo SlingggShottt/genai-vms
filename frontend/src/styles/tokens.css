@@ -26,6 +26,8 @@
   --sev-high-tint: color-mix(in srgb, var(--sev-high) 16%, transparent);
   --sev-critical-tint: color-mix(in srgb, var(--sev-critical) 16%, transparent);
   --scrim: color-mix(in srgb, var(--video-bg) 60%, transparent);
+  /* The zone editor's polygon fill: the accent at 22%, so the frame stays visible through it. */
+  --accent-tint: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 :root[data-theme='light'] {

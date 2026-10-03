@@ -52,4 +52,7 @@ export function stubApi(apiClient, routes) {
     });
   apiClient.get.mockImplementation(answer('GET'));
   apiClient.post.mockImplementation(answer('POST'));
+  // Tests of pages that edit things mock these two as well; the older ones mock only get/post.
+  apiClient.patch?.mockImplementation(answer('PATCH'));
+  apiClient.delete?.mockImplementation(answer('DELETE'));
 }
