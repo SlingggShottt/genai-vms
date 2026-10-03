@@ -52,7 +52,9 @@ def test_migration_0004_creates_candidates_as_the_model_declares_it() -> None:
             os.environ.pop("VMS_DB_DSN", None)
 
     model = Base.metadata.tables["events.candidates"]
-    assert created["tables"] == {"candidates"}
+    # Later migrations add their own tables to the `events` schema (0006: correlation_*), so the
+    # table is asserted present, not alone.
+    assert "candidates" in created["tables"]
     assert created["columns"] == set(model.c.keys())
     assert created["checks"] == {"ck_candidates_status", "ck_candidates_severity"}
     assert created["indexes"] == {i.name for i in model.indexes}
@@ -65,7 +67,7 @@ def test_migration_0004_creates_candidates_as_the_model_declares_it() -> None:
 
     assert after_downgrade["schema_exists"] is False
     assert after_downgrade["version_table"]
-    assert after_reupgrade["tables"] == {"candidates"}
+    assert "candidates" in after_reupgrade["tables"]
 
 
 async def _inspect(dsn: str) -> dict:

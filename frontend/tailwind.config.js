@@ -16,12 +16,18 @@ export default {
         'text-muted': 'var(--text-muted)',
         accent: 'var(--accent)',
         'accent-ink': 'var(--accent-ink)',
+        'accent-tint': 'var(--accent-tint)',
         'sev-low': 'var(--sev-low)',
         'sev-medium': 'var(--sev-medium)',
         'sev-high': 'var(--sev-high)',
         'sev-critical': 'var(--sev-critical)',
         ok: 'var(--ok)',
         'video-bg': 'var(--video-bg)',
+        'sev-low-tint': 'var(--sev-low-tint)',
+        'sev-medium-tint': 'var(--sev-medium-tint)',
+        'sev-high-tint': 'var(--sev-high-tint)',
+        'sev-critical-tint': 'var(--sev-critical-tint)',
+        scrim: 'var(--scrim)',
       },
       fontFamily: {
         sans: ['Barlow', 'system-ui', 'sans-serif'],
@@ -44,6 +50,10 @@ export default {
         6: '24px',
         8: '32px',
         12: '48px',
+      },
+      // AlertItem's severity bar is 3 px (§B.7), between Tailwind's 2 and 4.
+      borderWidth: {
+        3: '3px',
       },
       borderRadius: {
         tile: '2px',

@@ -6,9 +6,9 @@ Auth/RBAC, CRUD, recordings playlists, alerts (Kafka to WebSocket), notifier plu
 |---|---|
 | **Owner** | Jatin |
 | **Port** | 8000 |
-| **Topics** | consumes vms.events.v1, vms.correlations.v1, vms.incidents.v1 (land with P3-J3) |
+| **Topics** | consumes `vms.events.v1` (`event.v1`) and `vms.correlations.v1` (`correlation.v1`) since P3-J3; `vms.incidents.v1` lands with P5 |
 | **Config** | `src/api/settings.py` via `vms_common.config` (pydantic-settings) — never `os.environ` directly |
-| **Metrics** | `/metrics` (Prometheus text format) — endpoint-specific metrics land as each area is implemented; see `docs/design_architecture.md §15` |
+| **Metrics** | `/metrics` (Prometheus text format): `vms_api_alerts_created_total{severity}`, `_alerts_skipped_total{reason}`, `_alert_actions_total{action}`, `_alert_announcements_skipped_total{reason}`, `_ws_connections`, `_ws_messages_total{type}`, `_ws_dropped_total`, `_ws_publish_errors_total`, `_notifications_total{channel,result}`; others land as each area is implemented (`docs/design_architecture.md §15`) |
 
 ## Run
 
@@ -65,6 +65,61 @@ cameras). `libs/vms_common/contracts/zones.py` (P2-D3's proposed day-1
 contract) needed no field changes, just its docstring updated now that
 it's the real thing.
 
+**P3-J1** — Camera links / topology (`api/topology.py`): `GET/POST /topology/edges`
+(`?camera_id=` filters to edges touching a camera), `PATCH/DELETE /topology/edges/{id}`
+(admin write, any role read). An edge is `overlap` (cameras see the same area: carries
+`tolerance_s`, default 5 s, always bidirectional) or `transit` (`to` reachable from `from` in
+`min_s..max_s` seconds, one-way unless `bidirectional`). Validation answers 400 with the
+reason: parameters must suit the type (`api/domain/topology.py`, pure), a camera cannot link to
+itself, and both cameras must exist (404) and share a site (correlation groups are per site).
+Duplicates are 409 — including the reverse of an overlap edge (overlap is symmetric) and a
+transit edge a bidirectional one already covers — checked up front and again by the database
+(unique constraint + a partial unique index on the unordered overlap pair), so a race between
+two requests yields one 201 and 409s, never a 500. PATCH changes only the parameters; an edge's
+cameras and type are its identity (delete and recreate), and the result of a PATCH must still be
+a valid edge of its type. `core.topology_edges` (migration `0005`) has CHECK constraints for the
+same rules, so no writer can store a malformed edge; deleting a camera deletes its edges.
+`GET /internal/v1/topology` (service-token gated) returns the graph with camera **codes**, the
+shape `libs/vms_common/contracts/topology.py` + `fixtures/topology_internal.json` define, for the
+correlation service (P3-J2).
+
+**P3-J3** — Alerts, the live channel and notifiers (`api/alerts.py`, `api/correlations.py`,
+`api/ws.py`, `consumers/`, `realtime/`, `notifiers/`; full contract in `docs/design_architecture.md §9`).
+
+```
+event.v1 ─▶ ≥ VMS_ALERTS_MIN_SEVERITY? ─▶ INSERT core.alerts (event_id unique) ─▶ commit ─▶ dispatch to notifiers
+correlation.v1 ─▶ set / re-point alerts' group_id ─▶ commit ─▶ publish alert.updated          │
+                                                                                               ▼
+POST /alerts/{id}/ack|resolve ─▶ conditional UPDATE ─▶ audit ─▶ publish alert.updated ─▶ Redis channel ─▶ every replica's hub ─▶ sockets
+```
+
+- **Endpoints:** `GET /alerts`, `GET /alerts/{id}`, `POST /alerts/{id}/ack`, `POST /alerts/{id}/resolve`
+  (operator and admin; a viewer gets 403), `GET /correlations`, `GET /correlations/{id}` (every role),
+  `WS /api/v1/ws?token=` (every role; what each receives is filtered by role).
+- **Idempotent and ordered:** the unique `event_id` — not a prior `SELECT` — makes a redelivered or
+  concurrently handled event produce exactly one alert and one announcement. Announcing happens *after*
+  the commit, can never fail the message, and never repeats.
+- **Notifiers:** `VMS_NOTIFY_CHANNELS=dashboard` by default. `email,telegram` are implemented and off until
+  named; a channel without credentials stops start-up with the reason. Bot tokens and SMTP errors never reach
+  logs or exceptions (the Telegram url contains the token). At-most-once: a crash between commit and send loses
+  that notification, not the alert.
+- **Replaying history is quiet:** an event that ended more than `VMS_ALERTS_NOTIFY_MAX_AGE_SECONDS` (900) ago is
+  stored as an alert but not announced.
+- **Two replicas:** every replica subscribes to the Redis channel `vms:ws:broadcast`; whichever replica
+  handles a request or a Kafka partition publishes there. Both consumers use their own consumer groups
+  (`api-alerts`, `api-alerts-correlations`), so they scale with partitions like any other consumer.
+- **Cancellation:** background loops notice a cancel that a library swallowed or rewrote (`api/cancellation.py`;
+  redis-py 8.1 loses a cancel that lands mid-connect) and shutdown waits at most 5 s per task, logging
+  `background_task_did_not_stop` with the stack if one refuses.
+
+Env (`VMS_ALERTS_*`): `MIN_SEVERITY` (medium), `CONSUMERS_ENABLED` (true), `NOTIFY_MAX_AGE_SECONDS` (900),
+`WS_QUEUE_SIZE` (100), `EVENTS_TOPIC`, `CORRELATIONS_TOPIC`, `EVENTS_GROUP`, `CORRELATIONS_GROUP`.
+Env (`VMS_NOTIFY_*`): `CHANNELS`, `TIMEOUT_SECONDS`, `SMTP_HOST/PORT/USERNAME/PASSWORD/STARTTLS`, `EMAIL_FROM`,
+`EMAIL_TO`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. Kafka as everywhere (`VMS_KAFKA_*`).
+
+Not yet: `GET /events` (needs P3-D4's `events.events`), and nothing publishes `camera.status`, `job.progress`
+or `incident.ready` yet — the channel carries and role-filters them (`WS_MESSAGE_ROLES`) for when something does.
+
 **P2-J3** — Recordings & twin overlay endpoints, all roles read
 (`api/recordings.py`, `api/twin.py`):
 - `GET /recordings/{camera_id}/segments` — `media.segments` in `[start,
@@ -101,6 +156,25 @@ that track (`adapters/tracks.py`) rather than read off `vision.tracks`
 itself, since a track can leave and re-enter frame within its overall
 `first_ts`/`last_ts` span, so only the per-segment rows know actual time
 in view.
+
+**Writes are committed before the response** — endpoints take `SessionDep` (`api/deps.py`), never a bare
+`Depends(get_session)`. FastAPI runs a `yield` dependency's exit code (where the transaction commits) _after_ the
+response is sent unless the dependency has `scope="function"`, so a client that re-read at once — the frontend
+refetching a list after a save — could be handed the old data (and stay on it: nothing refetches twice), and a commit
+that failed would follow a "201 Created". Found by driving the P3-J5 editors in a real browser; in-process test clients
+wait for the whole call, so only a test that watches the ASGI send order can see it
+(`tests/unit/test_session_commits_before_response.py`, which also fails if an endpoint goes round `SessionDep`).
+
+
+## Tests
+
+```bash
+make test SVC=api        # 254 unit tests: alert rules, notifiers (incl. real-socket SMTP/HTTP), hub, cancellation, supervisor, settings
+make test-int            # Postgres + Redis + S3 double (+ Kafka for the e2e): REST, consumers, WebSocket, role matrix
+```
+
+`domain/` is pure (no I/O). The WebSocket tests run two api apps against one Redis (the two-replica case) and
+a real Kafka broker drives the event → alert → push path end to end.
 
 Not yet implemented: everything else in `docs/design_architecture.md §9`
 — see `docs/backlog.md`.

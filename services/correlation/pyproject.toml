@@ -3,10 +3,19 @@ name = "vms-correlation"
 version = "0.1.0"
 description = "Topology-aware time-aligned linking of verified events across cameras; group open/close."
 requires-python = ">=3.11"
-dependencies = ["vms-common"]
+dependencies = [
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "vms-common",
+    "vms-db",
+]
+
+[project.scripts]
+correlation = "correlation.main:main"
 
 [tool.uv.sources]
 vms-common = { workspace = true }
+vms-db = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

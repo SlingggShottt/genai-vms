@@ -356,3 +356,28 @@ services:
     volumes:
       - ../../config:/app/config:ro
     restart: unless-stopped
+
+  # Links verified events across cameras (event.v1 -> events.correlation_groups ->
+  # correlation.v1, P3-J2). Needs migration 0006 (`make migrate`). The camera graph comes
+  # from config/topology.yaml (copy topology.example.yaml) until the api is a Compose
+  # service; with no file every event is its own group.
+  correlation:
+    profiles: [core]
+    container_name: vms-correlation
+    build:
+      context: ../.. # repo root — see services/correlation/Dockerfile
+      dockerfile: services/correlation/Dockerfile
+    networks: [vms-net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      VMS_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
+      VMS_CORRELATION_CONFIG_PATH: /app/config/correlation.yaml
+      VMS_CORRELATION_TOPOLOGY_YAML_FALLBACK: /app/config/topology.yaml
+    volumes:
+      - ../../config:/app/config:ro
+    restart: unless-stopped

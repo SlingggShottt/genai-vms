@@ -263,6 +263,21 @@ genai-vms/
 }
 ```
 
+*Notes on `event.v1` (fixtures `fixtures/event_v1_*.json`):* only **verified** events are published —
+`verification.status` is `verified`, or `skipped` (a `verify: false` rule, or the gateway being down for a
+low-severity event); rejected candidates are stored but never sent. `event_type` is an open string
+(intrusion, loitering, crowding, abandoned_object, running today) so a new rule cannot break a consumer's
+parser; `event_id` is a UUID; `camera_id` is the camera's code.
+
+*Notes on `correlation.v1` (fixtures `fixtures/correlation_v1*.json`):* every message carries the group's whole
+current state, so a consumer needs only the newest. `status` is `open` (still collecting; re-sent as it grows,
+at most every 5 s), `closed` (final — reasoning runs on this) or `merged` (final for *this* id: a later event
+bridged it with another group and `merged_into` names the survivor, which now holds its events; `merged_into` is
+set if and only if the status is `merged`). `revision` rises with every change so a consumer can drop an older or
+duplicated message. `event_types` lists the distinct event types. For a `transit` link `delta_s` is
+`start(event on the to-camera) − end(event on the from-camera)`; for `overlap` it is the gap between the two
+windows (0 when they intersect). Links are in a canonical order (by event ids).
+
 **`incidentready.v1`** — reasoning → indexer, api
 ```json
 {
@@ -322,6 +337,8 @@ Key columns (selected):
 - `media.segments(segment_id text pk, camera_id, start_ts timestamptz, end_ts, uri, twin_uri, indexed_at)` — index `(camera_id, start_ts)`
 - `events.candidates(id uuid pk, site_id, camera_id, rule_id, event_type, severity, zone_id text, zone_name text, track_ids text[], segment_ids text[], start_ts, end_ts, rule_score float, status text CHECK in (open, closed), details jsonb, created_at, updated_at)` — written by the events service (P3-D1). `id` is a deterministic UUIDv5 of `camera|rule|zone|track|start_ts`, so replays upsert; `zone_id` is text (the YAML fallback's ids aren't `core.zones` UUIDs); `status` only moves open → closed. Indexes `(camera_id, start_ts)` and `(status)`.
 - `events.events(id, camera_id, event_type, severity, start_ts, end_ts, rule_id, rule_score, zone_id, track_ids text[], verification jsonb, group_id null, status enum(open,acknowledged,resolved))`
+- `events.correlation_groups(id uuid pk, site_id, status CHECK in (open, closed, merged), revision int, start_ts, end_ts, max_severity, camera_ids text[], event_types text[], event_ids text[] /* GIN-indexed: "which group holds this event?" */, members jsonb /* snapshot of what linking needs */, merged_into uuid null FK→self ON DELETE CASCADE, publish_pending bool, last_published_at, closed_at, created_at, updated_at)` and `events.correlation_links(id, group_id fk CASCADE, from_event, to_event, edge_type, delta_s, score)` with `(from_event, to_event)` unique — written by the correlation service (P3-J2). A merged group is only history of its survivor (`merged_into` is required for status `merged`, hence the cascade); `publish_pending` stays true from a change until its `correlation.v1` is acknowledged, which is what makes a crash between storing and sending recoverable. A group row is replaced only by a newer `revision`.
+- `core.alerts(id uuid pk (uuid7), event_id text UNIQUE /* idempotency key: a redelivered event.v1 raises no second alert */, site_id, camera_id /* camera code */, event_type, severity CHECK in (low, medium, high, critical), rule_id, zone_id, title, caption, verification_status, confidence, start_ts, end_ts, keyframe_uris text[] /* s3:// only; presigned per request */, group_id uuid null /* correlation group; NOT an FK — the group lives in the events schema and merges independently */, status CHECK in (open, acknowledged, resolved), acknowledged_by/_at/ack_note, resolved_by/_at/resolve_note, created_at, updated_at)` — written by the api (P3-J3). A CHECK ties `status` to its timestamps (open: neither; acknowledged: `acknowledged_at`; resolved: `resolved_at`, acknowledgement optional), so a row cannot claim a step that did not happen; indexes on `(status, created_at)`, `(group_id)`, `(camera_id, created_at)`.
 - `reasoning.incidents(id, group_id, status enum(generating,generated,failed,reviewed,closed), severity, title, report jsonb, report_uri, pdf_uri, provenance jsonb, created_at)`
 
 ### 6.2 Qdrant collections (owner: J; query side: D)
@@ -444,6 +461,14 @@ close group when now − last_event_end > max_transit(group cameras) + grace (de
 publish correlation.v1 on open→update (throttled 5 s) and on close
 ```
 Events with no links become single-event groups (still closed and published, so reasoning can run on them if severe enough). Appearance similarity is **future work** (ADR-008).
+
+**As built (P3-J2, `services/correlation`).** The sketch above is implemented literally; what it left open:
+- *Overlap fit.* Each event's window is widened by τ on both sides, so events link when the gap between the real windows is ≤ 2τ; fit is 1 when they intersect and falls linearly to 0 at 2τ. *Transit fit* is 1 at the centre of `[min, max]` and 0 at its bounds (a zero-width window fits only exactly).
+- *Compatibility* is a symmetric matrix in `config/correlation.yaml`; an unlisted pair of event types is incompatible and never links. Events on one camera never link. If several edges join two cameras the best-scoring link is kept; every link of a new event to an open group's events is recorded.
+- *Merge.* Groups are ordered by creation time (not by id: UUIDv7 is only ordered across milliseconds); the oldest survives and absorbs the others' events and links; each absorbed group is announced once as `merged`. `max_group_events` (default 50) is a safety valve: a link that would grow a group past it is not made.
+- *Close.* A group closes when `now − last_event_end > window + grace`, where `window` is the longest transit `max_s` — or twice the largest overlap tolerance — over the edges touching the group's cameras (0 for a camera with no edges). `now` is the wall clock; a replayed backlog therefore closes immediately.
+- *Publish.* An open group is announced when created and then at most every 5 s; closed and merged groups at once. Delivery is at-least-once with a durable `publish_pending` flag; duplicates are told apart by `group_id` + `revision`.
+- *Scope.* One instance per consumer group (a lock keeps closing and joining from interleaving). An event re-sent with a later end time is treated as a duplicate.
 
 ### 7.6 Event lifecycle
 ```mermaid
@@ -609,6 +634,25 @@ Base path `/api/v1`. JSON errors use the envelope in `style_guide.md §A.5`.
 | Ops | `GET /health`, `GET /ready`, `GET /metrics` | public/internal |
 
 **WebSocket message types:** `alert.created`, `alert.updated`, `camera.status`, `job.progress`, `incident.ready`.
+
+**Not built:** `GET /cameras/{id}/snapshot` (listed above). The zone editor (P3-J5) takes its still from the
+camera's live view in the browser instead (`frontend/src/features/zones/captureFrame.js`), so zones can only be drawn
+while the camera is streaming. An api snapshot (the latest keyframe, presigned) would remove that limit.
+
+**Writes are committed before the response is sent.** Endpoints take `SessionDep` (`api/api/deps.py`), not a bare
+`Depends(get_session)`: FastAPI runs a `yield` dependency's exit code (the commit) *after* the response by default, so a
+client that re-reads at once (a UI refetch) could get the old data, and a failed commit would follow a success
+response. `tests/unit/test_session_commits_before_response.py` guards it.
+
+**Alerts & the live channel (P3-J3).**
+- An alert is one row per verified `event.v1` whose severity is at or above `VMS_ALERTS_MIN_SEVERITY` (default `medium`); lower-severity events are still stored and searchable, they just do not interrupt anyone. The api consumes `vms.events.v1` (group `api-alerts`) and `vms.correlations.v1` (group `api-alerts-correlations`) itself; each consumer runs under a supervisor that restarts it with backoff, so Kafka being down at start-up, or going away later, never takes the HTTP API down. `VMS_ALERTS_CONSUMERS_ENABLED=false` makes a replica serve HTTP/WS only.
+- Lifecycle: `open → acknowledged → resolved`; an operator may resolve straight from `open` (false alarm). Each move is one conditional `UPDATE`, so of two operators acting at once exactly one wins and the other gets `409` with `details.status`. Both write an audit entry (`alert.acknowledged` / `alert.resolved`, the note in `details`).
+- `correlation.v1` sets each alert's `group_id` (a `merged` message re-points the absorbed group's alerts to the survivor; a stale `open` message cannot undo a merge, because the group's state in the database — written before it is announced — decides). `GET /alerts/{id}` returns the group as correlation holds it now, following merges.
+- `GET /alerts` is cursor-paginated newest first with filters `status` (repeatable), `severity` (repeatable), `camera_id` (code), `group_id`, `start`/`end` (on the event's start). Keyframes come back as presigned GET urls (≤ 15 min) made per request; WebSocket messages never carry urls (`keyframe_count` tells the UI whether to fetch them).
+- `GET /correlations` (window overlaps `[start, end)`, merged groups hidden unless `status=merged`) and `GET /correlations/{id}` (members + links) are readable by every role; the story of an incident is not operator-only even though alerts are.
+- **`WS /api/v1/ws?token=<access token>`** is server → client only (anything the client sends is ignored). The token is a query parameter because browsers cannot set headers on a WebSocket; it is short-lived and the connection ends when it does. The role is the user's *current* role (re-read at connect); a deactivated user is refused. The socket is accepted first and then closed with an application code a browser can read: **4401** token missing/invalid/expired or user gone (refresh the token, reconnect), **1013** the client fell too far behind its bounded queue (reconnect and refetch). Who receives what: `alert.created`, `alert.updated`, `job.progress` → admin, operator; `camera.status`, `incident.ready` → every role; an unknown type reaches nobody.
+- Fan-out across replicas: whoever produces a message publishes it to one Redis channel (`vms:ws:broadcast`); every replica subscribes and feeds its own connections. Pub/sub keeps nothing — a push is a hint, the state is in Postgres, a client that missed one refetches.
+- **Notifiers** (`api/notifiers/`): one `Notifier` interface (`name`, `async send(notice)`); `VMS_NOTIFY_CHANNELS` (default `dashboard`) picks `dashboard` (the `alert.created` push), `email` (SMTP, `VMS_NOTIFY_SMTP_*`, `VMS_NOTIFY_EMAIL_FROM/TO`), `telegram` (`VMS_NOTIFY_TELEGRAM_BOT_TOKEN/CHAT_ID`). Choosing a channel without its credentials fails at start-up. The dispatcher sends to all channels concurrently, each bounded by `VMS_NOTIFY_TIMEOUT_SECONDS`, and a failing channel never affects the others or the stored alert. Announcements are **at-most-once**: a crash between the database commit and the send loses that notification (the alert and its dashboard row are safe). An event that ended more than `VMS_ALERTS_NOTIFY_MAX_AGE_SECONDS` (900) ago is stored but not announced — a fresh consumer group replays the whole topic and must not email a month of history.
 
 **Playback strategy:** `playlist.m3u8` is generated on the fly as an HLS VOD playlist listing presigned URLs of the `.ts` segments covering `[start, end]` (with `#EXT-X-PROGRAM-DATE-TIME` so the UI can map player time → wall clock). No transcoding.
 
@@ -837,6 +881,7 @@ Contracts are **frozen on day 1 of the phase that needs them** (a 1-hour joint s
 | MediaMTX path naming `rtsp://…/cam{n}`, HLS/WebRTC URLs | D | J (live wall) | P1 day 1 | `docs` + compose |
 | `twin.v1` + `twinready.v1` + `.npz` layout | D (perception) | J (indexer, playback overlay) | P2 day 1 | `fixtures/twin_v1.json`, `fixtures/embeddings.npz` |
 | Zones internal API | J (api) | D (perception, events) — YAML fallback | P2 day 1 | `fixtures/zones_internal.json` |
+| Topology internal API `/internal/v1/topology` | J (api) | J (correlation) — YAML fallback | P3 day 1 | `fixtures/topology_internal.json` |
 | `event.v1` | D (events) | J (correlation, alerts, indexer) | P3 day 1 | `fixtures/event_v1_*.json` |
 | `correlation.v1` | J (correlation) | D (reasoning orchestrator, P5) | P3 day 1 | `fixtures/correlation_v1.json` |
 | `LLMGateway` interface + `models.yaml` | D | J (JIT, evidence, daily narrative) | P3 day 1 | stub `FakeGateway` in `vms_common.llm.testing` |
