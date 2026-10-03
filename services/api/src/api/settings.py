@@ -6,16 +6,21 @@ os.environ directly (docs/style_guide.md §A.1).
 
 from __future__ import annotations
 
+from typing import Literal
+
 from email_validator import EmailNotValidError, validate_email
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import SettingsConfigDict
 from vms_common.config import (
     DatabaseSettings,
     JWTSettings,
+    KafkaSettings,
     RedisSettings,
     StorageSettings,
     VMSBaseSettings,
 )
+
+NOTIFY_CHANNELS = ("dashboard", "email", "telegram")
 
 
 class AdminSeedSettings(VMSBaseSettings):
@@ -60,6 +65,97 @@ class AdminSeedSettings(VMSBaseSettings):
         return self
 
 
+class AlertSettings(VMSBaseSettings):
+    """`VMS_ALERTS_*` — which events become alerts and how they reach the api (P3-J3)."""
+
+    model_config = SettingsConfigDict(env_prefix="VMS_ALERTS_", env_file=".env", extra="ignore")
+
+    # FR-ALR-01: "verified events at or above a configured severity". Lower-severity events
+    # are still stored and searchable; they just do not interrupt anyone.
+    min_severity: Literal["low", "medium", "high", "critical"] = Field(default="medium")
+    # An event that ended longer ago than this still becomes an alert (the history is real) but
+    # is not announced: a fresh consumer group replays the whole topic, and that must not email
+    # or pop up a month of old incidents.
+    notify_max_age_seconds: float = Field(default=900.0, gt=0)
+    # The api consumes event.v1 / correlation.v1 itself; switch off for an api replica that
+    # should only serve HTTP/WS, or for tests that have no Kafka.
+    consumers_enabled: bool = Field(default=True)
+    events_topic: str = Field(default="vms.events.v1")
+    correlations_topic: str = Field(default="vms.correlations.v1")
+    events_group: str = Field(default="api-alerts")
+    correlations_group: str = Field(default="api-alerts-correlations")
+    # Messages a WebSocket client may have waiting; a client further behind than this is
+    # disconnected (it reconnects and refetches) rather than buffered without bound.
+    ws_queue_size: int = Field(default=100, gt=0)
+
+
+class NotifySettings(VMSBaseSettings):
+    """`VMS_NOTIFY_*` — notification channels (FR-ALR-03). `dashboard` (the WebSocket push) is
+    on by default; `email` and `telegram` are implemented but off until named in `channels`.
+
+    Choosing a channel without its credentials is a startup error, not a notification that
+    silently never goes out.
+    """
+
+    model_config = SettingsConfigDict(env_prefix="VMS_NOTIFY_", env_file=".env", extra="ignore")
+
+    channels: str = Field(default="dashboard", description="comma list of dashboard,email,telegram")
+    timeout_seconds: float = Field(default=10.0, gt=0)
+
+    smtp_host: str = Field(default="")
+    smtp_port: int = Field(default=587, gt=0)
+    smtp_username: str = Field(default="")
+    smtp_password: SecretStr = Field(default=SecretStr(""))
+    smtp_starttls: bool = Field(default=True)
+    email_from: str = Field(default="")
+    email_to: str = Field(default="", description="comma list of recipients")
+
+    telegram_bot_token: SecretStr = Field(default=SecretStr(""))
+    telegram_chat_id: str = Field(default="")
+
+    @property
+    def enabled_channels(self) -> list[str]:
+        return [c.strip().lower() for c in self.channels.split(",") if c.strip()]
+
+    @property
+    def email_recipients(self) -> list[str]:
+        return [a.strip() for a in self.email_to.split(",") if a.strip()]
+
+    @model_validator(mode="after")
+    def _channels_are_known_and_configured(self) -> NotifySettings:
+        channels = self.enabled_channels
+        unknown = sorted(set(channels) - set(NOTIFY_CHANNELS))
+        if unknown:
+            raise ValueError(
+                f"VMS_NOTIFY_CHANNELS names unknown channel(s) {unknown}; "
+                f"known: {list(NOTIFY_CHANNELS)}"
+            )
+        if "email" in channels:
+            missing = [
+                name
+                for name, value in (
+                    ("VMS_NOTIFY_SMTP_HOST", self.smtp_host),
+                    ("VMS_NOTIFY_EMAIL_FROM", self.email_from),
+                    ("VMS_NOTIFY_EMAIL_TO", self.email_recipients),
+                )
+                if not value
+            ]
+            if missing:
+                raise ValueError(f"the email channel needs {', '.join(missing)}")
+        if "telegram" in channels:
+            missing = [
+                name
+                for name, value in (
+                    ("VMS_NOTIFY_TELEGRAM_BOT_TOKEN", self.telegram_bot_token.get_secret_value()),
+                    ("VMS_NOTIFY_TELEGRAM_CHAT_ID", self.telegram_chat_id),
+                )
+                if not value
+            ]
+            if missing:
+                raise ValueError(f"the telegram channel needs {', '.join(missing)}")
+        return self
+
+
 class ApiSettings(VMSBaseSettings):
     """`VMS_API_*` env vars, plus the shared database/JWT blocks."""
 
@@ -79,3 +175,6 @@ class ApiSettings(VMSBaseSettings):
     admin: AdminSeedSettings = Field(default_factory=AdminSeedSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
+    kafka: KafkaSettings = Field(default_factory=KafkaSettings)
+    alerts: AlertSettings = Field(default_factory=AlertSettings)
+    notify: NotifySettings = Field(default_factory=NotifySettings)
