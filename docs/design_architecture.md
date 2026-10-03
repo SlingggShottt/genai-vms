@@ -837,6 +837,7 @@ Contracts are **frozen on day 1 of the phase that needs them** (a 1-hour joint s
 | MediaMTX path naming `rtsp://…/cam{n}`, HLS/WebRTC URLs | D | J (live wall) | P1 day 1 | `docs` + compose |
 | `twin.v1` + `twinready.v1` + `.npz` layout | D (perception) | J (indexer, playback overlay) | P2 day 1 | `fixtures/twin_v1.json`, `fixtures/embeddings.npz` |
 | Zones internal API | J (api) | D (perception, events) — YAML fallback | P2 day 1 | `fixtures/zones_internal.json` |
+| Topology internal API `/internal/v1/topology` | J (api) | J (correlation) — YAML fallback | P3 day 1 | `fixtures/topology_internal.json` |
 | `event.v1` | D (events) | J (correlation, alerts, indexer) | P3 day 1 | `fixtures/event_v1_*.json` |
 | `correlation.v1` | J (correlation) | D (reasoning orchestrator, P5) | P3 day 1 | `fixtures/correlation_v1.json` |
 | `LLMGateway` interface + `models.yaml` | D | J (JIT, evidence, daily narrative) | P3 day 1 | stub `FakeGateway` in `vms_common.llm.testing` |

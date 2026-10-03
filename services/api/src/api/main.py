@@ -24,6 +24,7 @@ from api.api.health import router as health_router
 from api.api.internal import router as internal_router
 from api.api.middleware import RequestIDMiddleware
 from api.api.recordings import router as recordings_router
+from api.api.topology import router as topology_router
 from api.api.tracks import router as tracks_router
 from api.api.twin import router as twin_router
 from api.api.users import router as users_router
@@ -90,6 +91,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app.include_router(users_router, prefix="/api/v1")
     app.include_router(cameras_router, prefix="/api/v1")
     app.include_router(zones_router, prefix="/api/v1")
+    app.include_router(topology_router, prefix="/api/v1")
     app.include_router(recordings_router, prefix="/api/v1")
     app.include_router(twin_router, prefix="/api/v1")
     app.include_router(tracks_router, prefix="/api/v1")
