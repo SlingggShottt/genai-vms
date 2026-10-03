@@ -37,7 +37,10 @@ def _bank(**event_types: list[dict[str, object]]) -> dict[str, object]:
 class TestTheCommittedBank:
     """config/vqa_bank.yaml is what annotators verify and what the adapter is scored on."""
 
-    bank = load_vqa_bank(REPO / "config/vqa_bank.yaml")
+    @pytest.fixture(autouse=True)
+    def _load(self) -> None:
+        # Per test, not at import: a bad bank then fails these tests, not the module's collection.
+        self.bank = load_vqa_bank(REPO / "config/vqa_bank.yaml")
 
     def test_loads_and_has_a_default_set(self) -> None:
         assert DEFAULT_EVENT_TYPE in self.bank.event_types
@@ -72,6 +75,33 @@ class TestTheCommittedBank:
         for questions in self.bank.event_types.values():
             for question in questions:
                 assert question.answers[-1] == CANNOT_TELL
+
+
+class TestTheLimitsAsWritten:
+    """The numbers in the spec (5-8 questions, 2-6 options), not the constants that hold them."""
+
+    @pytest.mark.parametrize("count", [5, 8])
+    def test_five_and_eight_questions_are_accepted(self, count: int) -> None:
+        assert (
+            len(parse_vqa_bank(_bank(alpha=_questions("alpha", count))).event_types["alpha"])
+            == count
+        )
+
+    @pytest.mark.parametrize("count", [4, 9])
+    def test_four_and_nine_questions_are_refused(self, count: int) -> None:
+        with pytest.raises(ValidationError, match="5 to 8 questions"):
+            parse_vqa_bank(_bank(alpha=_questions("alpha", count)))
+
+    @pytest.mark.parametrize("count", [2, 6])
+    def test_two_and_six_options_are_accepted(self, count: int) -> None:
+        options = [f"o{i}" for i in range(count)]
+        assert VQAQuestion(id="x.y", text="Which?", kind="choice", options=tuple(options))
+
+    @pytest.mark.parametrize("count", [1, 7])
+    def test_one_and_seven_options_are_refused(self, count: int) -> None:
+        options = tuple(f"o{i}" for i in range(count))
+        with pytest.raises(ValidationError, match="2 to 6 options"):
+            VQAQuestion(id="x.y", text="Which?", kind="choice", options=options)
 
 
 class TestAcceptedBanks:
