@@ -1,0 +1,179 @@
+# VQA question bank (P3-J6, docs/design_architecture.md §8.3).
+#
+# The questions the phase-aware reasoning asks about one phase of an incident in one camera's view
+# (PhaVR evidence), and the questions annotators verify in the caption/VQA Label Studio template
+# (ml/annotation/caption_vqa/). One file feeds both, so what the model is trained and scored on is
+# exactly what a person checked.
+#
+# Rules (enforced by vms_common.vqa_bank, and by its tests against this file):
+#   - 5 to 8 questions per event type; the event types are the ones the rules in rules.yaml raise
+#     (the part of a rule id before the dot), plus `default`, used for an event type with no entry
+#     of its own (event_type is an open string);
+#   - an id is `<event type>.<name>`, unique across the file, and changing the meaning of a question
+#     means a new id: labelled data refers to ids;
+#   - `yes_no` answers are Yes / No; a `choice` lists 2 to 6 options;
+#   - every question also accepts "Cannot tell" (not listed here): an annotator never has to guess,
+#     and a model that cannot see the answer is scored on honesty rather than luck.
+#
+# Phrase questions about what is visible in this camera's view of this phase, not about the whole
+# incident: a question whose answer is "No" because it happens in another phase or another camera
+# teaches the wrong thing.
+
+version: 1
+
+event_types:
+  intrusion:
+    - id: intrusion.crossing_barrier
+      text: Is anyone crossing a barrier such as a fence, gate or door?
+      kind: yes_no
+    - id: intrusion.inside_restricted_area
+      text: Is a person inside the restricted area?
+      kind: yes_no
+    - id: intrusion.carrying_item
+      text: Is the person carrying anything?
+      kind: yes_no
+    - id: intrusion.staff_visible
+      text: Is any staff member or guard visible?
+      kind: yes_no
+    - id: intrusion.direction
+      text: Which way does the person move?
+      kind: choice
+      options: [Toward the restricted area, Away from it, Along its edge, Staying in place]
+    - id: intrusion.person_count
+      text: How many people are involved?
+      kind: choice
+      options: ["1", "2", "3 or more"]
+    - id: intrusion.area_lit
+      text: Is the area well lit?
+      kind: yes_no
+    - id: intrusion.leaves_view
+      text: Does the person leave the camera's view?
+      kind: yes_no
+
+  loitering:
+    - id: loitering.staying_in_place
+      text: Is the person staying in roughly the same place?
+      kind: yes_no
+    - id: loitering.looking_around
+      text: Is the person looking around, or watching people or the area?
+      kind: yes_no
+    - id: loitering.pacing
+      text: Is the person pacing back and forth?
+      kind: yes_no
+    - id: loitering.with_others
+      text: Is the person talking to, or waiting for, someone?
+      kind: yes_no
+    - id: loitering.carrying_item
+      text: Is the person carrying anything?
+      kind: yes_no
+    - id: loitering.near_entrance
+      text: Is the person near a door, gate or other entrance?
+      kind: yes_no
+    - id: loitering.person_count
+      text: How many people are staying in the area?
+      kind: choice
+      options: ["1", "2", "3 or more"]
+    - id: loitering.approached
+      text: Does anyone approach the person and speak to them?
+      kind: yes_no
+
+  crowding:
+    - id: crowding.density
+      text: How crowded is the area?
+      kind: choice
+      options: [Few people (fewer than 5), Busy (5 to 10), Crowded (more than 10)]
+    - id: crowding.close_together
+      text: Are people standing close together?
+      kind: yes_no
+    - id: crowding.movement
+      text: Are most people moving, or standing still?
+      kind: choice
+      options: [Most are moving, Most are standing still, A mix of both]
+    - id: crowding.same_direction
+      text: Are most people moving in the same direction?
+      kind: yes_no
+    - id: crowding.blocking
+      text: Is the crowd blocking a doorway, path or exit?
+      kind: yes_no
+    - id: crowding.queue
+      text: Are people waiting in an orderly line?
+      kind: yes_no
+    - id: crowding.distress
+      text: Is anyone pushing, running or showing signs of panic?
+      kind: yes_no
+    - id: crowding.staff_visible
+      text: Is any staff member or guard visible?
+      kind: yes_no
+
+  abandoned_object:
+    - id: abandoned_object.item_type
+      text: What kind of item was left?
+      kind: choice
+      options: [Backpack, Handbag, Suitcase, Something else]
+    - id: abandoned_object.owner_visible
+      text: Is the person who left the item still visible?
+      kind: yes_no
+    - id: abandoned_object.owner_walks_away
+      text: Does the person walk away from the item?
+      kind: yes_no
+    - id: abandoned_object.placed_on_purpose
+      text: Was the item put down on purpose, rather than dropped or set down for a moment?
+      kind: yes_no
+    - id: abandoned_object.unattended
+      text: Is the item unattended right now?
+      kind: yes_no
+    - id: abandoned_object.others_approach
+      text: Does anyone else approach or touch the item?
+      kind: yes_no
+    - id: abandoned_object.in_walkway
+      text: Is the item in a place where people pass close to it?
+      kind: yes_no
+    - id: abandoned_object.others_react
+      text: Does anyone react to the item, for example by looking at it or pointing?
+      kind: yes_no
+
+  running:
+    - id: running.person_running
+      text: Is a person running, rather than walking?
+      kind: yes_no
+    - id: running.direction
+      text: Which way is the person running?
+      kind: choice
+      options: [Toward the camera, Away from the camera, Left to right, Right to left, Changing direction]
+    - id: running.person_count
+      text: How many people are running?
+      kind: choice
+      options: ["1", "2", "3 or more"]
+    - id: running.chasing
+      text: Is anyone chasing, or being chased by, someone else?
+      kind: yes_no
+    - id: running.carrying_item
+      text: Is the person carrying anything?
+      kind: yes_no
+    - id: running.others_react
+      text: Do other people react to the person running?
+      kind: yes_no
+    - id: running.falls
+      text: Does the person stumble or fall?
+      kind: yes_no
+    - id: running.leaves_view
+      text: Does the person leave the camera's view?
+      kind: yes_no
+
+  default:
+    - id: default.people_visible
+      text: How many people are visible?
+      kind: choice
+      options: ["None", "1", "2 or 3", "4 or more"]
+    - id: default.carrying_item
+      text: Is anyone carrying an item such as a bag?
+      kind: yes_no
+    - id: default.staff_visible
+      text: Is any staff member or guard visible?
+      kind: yes_no
+    - id: default.unusual_activity
+      text: Is anything unusual happening?
+      kind: yes_no
+    - id: default.well_lit
+      text: Is the scene well lit?
+      kind: yes_no
