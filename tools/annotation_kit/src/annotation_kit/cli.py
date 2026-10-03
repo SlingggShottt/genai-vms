@@ -4,6 +4,16 @@
     annotation-kit tasks phase_labels.jsonl --out tasks.json [--url-prefix s3://bucket/=https://host/]
     annotation-kit convert export.json --out phavr_labels.jsonl [--report-json report.json]
 
+Phase annotation (P3-D5), in the order they are used:
+
+    annotation-kit meva-candidates --repo <meva-data-repo> --out candidates.json
+    annotation-kit ucf-candidates --videos <dir> --annotations <txt> --out candidates.json
+    annotation-kit cut candidates.json --out-dir clips --source-prefix s3://b/=/data/ [--run]
+    annotation-kit phase-config --out ml/annotation/phase
+    annotation-kit phase-tasks candidates.json --clip-prefix s3://b/clips/ --out-dir tasks
+    annotation-kit phase-convert export.json --out phase_labels.jsonl
+    annotation-kit phase-agreement first.jsonl second.jsonl
+
 The pre-annotation step is not a command: it needs a model, so it runs in the Kaggle notebook
 (`ml/annotation/caption_vqa/prelabel_kaggle.ipynb`), which calls `annotation_kit.prelabel`.
 """
@@ -16,10 +26,15 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from vms_common.vqa_bank import load_vqa_bank
+from vms_common.vqa_bank import DEFAULT_EVENT_TYPE, load_vqa_bank
 
+from annotation_kit import agreement as agreement_mod
+from annotation_kit import meva, phaseconvert, ucf
+from annotation_kit.candidates import PhaseCandidate, read_candidates, write_candidates
 from annotation_kit.convert import convert, read_export, write_jsonl
 from annotation_kit.labelconfig import write_label_configs
+from annotation_kit.phaseconfig import config_filename, write_phase_configs
+from annotation_kit.phasetasks import cut_plan, cut_script, phase_tasks, run_cuts
 from annotation_kit.report import edit_report, render_markdown
 from annotation_kit.tasks import (
     dump_json,
@@ -79,6 +94,118 @@ def _convert(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---- phase annotation (P3-D5) --------------------------------------------------------------------
+
+# Event types a phase annotator can choose from: the deployed ones (from the question bank), the two
+# MEVA gives names to, MEVA's catch-all, and UCF-Crime's classes.
+_EXTRA_EVENT_TYPES = ("theft", "activity")
+
+
+def _event_types(bank_path: str) -> list[str]:
+    bank = load_vqa_bank(bank_path)
+    deployed = [t for t in bank.event_types if t != DEFAULT_EVENT_TYPE]
+    classes = [c.casefold() for c in ucf.DEFAULT_CLASSES]
+    return list(dict.fromkeys([*deployed, *_EXTRA_EVENT_TYPES, *classes]))
+
+
+def _phase_config(args: argparse.Namespace) -> int:
+    for path in write_phase_configs(_event_types(args.bank), args.out):
+        print(path)
+    return 0
+
+
+def _cap(value: int) -> int | None:
+    return None if value <= 0 else value
+
+
+def _meva_candidates(args: argparse.Namespace) -> int:
+    defaults = meva.MevaConfig()
+    config = meva.MevaConfig(
+        activities=tuple(args.activity) if args.activity else defaults.activities,
+        pad_before_s=args.pad_before,
+        pad_after_s=args.pad_after,
+        min_views=args.min_views,
+        per_activity_cap=_cap(args.per_activity_cap),
+        per_slot_cap=_cap(args.per_slot_cap),
+        seed=args.seed,
+        s3_prefix=args.s3_prefix,
+    )
+    selection = meva.load_selection(args.repo, config)
+    write_candidates(selection.candidates, args.out)
+    print(f"{len(selection.candidates)} candidates -> {args.out}\n")
+    print(meva.summarise(selection))
+    return 0
+
+
+def _ucf_candidates(args: argparse.Namespace) -> int:
+    classes = tuple(args.classes) if args.classes else ucf.DEFAULT_CLASSES
+    config = ucf.UcfConfig(
+        classes=classes,
+        per_class_cap=_cap(args.per_class_cap),
+        seed=args.seed,
+        uri_prefix=args.uri_prefix,
+    )
+    videos = ucf.scan_videos(args.videos, classes)
+    if args.probe:
+        videos = [
+            ucf.UcfVideo(v.name, v.cls, v.path, ucf.probe_duration(Path(args.videos) / v.path))
+            for v in videos
+        ]
+    annotations = ucf.read_temporal_annotations(args.annotations) if args.annotations else {}
+    selection = ucf.select_candidates(videos, annotations, config)
+    write_candidates(selection.candidates, args.out)
+    print(f"{len(selection.candidates)} candidates -> {args.out}\n")
+    print(ucf.summarise(selection))
+    return 0
+
+
+def _phase_tasks(args: argparse.Namespace) -> int:
+    candidates = read_candidates(args.candidates)
+    grouped = phase_tasks(
+        candidates, clip_prefix=args.clip_prefix, resolve_uri=_url_resolver(args.url_prefix)
+    )
+    out = Path(args.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    for views, tasks in grouped.items():
+        path = out / f"tasks_{views}view{'s' if views > 1 else ''}.json"
+        dump_json(tasks, path)
+        print(
+            f"{len(tasks)} tasks with {views} view(s) -> {path}  (config: {config_filename(views)})"
+        )
+    return 0
+
+
+def _cut(args: argparse.Namespace) -> int:
+    candidates: list[PhaseCandidate] = read_candidates(args.candidates)
+    plan = cut_plan(candidates, args.out_dir, resolve_source=_url_resolver(args.source_prefix))
+    if args.run:
+        done = run_cuts(plan)
+        print(f"cut {done['cut']}, kept {done['kept']}, failed {done['failed']} of {len(plan)}")
+        return 1 if done["failed"] else 0
+    Path(args.script).write_text(cut_script(plan), encoding="utf-8")
+    print(f"{len(plan)} cuts -> {args.script}")
+    return 0
+
+
+def _phase_convert(args: argparse.Namespace) -> int:
+    converted = phaseconvert.convert_phases(phaseconvert.read_export(args.export), fps=args.fps)
+    phaseconvert.write_phase_labels(converted.clips, args.out)
+    print(phaseconvert.summarise(converted))
+    return 0
+
+
+def _phase_agreement(args: argparse.Namespace) -> int:
+    first = read_phase_labels(args.first)
+    second = read_phase_labels(args.second)
+    result = agreement_mod.compare(first, second)
+    print(agreement_mod.render_markdown(result, expected_clips=args.expect_clips))
+    if args.report_json:
+        Path(args.report_json).write_text(
+            json.dumps(result.as_dict(), indent=2) + "\n", encoding="utf-8"
+        )
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="annotation-kit", description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -86,7 +213,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     config = sub.add_parser("label-config", help="write one Label Studio config per event type")
     config.add_argument("--bank", default=DEFAULT_BANK)
     config.add_argument("--out", required=True)
-    config.set_defaults(run=_label_config)
+    config.set_defaults(handler=_label_config)
 
     tasks = sub.add_parser("tasks", help="phase-labelled clips -> Label Studio tasks")
     tasks.add_argument("phase_labels", help="phase_labels.jsonl")
@@ -98,17 +225,75 @@ def main(argv: Sequence[str] | None = None) -> int:
         metavar="FROM=TO",
         help="rewrite a uri prefix for Label Studio's player (repeatable)",
     )
-    tasks.set_defaults(run=_tasks)
+    tasks.set_defaults(handler=_tasks)
 
     conv = sub.add_parser("convert", help="Label Studio export -> phavr_labels.jsonl + edit rate")
     conv.add_argument("export", help="the project's JSON export")
     conv.add_argument("--bank", default=DEFAULT_BANK)
     conv.add_argument("--out", required=True)
     conv.add_argument("--report-json")
-    conv.set_defaults(run=_convert)
+    conv.set_defaults(handler=_convert)
+
+    # -- phase annotation (P3-D5)
+    pconf = sub.add_parser("phase-config", help="write the phase-labelling Label Studio configs")
+    pconf.add_argument("--bank", default=DEFAULT_BANK)
+    pconf.add_argument("--out", required=True)
+    pconf.set_defaults(handler=_phase_config)
+
+    mv = sub.add_parser("meva-candidates", help="multi-view candidate clips from MEVA")
+    mv.add_argument("--repo", required=True, help="checkout of the MEVA annotation repo")
+    mv.add_argument("--out", required=True)
+    mv.add_argument("--activity", action="append", help="an activity to include (repeatable)")
+    mv.add_argument("--pad-before", type=float, default=10.0)
+    mv.add_argument("--pad-after", type=float, default=10.0)
+    mv.add_argument("--min-views", type=int, default=2)
+    mv.add_argument("--per-activity-cap", type=int, default=60, help="0 for no cap")
+    mv.add_argument("--per-slot-cap", type=int, default=3, help="0 for no cap")
+    mv.add_argument("--seed", type=int, default=0)
+    mv.add_argument("--s3-prefix", default=meva.MevaConfig().s3_prefix)
+    mv.set_defaults(handler=_meva_candidates)
+
+    uc = sub.add_parser("ucf-candidates", help="candidate clips from UCF-Crime")
+    uc.add_argument("--videos", required=True, help="folder the dataset was extracted to")
+    uc.add_argument("--annotations", help="Temporal_Anomaly_Annotation_for_Testing_Videos.txt")
+    uc.add_argument("--out", required=True)
+    uc.add_argument("--classes", nargs="+")
+    uc.add_argument("--per-class-cap", type=int, default=40, help="0 for no cap")
+    uc.add_argument("--seed", type=int, default=0)
+    uc.add_argument("--uri-prefix", default="")
+    uc.add_argument("--probe", action="store_true", help="read each video's length with ffprobe")
+    uc.set_defaults(handler=_ucf_candidates)
+
+    pt = sub.add_parser("phase-tasks", help="candidates -> Label Studio tasks, by number of views")
+    pt.add_argument("candidates")
+    pt.add_argument("--clip-prefix", required=True, help="where the cut clips are stored")
+    pt.add_argument("--out-dir", required=True)
+    pt.add_argument("--url-prefix", action="append", default=[], metavar="FROM=TO")
+    pt.set_defaults(handler=_phase_tasks)
+
+    ct = sub.add_parser("cut", help="cut every view of every candidate (script, or --run)")
+    ct.add_argument("candidates")
+    ct.add_argument("--out-dir", required=True)
+    ct.add_argument("--source-prefix", action="append", default=[], metavar="FROM=TO")
+    ct.add_argument("--script", default="cut_clips.sh")
+    ct.add_argument("--run", action="store_true", help="run ffmpeg now instead of writing a script")
+    ct.set_defaults(handler=_cut)
+
+    pc = sub.add_parser("phase-convert", help="phase export -> phase_labels.jsonl")
+    pc.add_argument("export")
+    pc.add_argument("--out", required=True)
+    pc.add_argument("--fps", type=int, default=30)
+    pc.set_defaults(handler=_phase_convert)
+
+    pa = sub.add_parser("phase-agreement", help="inter-annotator agreement on phase_labels files")
+    pa.add_argument("first")
+    pa.add_argument("second")
+    pa.add_argument("--expect-clips", type=int, default=20)
+    pa.add_argument("--report-json")
+    pa.set_defaults(handler=_phase_agreement)
 
     args = parser.parse_args(argv)
-    return args.run(args)
+    return args.handler(args)
 
 
 if __name__ == "__main__":
