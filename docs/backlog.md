@@ -510,10 +510,13 @@
 - [ ] Camera links editor (table + simple node diagram) for overlap/transit edges.
 
 ### P3-J6 · Caption & VQA annotation kit — 5 pts · Must · E10 · FR-RSN-03
-- [ ] `config/vqa_bank.yaml`: 5–8 questions per event type.
-- [ ] Label Studio template for per-phase, per-view caption + VQA verification.
+- [x] `config/vqa_bank.yaml`: 5–8 questions per event type.
+- [x] Label Studio template for per-phase, per-view caption + VQA verification.
+  - Generated from the bank, one config per event type (`ml/annotation/caption_vqa/*.xml`); all six parse and validate with Label Studio's own `LabelInterface`. Not driven in a running Label Studio UI.
 - [ ] Kaggle notebook generating draft captions/VQA answers with the largest open VLM that fits (e.g. Qwen2.5-VL-7B) on phase-labelled clips; drafts imported as pre-annotations.
-- [ ] Converter → `phavr_labels.jsonl`; script reports pseudo-label edit rate after human verification.
+  - Written (`ml/annotation/caption_vqa/prelabel_kaggle.ipynb`) and its pipeline run end to end with a placeholder model in the tests; **never run against Qwen2.5-VL-7B** (needs a Kaggle T4). Tick this once a real trial run on a few clips has produced drafts.
+- [x] Converter → `phavr_labels.jsonl`; script reports pseudo-label edit rate after human verification.
+  - Its input, `phase_labels.jsonl`, is the phase annotation kit's export (P3-D5), which has no frozen schema yet: `ml/annotation/phase_export_example.json` is J6's proposal for D5 to confirm.
 
 ---
 
