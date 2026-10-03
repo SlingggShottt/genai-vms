@@ -3,8 +3,9 @@
 Three, each owned by someone different:
 
 - `PhaseLabelClip` is one line of the phase annotation export (`phase_labels.jsonl`), which is what
-  Track D's annotation kit (P3-D5) hands over. Its shape is a *proposal* until D5 freezes it
-  (`ml/annotation/phase_export_example.json`); the kit builds against that example.
+  Track D's annotation kit (P3-D5) hands over. Its shape is frozen as `phase_labels.v1`
+  (`ml/annotation/phase_export_example.json`): an optional field may be added, anything else
+  needs a new version.
 - `CaptionVqaTask` is what is put into Label Studio: one phase of one clip in one camera's view.
 - `PhavrLabel` is what comes out (`phavr_labels.jsonl`, `phavr_label.v1`): the verified caption and
   VQA answers, with the model's draft kept beside them so the edit rate can be measured and so a
