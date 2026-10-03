@@ -6,6 +6,8 @@ autogenerate can discover them through `Base.metadata`
 from __future__ import annotations
 
 from vms_db.models.core import (
+    Alert,
+    AlertStatus,
     AuditLog,
     Camera,
     EdgeType,
@@ -22,6 +24,8 @@ from vms_db.models.media import Segment
 from vms_db.models.vision import MinuteCount, Track, TrackSegment
 
 __all__ = [
+    "Alert",
+    "AlertStatus",
     "AuditLog",
     "Camera",
     "Candidate",
