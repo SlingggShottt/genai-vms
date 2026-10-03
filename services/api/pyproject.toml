@@ -7,6 +7,7 @@ dependencies = [
     "argon2-cffi>=23.1",
     "email-validator>=2.2",
     "fastapi>=0.115",
+    "httpx>=0.27",
     "uvicorn[standard]>=0.30",
     "vms-common",
     "vms-db",

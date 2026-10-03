@@ -1,0 +1,34 @@
+{
+  "edges": [
+    {
+      "id": "01929e6c-0010-7000-8000-000000000010",
+      "from_camera_id": "cam02",
+      "to_camera_id": "cam03",
+      "edge_type": "overlap",
+      "min_s": null,
+      "max_s": null,
+      "tolerance_s": 3.0,
+      "bidirectional": true
+    },
+    {
+      "id": "01929e6c-0011-7000-8000-000000000011",
+      "from_camera_id": "cam02",
+      "to_camera_id": "cam04",
+      "edge_type": "transit",
+      "min_s": 5.0,
+      "max_s": 90.0,
+      "tolerance_s": null,
+      "bidirectional": false
+    },
+    {
+      "id": "01929e6c-0012-7000-8000-000000000012",
+      "from_camera_id": "cam03",
+      "to_camera_id": "cam04",
+      "edge_type": "transit",
+      "min_s": 10.0,
+      "max_s": 120.0,
+      "tolerance_s": null,
+      "bidirectional": true
+    }
+  ]
+}
