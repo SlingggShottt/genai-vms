@@ -1,0 +1,25 @@
+{
+  "schema_version": "event.v1",
+  "message_id": "0192f3d1-1111-7000-8000-0000000000a2",
+  "produced_at": "2026-10-05T10:16:14.020Z",
+  "event_id": "0192f3d1-0002-7000-8000-000000000002",
+  "site_id": "rvce-campus",
+  "camera_id": "cam04",
+  "event_type": "running",
+  "severity": "low",
+  "start_ts": "2026-10-05T10:16:05.000Z",
+  "end_ts": "2026-10-05T10:16:11.000Z",
+  "rule_id": "running",
+  "rule_score": 0.62,
+  "zone_id": null,
+  "track_ids": ["cam04-t31"],
+  "segment_ids": ["cam04_20261005T101600Z_000121"],
+  "keyframe_uris": ["s3://vms-keyframes/cam04/2026/10/05/10/000121/0003.jpg"],
+  "verification": {
+    "status": "skipped",
+    "confidence": null,
+    "caption": null,
+    "model": null,
+    "latency_ms": null
+  }
+}

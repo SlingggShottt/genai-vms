@@ -1,0 +1,41 @@
+{
+  "data": {
+    "ack_note": null,
+    "acknowledged_at": null,
+    "acknowledged_by": null,
+    "camera_code": "cam02",
+    "camera_id": "01929e6c-0002-7000-8000-000000000002",
+    "caption": "A person in a dark jacket climbs over the gate into the fenced area.",
+    "confidence": 0.84,
+    "created_at": "2026-10-05T10:15:50Z",
+    "end_ts": "2026-10-05T10:15:42Z",
+    "event_id": "0192f3d1-0001-7000-8000-000000000001",
+    "event_type": "intrusion",
+    "group": {
+      "camera_ids": ["cam03", "cam02"],
+      "end_ts": "2026-10-05T10:15:42Z",
+      "event_count": 2,
+      "id": "0192f3e0-0001-7000-8000-00000000000a",
+      "max_severity": "high",
+      "start_ts": "2026-10-05T10:15:00Z",
+      "status": "open"
+    },
+    "id": "0192f3d1-a001-7000-8000-000000000001",
+    "keyframe_count": 2,
+    "keyframe_urls": [],
+    "resolve_note": null,
+    "resolved_at": null,
+    "resolved_by": null,
+    "rule_id": "intrusion.after_hours",
+    "severity": "high",
+    "site_id": "rvce-campus",
+    "start_ts": "2026-10-05T10:15:20Z",
+    "status": "open",
+    "title": "Intrusion on cam02",
+    "updated_at": "2026-10-05T10:15:50Z",
+    "verification_status": "verified",
+    "zone_id": "01929e6c-0001-7000-8000-000000000001"
+  },
+  "ts": "2026-10-05T10:15:50Z",
+  "type": "alert.created"
+}

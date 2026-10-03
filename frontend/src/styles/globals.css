@@ -44,3 +44,30 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* §B.2 / §B.9: the one ambient motion — a new high or critical alert pulses once (600 ms) and
+   then stays still. The reduced-motion rule above cuts it to nothing for those who ask. */
+@layer components {
+  .alert-pulse-high {
+    --pulse-color: var(--sev-high-tint);
+  }
+
+  .alert-pulse-critical {
+    --pulse-color: var(--sev-critical-tint);
+  }
+
+  .alert-pulse-high,
+  .alert-pulse-critical {
+    animation: alert-pulse 600ms ease-out 1;
+  }
+
+  @keyframes alert-pulse {
+    from {
+      background-color: var(--pulse-color);
+    }
+
+    to {
+      background-color: transparent;
+    }
+  }
+}

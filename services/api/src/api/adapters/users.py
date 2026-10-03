@@ -8,6 +8,7 @@ import asyncio
 import uuid
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from vms_db.models import User, UserRole
 
@@ -83,13 +84,25 @@ async def delete_user(session: AsyncSession, user: User) -> None:
 async def seed_admin_user(session: AsyncSession, *, email: str, password: str) -> None:
     """Create the admin account on first start if it doesn't exist yet
     (P1-J2 AC). No-op when `password` is empty (nothing to seed with) or an
-    account with this email already exists. Caller owns the transaction
-    (e.g. `vms_db.session.session_scope` from the app lifespan).
+    account with this email already exists — including one created a moment
+    ago by another replica starting at the same time. Caller owns the
+    transaction (e.g. `vms_db.session.session_scope` from the app lifespan).
     """
     if not password:
         return
     if await get_user_by_email(session, email) is not None:
         return
-    await create_user(
-        session, email=email, full_name="Administrator", password=password, role=UserRole.ADMIN
-    )
+    try:
+        # A savepoint, so losing a race rolls back only this insert, not the caller's transaction.
+        async with session.begin_nested():
+            await create_user(
+                session,
+                email=email,
+                full_name="Administrator",
+                password=password,
+                role=UserRole.ADMIN,
+            )
+    except IntegrityError:
+        # Another replica starting at the same moment seeded the account between our check and
+        # our insert (the unique email decided). That is the outcome we wanted.
+        return

@@ -487,23 +487,66 @@
 ## Jatin — 23 pts
 
 ### P3-J1 · Camera links (topology) API — 2 pts · Must · E03 · FR-CAM-04
-- [ ] CRUD topology edges (`overlap` with tolerance, `transit` with min/max, bidirectional flag) with validation.
-- [ ] `GET /internal/v1/topology`.
+- [x] CRUD topology edges (`overlap` with tolerance, `transit` with min/max, bidirectional flag) with validation.
+      `GET/POST /topology/edges` (`?camera_id=` for edges touching a camera), `PATCH/DELETE /topology/edges/{id}`;
+      read: any role, write: admin (in the role matrix). Overlap takes `tolerance_s` (default 5 s, always two-way),
+      transit takes `min_s..max_s` (one-way unless `bidirectional`); anything that does not fit the type, a self-link,
+      a missing camera (404) or cameras on different sites are rejected with the reason. Duplicates are 409, including
+      the reverse of an overlap edge and a transit edge a bidirectional one already covers. `core.topology_edges`
+      (migration `0005`) enforces the same rules itself with CHECK constraints, a unique pair and a partial unique
+      index on the unordered overlap pair, so concurrent creates give one 201 and 409s, never a 500 (tested with 8
+      parallel requests). PATCH changes parameters only. 61 unit tests (rules, schemas, contract, model), 24 API
+      integration tests and 2 migration tests (real Postgres, incl. downgrade-then-upgrade); a 41-variant mutation
+      check kills 40, the survivor being an equivalent mutant (applying a `null` to a field validation already
+      guarantees is null). Found on the way: migration `0003` (zones) leaves `core.zone_type` behind on downgrade,
+      so downgrade-then-upgrade fails — not changed here (merged migrations are never edited); `0005` drops its type.
+- [x] `GET /internal/v1/topology`.
+      Service-token gated; reports camera **codes** (what correlation sees in `event.v1`), shape =
+      `vms_common.contracts.topology.TopologyInternalResponse` + `fixtures/topology_internal.json` (round-trip tested; the
+      integration test validates the live response against the contract). Not done here: the editor UI (P3-J5).
 
 ### P3-J2 · Correlation service — 5 pts · Must · E08 · FR-COR-01…04
-- [ ] Consumes `event.v1`; implements linking + union-find grouping + close rule (design §7.5) with `config/correlation.yaml` compatibility matrix.
-- [ ] Persists `events.correlation_groups` / `correlation_links`; publishes `correlation.v1` (throttled updates + close).
-- [ ] Unit tests: overlap link, transit link in window, out-of-window no link, incompatible types, group merge, single-event group close.
+- [x] Consumes `event.v1`; implements linking + union-find grouping + close rule (design §7.5) with `config/correlation.yaml` compatibility matrix.
+      `services/correlation` (README has the algorithm as built; design §7.5 "As built"). A new event is scored against
+      the events of the site's open groups — camera-graph edge window, then `0.7·fit + 0.3·compat ≥ 0.5` — and joins or
+      merges the groups it links (the oldest survives); `max_group_events` caps runaway chains; a group closes when its
+      last event ended more than *longest transit window of its cameras + 30 s* ago. `config/correlation.yaml` is
+      validated at startup (a typo stops the service). The camera graph comes from `GET /internal/v1/topology` with a
+      `config/topology.yaml` fallback (the api is not a Compose service yet, so the fallback is what runs).
+      Contracts defined here because nothing else had: `event.v1` (provided by D, P3-D4, built against fixtures) and
+      `correlation.v1` (adds `merged` status + `merged_into`, `revision`, `event_types` to the design's sketch).
+- [x] Persists `events.correlation_groups` / `correlation_links`; publishes `correlation.v1` (throttled updates + close).
+      Migration `0006`; revision-guarded upserts; an event already in any group is ignored on redelivery; a change stays
+      `publish_pending` until Kafka acknowledges it, so a crash or outage costs a duplicate, never a lost message. Open
+      groups are announced at creation then at most every 5 s; closed/merged at once. One instance per consumer group
+      (a lock serialises the consumer and the sweeper).
+- [x] Unit tests: overlap link, transit link in window, out-of-window no link, incompatible types, group merge, single-event group close.
+      101 unit tests (scoring incl. both fit curves and every edge direction, engine, config, topology, adapters) plus
+      38 integration tests on real Postgres/Kafka: repository, consumer and sweeper flows (all six arrival orders of the
+      fixture scenario, redelivery, restart, Kafka outage, a crashed publish, a hung Kafka not stalling event handling,
+      20 concurrent deliveries beside sweeps) and
+      one end to end over a Kafka container (a poison message is dead-lettered and does not stop the consumer). The
+      fixture scenario is replayed and must reproduce `correlation_v1.json`. A 55-variant mutation check kills 54; the
+      survivor is an equivalent mutant (the same-camera guard, which a validated graph can never reach).
+      **Verified live:** the real service against the dev Kafka with a scratch database/topics — three events became two
+      groups, the third bridged them (links 23 s / 0.5365 and 53 s / 0.6973, exactly the fixtures'), five messages came
+      out keyed by site; killed and restarted it (lag 0, nothing replayed or re-announced) and the restarted instance
+      closed the group 150 s after its last event ended, as the rule says. **Not verified:** the real events producer
+      (P3-D4 does not exist yet — events were produced from the fixtures), the api topology endpoint live, a second replica.
+      Found on the way: tests caught that `ON DELETE SET NULL` on `merged_into` contradicts the table's own CHECK (now
+      CASCADE); UUIDv7 ids are not ordered within one millisecond, so the survivor is chosen by creation time; link rows
+      came back in random order after a reload, so the message order is now canonical.
 
 ### P3-J3 · Alerts backend & notifier plugins — 5 pts · Must · E08 · FR-ALR-01…03
-- [ ] API consumer for `event.v1`, `correlation.v1` creates/updates `core.alerts` per severity threshold.
-- [ ] `WS /api/v1/ws` with JWT auth, role filtering, message types per design §9; Redis pub/sub fan-out (works with 2 API replicas).
-- [ ] Ack/resolve endpoints with notes + audit log.
-- [ ] `Notifier` interface with `DashboardNotifier` (on) and `EmailNotifier`, `TelegramNotifier` (implemented, disabled by default via `VMS_NOTIFY_CHANNELS`).
+- [x] API consumer for `event.v1`, `correlation.v1` creates/updates `core.alerts` per severity threshold.
+- [x] `WS /api/v1/ws` with JWT auth, role filtering, message types per design §9; Redis pub/sub fan-out (works with 2 API replicas).
+- [x] Ack/resolve endpoints with notes + audit log.
+- [x] `Notifier` interface with `DashboardNotifier` (on) and `EmailNotifier`, `TelegramNotifier` (implemented, disabled by default via `VMS_NOTIFY_CHANNELS`).
 
 ### P3-J4 · Alerts & events UI — 3 pts · Must · E08 · FR-ALR-01, FR-ALR-02
-- [ ] Alert tray (AlertItem §B.7), live via WS, acknowledge/resolve with note dialog; `aria-live` per §B.10.
-- [ ] Events page with filters; event detail with keyframes, VLM caption, clip playback, correlated events list.
+- [x] Alert tray (AlertItem §B.7), live via WS, acknowledge/resolve with note dialog; `aria-live` per §B.10.
+- [x] Events page with filters; event detail with keyframes, VLM caption, clip playback, correlated events list.
+  - Scope note: the page lists events that raised an alert (`GET /alerts`); it switches to `GET /events` (every verified event) when P3-D4's `events.events` lands. See `frontend/README.md`.
 
 ### P3-J5 · Zone & camera-link editors — 3 pts · Must · E03 · FR-CAM-03, FR-CAM-04
 - [ ] Polygon editor over a camera snapshot (add/move/delete points, name, type, schedule).

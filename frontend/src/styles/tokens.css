@@ -19,6 +19,13 @@
   --sev-critical: #e5484d;
   --ok: #6fb58a;
   --video-bg: #000000;
+  /* Tints derived from the tokens above (never a second source of colour): severity pills sit on
+     16% of their colour (§B.7 SeverityBadge); the scrim dims what is behind a dialog. */
+  --sev-low-tint: color-mix(in srgb, var(--sev-low) 16%, transparent);
+  --sev-medium-tint: color-mix(in srgb, var(--sev-medium) 16%, transparent);
+  --sev-high-tint: color-mix(in srgb, var(--sev-high) 16%, transparent);
+  --sev-critical-tint: color-mix(in srgb, var(--sev-critical) 16%, transparent);
+  --scrim: color-mix(in srgb, var(--video-bg) 60%, transparent);
 }
 
 :root[data-theme='light'] {

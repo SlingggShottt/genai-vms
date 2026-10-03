@@ -20,12 +20,13 @@ npm test
 ```text
 src/
 ├── app/            # router, providers, ProtectedRoute, AppShell (nav rail + header + alert tray)
-├── components/ui/  # shadcn primitives (Button, Input, Label) — tsx: false, tokens only
+├── components/      # shared app components (VideoTile, SeverityBadge)
+├── components/ui/  # shadcn primitives (Button, Input, Label, Dialog, Textarea, Sonner toaster) — tsx: false, tokens only
 ├── features/<name>/
 │   ├── api.js       # TanStack Query hooks
 │   ├── schemas.js   # zod schemas for API responses
 │   └── pages/
-├── lib/             # apiClient (fetch + token refresh), tokenStore, utils
+├── lib/             # apiClient (fetch + token refresh), tokenStore, ws (live channel), time, utils
 └── styles/          # tokens.css (docs/style_guide.md §B.3), globals.css
 ```
 
@@ -92,3 +93,57 @@ redirects to `/login` when there's no refresh token or refresh itself fails.
   reason as P2-J5 (no indexed twin data in this environment yet).
 
 Phase 2 (both tracks) is now fully implemented.
+
+- **P3-J4** — alerts and events (`features/alerts`, `features/events`):
+  - **Alert tray** (`AppShell` → `AlertTray`, `AlertItem`): the open and acknowledged alerts, newest
+    first, each with a 3 px severity bar, `SeverityBadge` (colour + label + shape: ○ ◐ ▲ ■), camera,
+    "2 min ago, 15:45:20" (relative only ever next to the absolute IST time) and _Acknowledge_ /
+    _Resolve_ / _Open_. Acknowledge and Resolve open a note dialog (`AlertNoteDialog`; the button
+    keeps the action's name, a toast says "Alert acknowledged"); a 409 (someone else got there first)
+    says what the alert is now and refreshes the tray. Focus returns to the button that opened the
+    dialog (Radix only does that for a `Trigger`; `AlertNoteDialog` is opened by state).
+  - **Live updates** (`LiveAlertsProvider`, `lib/ws.js`): one WebSocket per tab for operators and
+    admins (a viewer gets 403 on the api and no socket here). New and changed alerts go straight
+    into the TanStack Query caches (`liveCache.js`); a push carries no presigned keyframe urls, so an
+    update is _merged_ and never wipes urls already held. The socket reconnects with backoff
+    (1, 2, 5, 10, 30 s), re-mints the access token on the server's 4401 close (token expiry), and
+    after any reconnect refetches the alerts — pub/sub keeps nothing, a push is a hint. While it is
+    down the tray says "Live updates paused. Reconnecting…".
+  - **Accessibility** (§B.10): two always-mounted live regions — new alerts are announced
+    `polite`, critical ones `assertive`; only a new high/critical alert pulses, once, for 600 ms
+    (`prefers-reduced-motion` cuts it to nothing); visible 2 px focus ring; every action is
+    keyboard-operable.
+  - **Events page** (`/events`) with filters for status, severity, camera and time range, kept in the
+    url so a view can be shared; cursor pagination ("Show more"). **Event detail**
+    (`/events/:id`): the clip (hls.js on `GET /recordings/{camera}/playlist.m3u8`, 10 s either side),
+    keyframes (presigned urls; an expired link says how to get a fresh one), the vision model's
+    description with its confidence ("Low confidence — review the clip before acting."), the facts,
+    and the correlated events with why they were linked (`GET /correlations/{id}`). Operators and
+    admins only; a viewer is told so.
+  - The JSON the tests use is generated from the api's own response models
+    (`services/api/tests/unit/test_frontend_fixtures.py` writes
+    `features/alerts/fixtures/*.json` and fails if they drift), and the zod schemas are tested against
+    the same files.
+
+  Verified for real, in headless Brave against a real `services/api` (uvicorn) with a scratch
+  Postgres, the dev Kafka, Redis and MinIO, and the last minutes of the dev stack's `cam01`
+  recordings: sign in through the UI as operator, second operator and viewer; Kafka
+  `event.v1` → alert in the tray with no reload, the 600 ms pulse and its end, the polite and
+  assertive announcements; a second operator acknowledges and the first sees it live; correlation
+  links appear live; filters, shared links and the empty states; the clip really decodes (a 40 s
+  HLS clip), keyframes load from presigned MinIO urls; a viewer gets no nav item, no alerts and no
+  socket; `prefers-reduced-motion`; keyboard-only acknowledge with focus restored; the access token
+  (set to 1 minute) really expiring → 4401 → refresh → reconnect → alerts still arrive; the api
+  stopped and restarted → "paused" notice → recovery. 74 checks, 0 failures. A 112-variant mutation
+  check of the frontend (one deliberate bug at a time) is killed 112/112; the first run missed 14
+  and found real test gaps (two stale-socket races, the nav gating, history `replace`, ordering).
+
+  Not verified / not done: only Chromium (Brave) was driven, no Firefox or Safari; screen-reader
+  announcements are verified as live-region DOM, not with an actual screen reader; the light theme
+  is not visually checked; at 1024–1439 px the tray stays a collapsible column rather than becoming a
+  drawer (§B.5; the shell never had that). **The Events page lists events that raised an alert**
+  (`GET /alerts`), not every verified event: `GET /events` needs P3-D4's `events.events` table, and the
+  page switches its source then. The time-range inputs are `datetime-local` (the browser's own time
+  zone, as on the Playback page) while every displayed time is IST. The WebSocket token is a url
+  parameter (browsers cannot set headers on a WebSocket): a failed connection attempt shows that url in
+  the browser console.

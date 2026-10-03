@@ -8,14 +8,34 @@ timestamps, ids as strings.
 from __future__ import annotations
 
 import re
+import uuid
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 from vms_common.types import CameraCode, CameraId
-from vms_db.models import Camera, Track, User, UserRole, Zone, ZoneType
+from vms_db.models import (
+    Alert,
+    Camera,
+    CorrelationGroup,
+    CorrelationLinkRow,
+    EdgeType,
+    TopologyEdge,
+    Track,
+    User,
+    UserRole,
+    Zone,
+    ZoneType,
+)
 
 from api.domain.recordings import DensityBucket, Gap, SegmentWindow
+from api.domain.topology import (
+    DEFAULT_OVERLAP_TOLERANCE_S,
+    MAX_TOLERANCE_S,
+    MAX_TRANSIT_S,
+    validate_edge,
+)
 from api.domain.zones import validate_polygon
 
 _RTSP_URL_PATTERN = re.compile(r"^rtsp://\S+$")  # FR-CAM-01: validate RTSP URL format
@@ -392,3 +412,337 @@ class ZoneUpdateRequest(BaseModel):
         cls, value: list[tuple[float, float]] | None
     ) -> list[tuple[float, float]] | None:
         return validate_polygon(value) if value is not None else value
+
+
+def _canonical_uuid(value: str) -> str:
+    try:
+        return str(uuid.UUID(value))
+    except ValueError as exc:
+        raise ValueError(f"{value!r} is not a valid camera id") from exc
+
+
+class TopologyEdgeOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    # UUIDs of core.cameras.id, NOT codes — see api/topology.py's module docstring.
+    from_camera_id: CameraId
+    to_camera_id: CameraId
+    edge_type: EdgeType
+    min_s: float | None
+    max_s: float | None
+    tolerance_s: float | None
+    bidirectional: bool
+    created_at: datetime
+
+    @classmethod
+    def from_model(cls, edge: TopologyEdge) -> TopologyEdgeOut:
+        return cls(
+            id=str(edge.id),
+            from_camera_id=str(edge.from_camera_id),
+            to_camera_id=str(edge.to_camera_id),
+            edge_type=edge.edge_type,
+            min_s=edge.min_s,
+            max_s=edge.max_s,
+            tolerance_s=edge.tolerance_s,
+            bidirectional=edge.bidirectional,
+            created_at=edge.created_at,
+        )
+
+
+class TopologyEdgesPage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[TopologyEdgeOut]
+
+
+class TopologyEdgeCreateRequest(BaseModel):
+    """What is optional depends on the type: an overlap edge takes `tolerance_s`
+    (default 5 s) and is always bidirectional; a transit edge takes `min_s` and
+    `max_s` and is one-way unless `bidirectional` is true. Anything that does not fit
+    the type is a 400 with the reason, not a silent drop.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    from_camera_id: str
+    to_camera_id: str
+    edge_type: EdgeType
+    min_s: float | None = Field(default=None, ge=0, le=MAX_TRANSIT_S)
+    max_s: float | None = Field(default=None, ge=0, le=MAX_TRANSIT_S)
+    tolerance_s: float | None = Field(default=None, ge=0, le=MAX_TOLERANCE_S)
+    bidirectional: bool | None = None
+
+    @field_validator("from_camera_id", "to_camera_id")
+    @classmethod
+    def _ids_are_uuids(cls, value: str) -> str:
+        return _canonical_uuid(value)
+
+    @model_validator(mode="after")
+    def _fill_defaults_and_check_the_type(self) -> Self:
+        if self.from_camera_id == self.to_camera_id:
+            raise ValueError("an edge must connect two different cameras")
+        if self.edge_type == EdgeType.OVERLAP:
+            if self.tolerance_s is None:
+                self.tolerance_s = DEFAULT_OVERLAP_TOLERANCE_S
+            if self.bidirectional is None:
+                self.bidirectional = True
+        elif self.bidirectional is None:
+            self.bidirectional = False
+        validate_edge(
+            self.edge_type.value,
+            min_s=self.min_s,
+            max_s=self.max_s,
+            tolerance_s=self.tolerance_s,
+            bidirectional=bool(self.bidirectional),
+        )
+        return self
+
+
+class TopologyEdgeUpdateRequest(BaseModel):
+    """Only an edge's parameters can change; its cameras and type are its identity (delete
+    and recreate to change them). An omitted field keeps its value, an explicit `null`
+    clears it — so `{"min_s": null}` on a transit edge is a 400, the result must still be a
+    valid edge of its type.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    min_s: float | None = Field(default=None, ge=0, le=MAX_TRANSIT_S)
+    max_s: float | None = Field(default=None, ge=0, le=MAX_TRANSIT_S)
+    tolerance_s: float | None = Field(default=None, ge=0, le=MAX_TOLERANCE_S)
+    bidirectional: bool | None = None
+
+
+# --- alerts & correlation groups (P3-J3) ----------------------------------------------------------
+
+Severity = Literal["low", "medium", "high", "critical"]
+AlertStatusLiteral = Literal["open", "acknowledged", "resolved"]
+
+
+class AlertGroupOut(BaseModel):
+    """The correlation group an alert's event belongs to, as of the last `correlation.v1`."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    status: Literal["open", "closed"]
+    event_count: int
+    camera_ids: list[CameraCode]
+    max_severity: Severity
+    start_ts: datetime
+    end_ts: datetime
+
+    @classmethod
+    def from_model(cls, group: CorrelationGroup) -> AlertGroupOut:
+        return cls(
+            id=str(group.id),
+            status=group.status,  # type: ignore[arg-type]
+            event_count=len(group.event_ids),
+            camera_ids=[CameraCode(c) for c in group.camera_ids],
+            max_severity=group.max_severity,  # type: ignore[arg-type]
+            start_ts=group.start_ts,
+            end_ts=group.end_ts,
+        )
+
+
+class AlertOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    event_id: str
+    site_id: str
+    # The camera's code (what event.v1 carries). `camera_id` is its core.cameras.id when the
+    # camera is still configured, so a UI can link to it; null otherwise.
+    camera_code: CameraCode
+    camera_id: CameraId | None
+    event_type: str
+    severity: Severity
+    title: str
+    caption: str | None
+    rule_id: str
+    zone_id: str | None
+    verification_status: Literal["verified", "skipped"]
+    confidence: float | None
+    start_ts: datetime
+    end_ts: datetime
+    # Presigned GET urls, valid ≤ 15 min and made per request — the database keeps only the
+    # s3:// uris (CLAUDE.md: never store presigned urls). WebSocket pushes carry none (empty
+    # list, `keyframe_count` still set): fetch `GET /alerts/{id}` for fresh urls.
+    keyframe_urls: list[str]
+    keyframe_count: int
+    group: AlertGroupOut | None
+    status: AlertStatusLiteral
+    acknowledged_by: str | None
+    acknowledged_at: datetime | None
+    ack_note: str | None
+    resolved_by: str | None
+    resolved_at: datetime | None
+    resolve_note: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    @classmethod
+    def from_model(
+        cls,
+        alert: Alert,
+        *,
+        group: CorrelationGroup | None = None,
+        camera_id: uuid.UUID | None = None,
+        keyframe_urls: list[str] | None = None,
+    ) -> AlertOut:
+        return cls(
+            id=str(alert.id),
+            event_id=alert.event_id,
+            site_id=alert.site_id,
+            camera_code=CameraCode(alert.camera_id),
+            camera_id=CameraId(str(camera_id)) if camera_id else None,
+            event_type=alert.event_type,
+            severity=alert.severity,  # type: ignore[arg-type]
+            title=alert.title,
+            caption=alert.caption,
+            rule_id=alert.rule_id,
+            zone_id=alert.zone_id,
+            verification_status=alert.verification_status,  # type: ignore[arg-type]
+            confidence=alert.confidence,
+            start_ts=alert.start_ts,
+            end_ts=alert.end_ts,
+            keyframe_urls=keyframe_urls or [],
+            keyframe_count=len(alert.keyframe_uris),
+            group=AlertGroupOut.from_model(group) if group is not None else None,
+            status=alert.status,  # type: ignore[arg-type]
+            acknowledged_by=str(alert.acknowledged_by) if alert.acknowledged_by else None,
+            acknowledged_at=alert.acknowledged_at,
+            ack_note=alert.ack_note,
+            resolved_by=str(alert.resolved_by) if alert.resolved_by else None,
+            resolved_at=alert.resolved_at,
+            resolve_note=alert.resolve_note,
+            created_at=alert.created_at,
+            updated_at=alert.updated_at,
+        )
+
+
+class AlertsPage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[AlertOut]
+    next_cursor: str | None
+
+
+class AlertActionRequest(BaseModel):
+    """Body of `POST /alerts/{id}/ack` and `/resolve`: an optional note (kept in the audit log)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    note: str | None = Field(default=None, max_length=1000)
+
+    @field_validator("note")
+    @classmethod
+    def _blank_is_no_note(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
+
+
+class CorrelationLinkOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    from_event: str
+    to_event: str
+    edge_type: Literal["overlap", "transit"]
+    delta_s: float
+    score: float
+
+
+class CorrelationMemberOut(BaseModel):
+    """One event of a group, as correlation saw it (a snapshot, not the full event)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    event_id: str
+    camera_id: CameraCode
+    event_type: str
+    severity: Severity
+    start_ts: datetime
+    end_ts: datetime
+
+
+class CorrelationGroupOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    site_id: str
+    status: Literal["open", "closed", "merged"]
+    revision: int
+    start_ts: datetime
+    end_ts: datetime
+    max_severity: Severity
+    camera_ids: list[CameraCode]
+    event_types: list[str]
+    event_ids: list[str]
+    merged_into: str | None
+    created_at: datetime
+    closed_at: datetime | None
+
+    @classmethod
+    def from_model(cls, group: CorrelationGroup) -> CorrelationGroupOut:
+        return cls(
+            id=str(group.id),
+            site_id=group.site_id,
+            status=group.status,  # type: ignore[arg-type]
+            revision=group.revision,
+            start_ts=group.start_ts,
+            end_ts=group.end_ts,
+            max_severity=group.max_severity,  # type: ignore[arg-type]
+            camera_ids=[CameraCode(c) for c in group.camera_ids],
+            event_types=list(group.event_types),
+            event_ids=list(group.event_ids),
+            merged_into=str(group.merged_into) if group.merged_into else None,
+            created_at=group.created_at,
+            closed_at=group.closed_at,
+        )
+
+
+class CorrelationGroupDetail(CorrelationGroupOut):
+    members: list[CorrelationMemberOut]
+    links: list[CorrelationLinkOut]
+
+    @classmethod
+    def from_rows(
+        cls, group: CorrelationGroup, links: Sequence[CorrelationLinkRow]
+    ) -> CorrelationGroupDetail:
+        base = CorrelationGroupOut.from_model(group).model_dump()
+        members = [
+            CorrelationMemberOut(
+                event_id=m["event_id"],
+                camera_id=CameraCode(m["camera_id"]),
+                event_type=m["event_type"],
+                severity=m["severity"],
+                start_ts=m["start_ts"],
+                end_ts=m["end_ts"],
+            )
+            for m in sorted(group.members, key=lambda m: (m["start_ts"], m["event_id"]))
+        ]
+        ordered = sorted(links, key=lambda x: (x.from_event, x.to_event))
+        return cls(
+            **base,
+            members=members,
+            links=[
+                CorrelationLinkOut(
+                    from_event=link.from_event,
+                    to_event=link.to_event,
+                    edge_type=link.edge_type,  # type: ignore[arg-type]
+                    delta_s=link.delta_s,
+                    score=round(link.score, 4),
+                )
+                for link in ordered
+            ],
+        )
+
+
+class CorrelationGroupsPage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[CorrelationGroupOut]
+    next_cursor: str | None

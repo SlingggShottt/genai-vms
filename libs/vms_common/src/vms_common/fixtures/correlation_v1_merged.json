@@ -1,0 +1,23 @@
+{
+  "schema_version": "correlation.v1",
+  "message_id": "0192f3e0-2222-7000-8000-0000000000b2",
+  "produced_at": "2026-10-05T10:16:14.500Z",
+  "group_id": "0192f3e0-0002-7000-8000-00000000000b",
+  "site_id": "rvce-campus",
+  "status": "merged",
+  "revision": 2,
+  "event_ids": [
+    "0192f3d1-0001-7000-8000-000000000001"
+  ],
+  "camera_ids": [
+    "cam02"
+  ],
+  "event_types": [
+    "intrusion"
+  ],
+  "start_ts": "2026-10-05T10:15:20.000Z",
+  "end_ts": "2026-10-05T10:15:42.000Z",
+  "max_severity": "high",
+  "links": [],
+  "merged_into": "0192f3e0-0001-7000-8000-00000000000a"
+}
