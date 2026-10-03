@@ -18,7 +18,6 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from vms_db.models import User, UserRole
 
 from api.adapters.cameras import get_camera_by_id
@@ -29,7 +28,7 @@ from api.adapters.zones import (
     list_zones_for_camera,
     update_zone,
 )
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 from api.api.security import get_current_user, require_role
 from api.schemas import ZoneCreateRequest, ZoneOut, ZonesPage, ZoneUpdateRequest
@@ -57,7 +56,7 @@ def _parse_uuid(value: str, *, what: str) -> uuid.UUID:
 @router.get("/cameras/{camera_id}/zones", response_model=ZonesPage)
 async def list_zones_endpoint(
     camera_id: str,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _current_user: Annotated[User, Depends(get_current_user)],
 ) -> ZonesPage:
     camera = await get_camera_by_id(session, _parse_uuid(camera_id, what="camera"))
@@ -73,7 +72,7 @@ async def list_zones_endpoint(
 async def create_zone_endpoint(
     camera_id: str,
     body: ZoneCreateRequest,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _admin: Annotated[User, Depends(_admin_only)],
 ) -> ZoneOut:
     camera = await get_camera_by_id(session, _parse_uuid(camera_id, what="camera"))
@@ -94,7 +93,7 @@ async def create_zone_endpoint(
 async def update_zone_endpoint(
     zone_id: str,
     body: ZoneUpdateRequest,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _admin: Annotated[User, Depends(_admin_only)],
 ) -> ZoneOut:
     target = await get_zone_by_id(session, _parse_uuid(zone_id, what="zone"))
@@ -119,7 +118,7 @@ async def update_zone_endpoint(
 @router.delete("/zones/{zone_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_zone_endpoint(
     zone_id: str,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _admin: Annotated[User, Depends(_admin_only)],
 ) -> None:
     target = await get_zone_by_id(session, _parse_uuid(zone_id, what="zone"))

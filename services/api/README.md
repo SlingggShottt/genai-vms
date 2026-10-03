@@ -157,11 +157,19 @@ itself, since a track can leave and re-enter frame within its overall
 `first_ts`/`last_ts` span, so only the per-segment rows know actual time
 in view.
 
+**Writes are committed before the response** — endpoints take `SessionDep` (`api/deps.py`), never a bare
+`Depends(get_session)`. FastAPI runs a `yield` dependency's exit code (where the transaction commits) _after_ the
+response is sent unless the dependency has `scope="function"`, so a client that re-read at once — the frontend
+refetching a list after a save — could be handed the old data (and stay on it: nothing refetches twice), and a commit
+that failed would follow a "201 Created". Found by driving the P3-J5 editors in a real browser; in-process test clients
+wait for the whole call, so only a test that watches the ASGI send order can see it
+(`tests/unit/test_session_commits_before_response.py`, which also fails if an endpoint goes round `SessionDep`).
+
 
 ## Tests
 
 ```bash
-make test SVC=api        # 236 unit tests: alert rules, notifiers (incl. real-socket SMTP/HTTP), hub, cancellation, supervisor, settings
+make test SVC=api        # 254 unit tests: alert rules, notifiers (incl. real-socket SMTP/HTTP), hub, cancellation, supervisor, settings
 make test-int            # Postgres + Redis + S3 double (+ Kafka for the e2e): REST, consumers, WebSocket, role matrix
 ```
 

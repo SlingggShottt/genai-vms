@@ -14,14 +14,13 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query, Request, status
 from pydantic import AwareDatetime
-from sqlalchemy.ext.asyncio import AsyncSession
 from vms_db.models import User, UserRole
 from vms_db.session import session_scope
 
 from api.adapters.alert_views import build_alert_outs
 from api.adapters.alerts import acknowledge, get_alert, list_alerts, resolve
 from api.adapters.audit import write_audit_log
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 from api.api.security import require_role
 from api.domain.alerts import AlertTransitionError, check_transition
@@ -54,7 +53,7 @@ def _not_found() -> APIError:
 @router.get("", response_model=AlertsPage)
 async def list_alerts_endpoint(
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _user: Annotated[User, Depends(_operator_up)],
     alert_status: Annotated[
         list[Literal["open", "acknowledged", "resolved"]] | None,
@@ -93,7 +92,7 @@ async def list_alerts_endpoint(
 async def get_alert_endpoint(
     alert_id: str,
     request: Request,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _user: Annotated[User, Depends(_operator_up)],
 ) -> AlertOut:
     alert = await get_alert(session, _parse_uuid(alert_id, what="alert"))

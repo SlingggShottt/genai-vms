@@ -10,11 +10,10 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query, status
 from pydantic import AwareDatetime
-from sqlalchemy.ext.asyncio import AsyncSession
 from vms_db.models import User
 
 from api.adapters.groups import get_group, links_for_group, list_groups
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 from api.api.security import get_current_user
 from api.schemas import CorrelationGroupDetail, CorrelationGroupOut, CorrelationGroupsPage
@@ -36,7 +35,7 @@ def _parse_uuid(value: str, *, what: str) -> uuid.UUID:
 
 @router.get("", response_model=CorrelationGroupsPage)
 async def list_correlations_endpoint(
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _user: Annotated[User, Depends(get_current_user)],
     start: Annotated[
         AwareDatetime | None, Query(description="group window overlaps [start, end)")
@@ -74,7 +73,7 @@ async def list_correlations_endpoint(
 @router.get("/{group_id}", response_model=CorrelationGroupDetail)
 async def get_correlation_endpoint(
     group_id: str,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _user: Annotated[User, Depends(get_current_user)],
 ) -> CorrelationGroupDetail:
     """A merged group is returned as it was (status `merged`, `merged_into` set) so a link to

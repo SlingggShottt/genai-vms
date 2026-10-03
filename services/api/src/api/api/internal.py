@@ -4,10 +4,7 @@ guarded by `require_service_token`, never a user JWT/role.
 
 from __future__ import annotations
 
-from typing import Annotated
-
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from vms_common.contracts.camera import CameraInternal, CamerasInternalResponse
 from vms_common.contracts.topology import TopologyEdgeInternal, TopologyInternalResponse
 from vms_common.contracts.zones import ZoneInternal, ZoneSchedule, ZonesInternalResponse
@@ -15,7 +12,7 @@ from vms_common.contracts.zones import ZoneInternal, ZoneSchedule, ZonesInternal
 from api.adapters.cameras import list_all_cameras
 from api.adapters.topology import list_all_edges
 from api.adapters.zones import list_all_zones
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.security import require_service_token
 
 router = APIRouter(
@@ -25,7 +22,7 @@ router = APIRouter(
 
 @router.get("/cameras", response_model=CamerasInternalResponse)
 async def internal_cameras_endpoint(
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
 ) -> CamerasInternalResponse:
     """All cameras, enabled or not (design_architecture.md §16: ingestion's
     `resolve_cameras` filters by `enabled` on its own side) — matches
@@ -52,7 +49,7 @@ async def internal_cameras_endpoint(
 
 @router.get("/zones", response_model=ZonesInternalResponse)
 async def internal_zones_endpoint(
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
 ) -> ZonesInternalResponse:
     """Matches `libs/vms_common/fixtures/zones_internal.json` — note
     `camera_id` here is the camera's **code** (e.g. `cam03`), not its
@@ -81,7 +78,7 @@ async def internal_zones_endpoint(
 
 @router.get("/topology", response_model=TopologyInternalResponse)
 async def internal_topology_endpoint(
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
 ) -> TopologyInternalResponse:
     """Matches `libs/vms_common/fixtures/topology_internal.json` — `from_camera_id` /
     `to_camera_id` are the cameras' **codes** (e.g. `cam03`), not the UUIDs the public
