@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI
 from qdrant_client import AsyncQdrantClient
@@ -18,7 +19,11 @@ from retrieval.adapters.catalog import Catalog
 from retrieval.adapters.encoder import SiglipQueryEncoder
 from retrieval.adapters.twins import TwinReader
 from retrieval.adapters.vectors import VectorSearch
+from retrieval.api.assistant_routes import router as assistant_router
 from retrieval.api.routes import router
+from retrieval.assistant.agent import Assistant
+from retrieval.assistant.store import ChatStore
+from retrieval.assistant.tools import ToolContext
 from retrieval.pipeline import SearchPipeline
 from retrieval.settings import RetrievalSettings
 
@@ -57,6 +62,29 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
             gateway.profile,
         )
 
+        catalog = Catalog(sessions)
+        try:
+            cameras = await catalog.camera_codes()
+        except Exception as exc:  # the list only helps the model phrase tool arguments
+            log.warning("camera_list_unavailable", error=str(exc))
+            cameras = []
+        tz = ZoneInfo(settings.site_timezone)
+        chat_store = ChatStore(sessions)
+        app.state.sessions, app.state.chat_store = sessions, chat_store
+        app.state.assistant = Assistant(
+            gateway=gateway,
+            store=chat_store,
+            ctx_factory=lambda evidence: ToolContext(
+                sessions=sessions,
+                pipeline=pipeline,
+                tz=tz,
+                evidence=evidence,
+                archive_since=settings.archive_since,
+            ),
+            tz=tz,
+            cameras=cameras,
+        )
+
         # Weights load off the event loop so /health answers at once; /ready flips when done.
         loader = asyncio.create_task(asyncio.to_thread(encoder.load), name="siglip-load")
         await pipeline.refresh_zones()
@@ -71,6 +99,7 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
 
     app = FastAPI(title="GenAI-VMS retrieval", version="0.1.0", lifespan=lifespan)
     app.include_router(router)
+    app.include_router(assistant_router)
     return app
 
 

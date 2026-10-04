@@ -38,6 +38,14 @@ query ─▶ plan ─▶ SigLIP 2 text vectors (CPU) ─▶ Qdrant frames + trac
 - **Image search.** `POST /search/image` embeds the upload with SigLIP 2 vision and searches `tracks`.
 - Every search is written to `retrieval.search_logs` (plan, results, per-stage timings).
 
+## Assistant
+
+`POST /assistant/sessions/{id}/messages` streams a turn (`assistant/agent.py`): route or plan → run
+tools (`assistant/tools.py`, fixed parameterised SQL and the search pipeline) → stream an answer
+that opens with the lookup's own header line → validate the `[E:…]` / `[I:…]` / `[S:…]` tags it
+wrote against what the tools handed out (`assistant/evidence.py`). Sessions and the rolling summary
+live in `retrieval.chat_*`. See design §10.3 "As built" for why the router and the lead sentence exist.
+
 ## Retention
 
 The index outlives recordings: keyframes and segments are removed by the retention policy while

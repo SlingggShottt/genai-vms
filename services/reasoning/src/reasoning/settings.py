@@ -48,6 +48,12 @@ class ReasoningSettings(VMSBaseSettings):
     consumer_group: str = "reasoning-auto"
 
     vqa_bank_path: str = "config/vqa_bank.yaml"
+
+    # Daily reports: the worker queues yesterday's report once the site clock passes this hour
+    # (the design's supercronic / CronJob, without a second container to run it).
+    site_timezone: str = "Asia/Kolkata"
+    daily_report_hour: int = Field(default=6, ge=0, le=23)
+    daily_report_auto: bool = True
     evidence_bucket: str = "vms-evidence"
 
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)

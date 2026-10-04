@@ -30,6 +30,11 @@ start() { # name port command...
     echo "  $name already up on :$port"
     return
   fi
+  # A service with no port (the reasoning worker) is "up" if its recorded process group lives.
+  if [ -z "$port" ] && [ -f "$RUN/pids/$name" ] && kill -0 "$(cat "$RUN/pids/$name")" 2>/dev/null; then
+    echo "  $name already running (pid $(cat "$RUN/pids/$name"))"
+    return
+  fi
   setsid nohup "$@" >"$RUN/logs/$name.log" 2>&1 </dev/null &
   echo $! >"$RUN/pids/$name"
   echo "  started $name (log: .demo/logs/$name.log)"

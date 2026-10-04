@@ -11,9 +11,9 @@ evidence bundle (`evidence.v1`) it cites.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Float, Index, String, Text, func, text
+from sqlalchemy import CheckConstraint, Date, DateTime, Float, Index, String, Text, func, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -97,3 +97,35 @@ class Incident(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
+
+
+class DailyReport(Base):
+    """`reasoning.daily_reports` — a security report over one or more days (FR-RPT-01…04).
+
+    The api inserts a `queued` row; the reasoning worker claims it, aggregates `facts` with
+    fixed SQL, writes the `narrative` (model first, template if the model's numbers do not check
+    out) and marks it `ready`.
+    """
+
+    __tablename__ = "daily_reports"
+    __table_args__ = (
+        CheckConstraint("status IN ('queued', 'generating', 'ready', 'failed')", name="status"),
+        CheckConstraint("date_to >= date_from", name="range"),
+        Index("ix_reasoning_daily_reports_created_at", "created_at"),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    date_from: Mapped[date] = mapped_column(Date, nullable=False)
+    date_to: Mapped[date] = mapped_column(Date, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="queued")
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    facts: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    narrative: Mapped[str | None] = mapped_column(Text, nullable=True)
+    narrative_source: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

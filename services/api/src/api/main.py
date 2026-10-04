@@ -20,6 +20,7 @@ from vms_db.session import create_engine, create_session_factory, session_scope
 
 from api.adapters.users import seed_admin_user
 from api.api.alerts import router as alerts_router
+from api.api.assistant import router as assistant_router
 from api.api.auth import router as auth_router
 from api.api.cameras import router as cameras_router
 from api.api.correlations import router as correlations_router
@@ -29,6 +30,7 @@ from api.api.incidents import router as incidents_router
 from api.api.internal import router as internal_router
 from api.api.middleware import RequestIDMiddleware
 from api.api.recordings import router as recordings_router
+from api.api.reports import router as reports_router
 from api.api.search import router as search_router
 from api.api.topology import router as topology_router
 from api.api.tracks import router as tracks_router
@@ -192,6 +194,8 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app.include_router(internal_router, prefix="/api/v1")
     app.include_router(incidents_router, prefix="/api/v1")
     app.include_router(search_router, prefix="/api/v1")
+    app.include_router(assistant_router, prefix="/api/v1")
+    app.include_router(reports_router, prefix="/api/v1")
 
     return app
 

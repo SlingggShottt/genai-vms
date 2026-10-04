@@ -1,6 +1,16 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { FileText, History, LayoutGrid, ListChecks, Search, Settings, LogOut } from 'lucide-react';
+import {
+  BarChart3,
+  FileText,
+  History,
+  LayoutGrid,
+  ListChecks,
+  MessageSquare,
+  Search,
+  Settings,
+  LogOut,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AlertTray } from '@/features/alerts/components/AlertTray';
 import { LiveAlertsProvider } from '@/features/alerts/LiveAlerts';
@@ -20,6 +30,8 @@ const NAV_ITEMS = [
   // Alerts and events are for operators and admins (the api answers a viewer with 403).
   { to: '/events', label: 'Events', icon: ListChecks, end: false, needsAlerts: true },
   { to: '/incidents', label: 'Incidents', icon: FileText, end: false },
+  { to: '/assistant', label: 'Assistant', icon: MessageSquare, end: false },
+  { to: '/reports', label: 'Reports', icon: BarChart3, end: false },
 ];
 
 function NavRail() {

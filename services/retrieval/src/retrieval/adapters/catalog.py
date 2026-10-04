@@ -36,6 +36,13 @@ class Catalog:
             )
             return sorted(r[0] for r in rows if r[0])
 
+    async def camera_codes(self) -> list[str]:
+        async with self._sessions() as s:
+            rows = await s.execute(
+                text("SELECT code FROM core.cameras WHERE enabled ORDER BY code")
+            )
+            return [r[0] for r in rows]
+
     async def twin_uris(self, segment_ids: list[str]) -> dict[str, str]:
         if not segment_ids:
             return {}

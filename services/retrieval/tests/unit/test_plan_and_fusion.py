@@ -69,3 +69,57 @@ def test_rerank_score_scales_and_blend_falls_back_without_a_model_score():
     assert RerankItem(id="c1", score=7).score == 0.7
     assert blend(0.5, None, 0.6) == 0.5
     assert blend(1.0, 0.0, 0.6) == 0.4
+
+
+def test_router_picks_the_lookup_a_clear_question_means():
+    from retrieval.assistant.router import route
+
+    cams = ["cam01", "cam-2"]
+    assert route("How many people were on cam01 at the busiest time today?", cams) == (
+        "count_objects",
+        {"category": "person", "when": "today", "group_by": "hour", "camera": "cam01"},
+    )
+    assert route("Were there any serious incidents today?", cams)[0] == "list_incidents"
+    assert route("What happened on cam01 in the last 2 hours?", cams) == (
+        "list_events",
+        {"when": "last 2 hours", "limit": 10, "camera": "cam01"},
+    )
+    assert route("Find a man carrying a red bag", cams)[0] == "search_footage"
+    assert route("Show me the daily report for yesterday", cams) == (
+        "get_daily_report",
+        {"date": "yesterday"},
+    )
+    assert route("hello there", cams) is None
+
+
+def test_lead_sentence_is_the_tools_own_header_without_tags():
+    from retrieval.assistant.router import lead_sentence
+
+    got = lead_sentence(
+        "list_incidents", "5 incident report(s) (severity: 5 HIGH), newest first:\n[I:ab] x"
+    )
+    assert got == "5 incident report(s) (severity: 5 HIGH)."
+    assert lead_sentence("list_events", "No verified events in that period.") == (
+        "No verified events in that period."
+    )
+
+
+def test_a_repeated_lead_is_stripped_from_the_models_opening():
+    from retrieval.assistant.agent import strip_repeat
+
+    lead = "5 incident report(s) (severity: 5 HIGH)."
+    assert strip_repeat(
+        'Answer: "5 incident report(s) (severity: 5 HIGH). They were at noon."', lead
+    ) == ("They were at noon.")
+    assert strip_repeat("They were at noon.", lead) == "They were at noon."
+
+
+def test_evidence_only_resolves_tags_it_handed_out():
+    from retrieval.assistant.evidence import Evidence
+
+    ev = Evidence()
+    tag = ev.event(
+        "30b6f125-67c9-5eee-93ad-73d79e17268e", "intrusion on cam01", camera="cam01", ts=None
+    )
+    valid, unknown = ev.resolve(f"One intrusion {tag} and a made-up one [E:deadbeef].")
+    assert [c.ref[:8] for c in valid] == ["30b6f125"] and unknown == ["E:deadbeef"]

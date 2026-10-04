@@ -11,10 +11,12 @@ raw model output when synthesis was the problem) — never a half-written `gener
 from __future__ import annotations
 
 import asyncio
+import time
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from vms_common.contracts.event import Severity
 from vms_common.contracts.reasoning import IncidentReadyV1
 from vms_common.ids import uuid7_str
@@ -27,6 +29,8 @@ from reasoning.adapters.footage import Footage, FootFrame
 from reasoning.adapters.store import JobRow, ReasoningStore
 from reasoning.domain.context import build_context
 from reasoning.domain.evidence import PhaseReading, build_bundle
+from reasoning.reports.daily import ReportQueue
+from reasoning.reports.daily import generate as generate_report
 from reasoning.settings import ReasoningSettings
 from reasoning.steps.phases import locate_phases
 from reasoning.steps.readings import read_view
@@ -51,6 +55,8 @@ class ReasoningWorker:
         producer: KafkaProducerClient | None,
         profile: str,
         tz: ZoneInfo,
+        reports: ReportQueue | None = None,
+        sessions: async_sessionmaker[AsyncSession] | None = None,
     ) -> None:
         self._s = settings
         self._store = store
@@ -60,14 +66,56 @@ class ReasoningWorker:
         self._producer = producer
         self._profile = profile
         self._tz = tz
+        self._reports = reports
+        self._sessions = sessions
+        self._last_schedule_check = 0.0
 
     async def run_forever(self) -> None:
         while True:
             job = await self._store.claim(self._s.job_lease_s)
-            if job is None:
-                await asyncio.sleep(self._s.poll_s)
+            if job is not None:
+                await self.process(job)
                 continue
-            await self.process(job)
+            if await self._daily_report_step():
+                continue
+            await asyncio.sleep(self._s.poll_s)
+
+    async def _daily_report_step(self) -> bool:
+        """Queue yesterday's report when it is time, then work one queued report. True if a
+        report was worked (the loop should look for more before sleeping)."""
+        if self._reports is None or self._sessions is None:
+            return False
+        try:
+            await self._schedule_daily()
+            report_id = await self._reports.claim()
+            if report_id is None:
+                return False
+            try:
+                await generate_report(self._sessions, self._gateway, report_id, self._tz)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                log.exception("daily_report_failed", report_id=str(report_id))
+                await self._reports.fail(report_id, f"{type(exc).__name__}: {exc}")
+            return True
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("daily_report_step_failed")
+            return False
+
+    async def _schedule_daily(self) -> None:
+        now = time.monotonic()
+        if not self._s.daily_report_auto or now - self._last_schedule_check < 60:
+            return
+        self._last_schedule_check = now
+        local = datetime.now(self._tz)
+        if local.hour < self._s.daily_report_hour:
+            return
+        day = local.date() - timedelta(days=1)
+        if not await self._reports.scheduled_exists(day):
+            await self._reports.enqueue(day, day)
+            log.info("daily_report_queued", day=str(day))
 
     async def process(self, job: JobRow) -> None:
         bind_context(job_id=str(job.id))

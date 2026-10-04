@@ -1,13 +1,13 @@
 # Demo runbook
 
-The three things to show: **reasoning-based search**, **event reasoning** (phase-aware analysis of an
-event) and **automated incident summarisation**.
+The things to show: **reasoning-based search**, **event reasoning** (phase-aware analysis of an
+event), **automated incident summarisation**, the **assistant** and **daily reports**.
 
 ## Bring it up
 
 ```bash
 make up PROFILE=infra,core            # Kafka, Postgres, Qdrant, MinIO, Redis, MediaMTX, ingestion, indexer, events, correlation
-make migrate                          # needs migration 0009 (reasoning + retrieval tables)
+make migrate                          # needs migrations 0009-0011 (reasoning, retrieval, chat, daily reports)
 VMS_RETRIEVAL_ARCHIVE_SINCE=<today>T00:00:00Z deploy/demo/start.sh   # Ollama, retrieval :8010, reasoning, api :8000, UI :5173
 ```
 
@@ -42,6 +42,13 @@ GPU).
    detector's timing instead of the model.
 4. **Automation.** Closed correlation groups of severity high or above are analysed without a click
    (at most 6 an hour); they appear in `/incidents` as *Writing report* and then finish.
+
+5. **Assistant** (`/assistant`). Start from a suggested question, e.g. *Were there any serious incidents
+   on cam01 today?* — the lookup runs first and what it found is listed under the answer; every chip
+   opens the event, report or recording behind it. A tag the model invents is dropped, not shown.
+6. **Daily reports** (`/reports`). *Generate report*, pick a day; it fills in within a minute. The
+   summary is written by the model but every number in it is checked against the figures (the page
+   says when it fell back to the standard summary). *Print or save as PDF*.
 
 ## Known limits (say them before they are found)
 

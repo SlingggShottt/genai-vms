@@ -758,21 +758,25 @@
 - [ ] Golden tests on 5 fixture evidence bundles (schema-valid, citations valid).
 
 ### P6-D2 · RAG assistant agent & streaming — 8 pts · Must · E14 · FR-AST-02…04, FR-AST-06
+> **Status 2026-10-04 — partly built** (`services/retrieval/src/retrieval/assistant`): seven parameterised tools (`search_footage`, `list_events`, `list_incidents`, `get_incident`, `get_timeline`, `count_objects` over `vision.minute_counts`, `get_daily_report`); SSE `tool_call`, `tool_result`, `token`, `citation`, `done`, `error`; citation tags resolved server-side. The local model has no native tool calling, so clear questions are routed by keywords and only the rest go to a JSON-action planner (≤ 4 calls). **Not done:** the 25 scripted `FakeGateway` conversations, `zone` in `count_objects` (counts are per camera), a rate/size cap on tool results beyond truncation.
 - [ ] Tools per design §10.3 with JSON schemas; `count_objects` uses pre-defined parameterized SQL only.
 - [ ] Agent loop (≤ 5 tool rounds), citation format enforcement, "nothing found" behaviour.
 - [ ] `POST /assistant/sessions/{id}/messages` streams SSE events `token`, `tool_call`, `tool_result`, `citation`, `done`, `error`.
 - [ ] 25 scripted conversations pass tool-selection and citation checks with `FakeGateway` recordings.
 
 ### P6-D3 · Conversation memory — 2 pts · Should · E14 · FR-AST-01, FR-AST-05
+> **Status 2026-10-04 — built, not unit-tested end to end:** sessions and messages in `retrieval.chat_sessions` / `chat_messages` (migration 0010), last 12 messages verbatim plus a rolling summary updated in the background, tool output truncated.
 - [ ] Sessions/messages persisted; last 12 messages + rolling summary; tool results truncated to budget.
 
 ### P6-D4 · Assistant UI — 5 pts · Must · E14 · FR-AST-01, FR-AST-03
+> **Status 2026-10-04 — built, driven in a real browser:** conversation list, streaming chat, tool activity with what each lookup found, citation chips (event → its alert page, incident → report, footage → playback at the moment), starter questions from the last 24 h, stop button, retry. Records the model did not cite are shown as "Records consulted", never as its citations.
 - [ ] Session list + chat column (§B.7); streaming render; tool activity lines; EvidenceChip citations opening clips/incidents.
 - [ ] Suggested starter questions from the last 24 h; stop-generation button; error/retry states.
 
 ## Jatin — 23 pts
 
 ### P6-J1 · Daily security report job — 5 pts · Must · E15 · FR-RPT-01…04
+> **Status 2026-10-04 — partly built** (`services/reasoning/src/reasoning/reports`): `DailyFacts` from fixed SQL, narrative from `daily_narrative/1.0` with every number checked against the figures (one retry, then a template text; `narrative_source` says which), `reasoning.daily_reports` (migration 0011), the worker queues yesterday's report after 06:00 IST, `POST /reports/daily` (≤ 7 days) and `python -m reasoning.reports.daily`. **Not done:** server-side charts and PDF (WeasyPrint; the UI draws the charts and the browser prints to PDF), indexing into `knowledge`, supercronic in Compose (the worker schedules it).
 - [ ] `DailyFacts` aggregation SQL; charts (events by hour/type/camera, alert response times).
 - [ ] Narrative via gateway with numeric post-check (numbers must exist in facts) → regenerate once → template fallback.
 - [ ] Jinja2 + WeasyPrint PDF per §B.11 → `vms-reports`; row in `reasoning.daily_reports`; indexed into `knowledge`.
@@ -794,6 +798,7 @@
 - [ ] Shift-drag range → "Search in range" / "Save to case"; cases CRUD with bookmarked items and notes.
 
 ### P6-J5 · Daily reports UI — 2 pts · Must · E15 · FR-RPT-02, FR-RPT-04
+> **Status 2026-10-04 — built, driven in a real browser:** reports list with live status, *Generate report* dialog (date range, ≤ 7 days), report page with the narrative, tiles, hourly chart, breakdowns, response times and the incident list, print-to-PDF.
 - [ ] Reports list, "Generate report" dialog (date range), status while generating, preview + download PDF.
 
 ---

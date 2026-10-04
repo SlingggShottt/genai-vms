@@ -7,7 +7,6 @@ import asyncio
 import contextlib
 from zoneinfo import ZoneInfo
 
-from vms_common.config import VMSBaseSettings
 from vms_common.kafka.producer import KafkaProducerClient
 from vms_common.llm import LLMGateway
 from vms_common.logging import configure_logging, get_logger
@@ -18,21 +17,19 @@ from vms_db.session import create_engine, create_session_factory
 from reasoning.adapters.footage import Footage
 from reasoning.adapters.store import ReasoningStore
 from reasoning.consumers.correlations import CorrelationConsumer
+from reasoning.reports.daily import ReportQueue
 from reasoning.settings import ReasoningSettings
 from reasoning.worker import ReasoningWorker
 
 log = get_logger(__name__)
 
 
-class _Site(VMSBaseSettings):
-    site_timezone: str = "Asia/Kolkata"
-
-
 async def _amain() -> None:
     settings = ReasoningSettings()
     configure_logging(level=settings.log_level)
     engine = create_engine(settings.db)
-    store = ReasoningStore(create_session_factory(engine))
+    sessions = create_session_factory(engine)
+    store = ReasoningStore(sessions)
     s3 = S3Client(
         endpoint_url=settings.storage.endpoint_url,
         access_key=settings.storage.access_key,
@@ -52,7 +49,9 @@ async def _amain() -> None:
         bank=load_vqa_bank(settings.vqa_bank_path),
         producer=producer,
         profile=gateway.profile,
-        tz=ZoneInfo(_Site().site_timezone),
+        tz=ZoneInfo(settings.site_timezone),
+        reports=ReportQueue(sessions, settings.job_lease_s),
+        sessions=sessions,
     )
     tasks = [asyncio.create_task(worker.run_forever(), name="reasoning-worker")]
     consumer = CorrelationConsumer(store=store, settings=settings)

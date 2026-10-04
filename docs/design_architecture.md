@@ -725,7 +725,7 @@ Relative times ("this morning") are resolved by the LLM using the provided curre
 - Colours and zones *boost* a track rather than filter it (the colour naming is rough); camera, time and category are hard filters.
 - Verified events join the fusion through Postgres full-text over their VLM caption — a stand-in for the `knowledge` collection, which is not written yet.
 - `VMS_RETRIEVAL_ARCHIVE_SINCE` floors every search at the oldest footage that still exists, and results whose keyframe has been removed by retention are dropped and counted in `notes`.
-- All local text and vision tasks run on one resident model (`qwen2.5vl:3b`, `num_ctx` 8192): on a 4 GB GPU a second model means Ollama reloads between the events gate and a search.
+- Local text tasks run on `qwen2.5:3b` and vision tasks on `qwen2.5vl:3b` (both `num_ctx` 8192). On the same evidence the text model answered an assistant question correctly where the VL model contradicted it, so the split of the original design stands; the price is an Ollama reload when activity moves between the two (once per analysis job).
 
 ### 10.2 Image search & grounding (owner J)
 - **Image query:** upload or `{frame_uri, bbox}` → crop → SigLIP2 vision (CPU in retrieval) → `tracks` collection with optional filters → group by track → results sorted by score then time.
@@ -738,12 +738,16 @@ Relative times ("this morning") are resolved by the LLM using the provided curre
 - **Memory:** last 12 messages verbatim + rolling summary stored on the session; tool results truncated to 1.5 k tokens each.
 - **Streaming:** SSE events `token`, `tool_call`, `tool_result` (summary only), `citation`, `done`, `error`.
 
+**As built (P6-D2…D4, `services/retrieval/src/retrieval/assistant`).** One turn: a keyword router picks the first tool for clear questions (counts, incidents, events, footage, daily report), otherwise `AgentStep` JSON from the `assistant` task chooses up to four calls (the local Ollama tags have no native tool calling, so the design's `tools=` path is not used); every tool returns text with 8-character evidence tags (`[E:…]`, `[I:…]`, `[S:…]`) because a small model cannot copy uuids, and the tags are resolved to real ids on the server. The streamed answer opens with a sentence taken from the tool's own header line (a 3B model contradicted its evidence when left to phrase the finding), the model continues after it, and the stream ends with the citations that resolve plus the tags that were invented. When the model cites nothing the UI shows the records as "consulted". Memory: last 12 messages plus a rolling summary in `retrieval.chat_sessions` / `chat_messages`.
+
 ### 10.4 Daily security reports (owner J)
 1. Aggregate SQL → `DailyFacts` JSON (counts by type/camera/hour, incidents, alert ack/resolve times p50/p90, top correlation groups).
 2. Charts rendered server-side (matplotlib → PNG).
 3. LLM narrative with instruction to use only figures in `DailyFacts`; a post-check verifies every number in the narrative appears in the facts (else regenerate once, else template-only narrative).
 4. Jinja2 HTML → WeasyPrint PDF → `vms-reports`; row in `reasoning.daily_reports`; indexed into `knowledge`.
 5. Scheduling: Kubernetes `CronJob` (k8s) / `supercronic` container (Compose) calling `python -m reasoning.reports.daily --date yesterday`; on-demand via API.
+
+**As built (P6-J1/J5).** Facts come from fixed SQL over a range of site-time days (`reasoning.reports.facts`); the narrative is asked of `daily_narrative` with the figures as plain lines, and every number in it must appear in the figures (a clock time passes only as a whole hour that is a busiest-hour bucket) — one retry, then a template text. The api inserts a `queued` `reasoning.daily_reports` row; the reasoning worker claims it, and also queues yesterday's report itself once the site clock passes `VMS_REASONING_DAILY_REPORT_HOUR` (06:00), which replaces the supercronic container. Charts are drawn in the UI and the PDF is the browser's print.
 
 ## 11. LLM gateway, model registry & GPU (owner D)
 

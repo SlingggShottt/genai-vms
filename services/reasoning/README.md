@@ -37,8 +37,16 @@ job ─▶ events + group ─▶ keyframes from the twins of the window (±15 s)
    and the report says how many were dropped. If nothing cited survives the job fails and the raw
    output is kept on the incident row.
 
+## Daily reports
+
+`reports/facts.py` aggregates a range of site-time days with fixed SQL; `reports/daily.py` asks the
+`daily_narrative` task for the summary and accepts it only if every number appears in the figures
+(otherwise one retry, then a template text). The worker claims `queued` rows of
+`reasoning.daily_reports` and queues yesterday's report itself after `VMS_REASONING_DAILY_REPORT_HOUR`.
+`python -m reasoning.reports.daily --date yesterday` queues one by hand.
+
 ## Not built
 
-The `hf_local` provider for the LoRA adapters (P5-D5), the synced multi-view playback, PDF export
+The `hf_local` provider for the LoRA adapters (P5-D5), the synced multi-view playback, server-side PDF
 (the UI offers print-to-PDF), `incident.ready` / `job.progress` pushes on the WebSocket (the UI
-polls), similar-incident search, and the assistant and daily reports.
+polls) and similar-incident search.

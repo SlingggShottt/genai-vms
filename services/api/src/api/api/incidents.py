@@ -352,3 +352,18 @@ async def event_reasoning(
         job=await _job_out(session, job) if job else None,
         incident=_summary(incident) if incident else None,
     )
+
+
+@router.get("/events/{event_id}/alert")
+async def event_alert(
+    event_id: str, session: SessionDep, _user: Annotated[User, Depends(get_current_user)]
+) -> dict[str, str | None]:
+    """The alert page that shows an event (the UI addresses events by alert id); null when the
+    event raised none (below the alert threshold)."""
+    _uuid(event_id, "event")
+    row = (
+        await session.execute(
+            text("SELECT id::text FROM core.alerts WHERE event_id = :e"), {"e": event_id}
+        )
+    ).first()
+    return {"alert_id": row[0] if row else None}
