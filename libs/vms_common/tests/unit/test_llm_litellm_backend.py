@@ -430,7 +430,7 @@ async def test_gateway_vision_call_end_to_end_over_litellm(ollama: FakeOllama) -
     assert result.parsed == Verdict(verdict="confirmed", confidence=0.8)
     assert (result.attempts, result.provider, result.model) == (2, "ollama", "qwen2.5vl:3b")
     first, second = (body for _path, body in ollama.requests)
-    assert first["options"]["num_ctx"] == 6144  # from config/models.yaml
+    assert first["options"]["num_ctx"] == 8192  # from config/models.yaml
     assert first["format"]["properties"]["verdict"]  # the response_model's schema went along
     assert len(first["messages"][0]["images"]) == 1
     assert [m["role"] for m in second["messages"]] == ["user", "assistant", "user"]  # the repair

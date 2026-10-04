@@ -73,15 +73,24 @@ tasks:
 # reloads a model when its context size changes between requests.
 profiles:
   local:
-    event_verify:       {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 6144}
-    jit_vqa:            {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 6144}
-    query_decompose:    {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
-    rerank:             {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
-    phase_tg:           {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/tg/v1"}
-    phase_vr:           {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/phavr/v1"}
-    incident_synthesis: {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
-    assistant:          {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
-    daily_narrative:    {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
+    # One resident model serves every local task: on a 4 GB GPU a second model means Ollama
+    # unloads and reloads (tens of seconds) every time two tasks alternate — which the events
+    # gate (vision) and a search (text) do all the time. Qwen2.5-VL-3B answers text-only prompts
+    # as well, so text tasks use it too, at the same num_ctx so the runner is never reloaded.
+    # `phase_tg` / `phase_vr` point at the zero-shot base until the fine-tuned adapters exist
+    # (P5-D2 / P5-J2 train them on Kaggle); swap in the hf_local entries then.
+    event_verify:       {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    jit_vqa:            {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    query_decompose:    {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    rerank:             {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    phase_tg:           {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    phase_vr:           {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    incident_synthesis: {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    assistant:          {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    daily_narrative:    {provider: ollama, model: "qwen2.5vl:3b", num_ctx: 8192}
+    # Fine-tuned (not yet trained):
+    #   phase_tg: {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/tg/v1"}
+    #   phase_vr: {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/phavr/v1"}
 
   hybrid:               # local vision, cloud text reasoning
     extends: local

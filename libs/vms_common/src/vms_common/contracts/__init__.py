@@ -14,7 +14,14 @@ from vms_common.contracts.embeddings import (
     load_embeddings_npz,
 )
 from vms_common.contracts.event import EventV1, Verification
+from vms_common.contracts.reasoning import (
+    EvidenceBundleV1,
+    IncidentReadyV1,
+    IncidentReportV1,
+    PhaseTimelineV1,
+)
 from vms_common.contracts.segment import SegmentV1
+from vms_common.contracts.search import QueryPlan, SearchRequest, SearchResponse, SearchResult
 from vms_common.contracts.topology import TopologyEdgeInternal, TopologyInternalResponse
 from vms_common.contracts.twin import (
     Frame,
@@ -35,6 +42,14 @@ __all__ = [
     "CorrelationLink",
     "CorrelationV1",
     "EventV1",
+    "EvidenceBundleV1",
+    "IncidentReadyV1",
+    "IncidentReportV1",
+    "PhaseTimelineV1",
+    "QueryPlan",
+    "SearchRequest",
+    "SearchResponse",
+    "SearchResult",
     "Frame",
     "FrameObject",
     "FrameSize",

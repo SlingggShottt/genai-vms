@@ -21,6 +21,8 @@ from vms_db.models.core import (
 from vms_db.models.correlation import CorrelationGroup, CorrelationLinkRow
 from vms_db.models.events import Candidate, Event
 from vms_db.models.media import Segment
+from vms_db.models.reasoning import Incident, ReasoningJob
+from vms_db.models.retrieval import SearchLog
 from vms_db.models.vision import MinuteCount, Track, TrackSegment
 
 __all__ = [
@@ -33,8 +35,11 @@ __all__ = [
     "CorrelationLinkRow",
     "EdgeType",
     "Event",
+    "Incident",
     "MinuteCount",
+    "ReasoningJob",
     "RefreshToken",
+    "SearchLog",
     "Segment",
     "TopologyEdge",
     "Track",
