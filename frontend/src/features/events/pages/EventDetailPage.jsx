@@ -6,6 +6,7 @@ import { useAlert } from '@/features/alerts/api';
 import { AlertNoteDialog } from '@/features/alerts/components/AlertNoteDialog';
 import { canSeeAlerts } from '@/features/alerts/schemas';
 import { useCurrentUser } from '@/features/auth/api';
+import { AnalyzePanel } from '@/features/incidents/components/AnalyzePanel';
 import { ApiError } from '@/lib/apiClient';
 import { formatClock, formatDateTime } from '@/lib/time';
 import { ClipPlayer } from '../components/ClipPlayer';
@@ -166,6 +167,10 @@ export function EventDetailPage() {
                 </Detail>
               )}
             </dl>
+          </Section>
+
+          <Section title="Reasoning">
+            <AnalyzePanel eventId={alert.event_id} canAnalyze={allowed} />
           </Section>
 
           <Section title="Correlated events">

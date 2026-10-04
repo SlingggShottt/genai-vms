@@ -48,7 +48,9 @@ export const apiUrl = buildUrl;
 
 async function rawRequest(path, { method = 'GET', body, headers = {}, skipAuth = false } = {}) {
   const finalHeaders = { ...headers };
-  if (body !== undefined) finalHeaders['Content-Type'] = 'application/json';
+  // A FormData body (image upload) must keep the multipart boundary the browser generates.
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (body !== undefined && !isForm) finalHeaders['Content-Type'] = 'application/json';
 
   const accessToken = getAccessToken();
   if (!skipAuth && accessToken) {
@@ -58,7 +60,7 @@ async function rawRequest(path, { method = 'GET', body, headers = {}, skipAuth =
   const response = await fetch(buildUrl(path), {
     method,
     headers: finalHeaders,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   });
 
   return response;

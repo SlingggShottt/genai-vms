@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Hls from 'hls.js';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useCameras } from '@/features/cameras/api';
@@ -40,9 +41,34 @@ export function PlaybackPage() {
   const { data: cameras } = useCameras();
   const enabledCameras = cameras?.items.filter((c) => c.enabled) ?? [];
 
-  const [cameraCode, setCameraCode] = useState('');
-  const [draftRange, setDraftRange] = useState(defaultRange);
-  const [activeRange, setActiveRange] = useState(null); // { startIso, endIso, startDate, endDate }
+  // A link from search or an incident carries ?camera=&start=&end= (ISO): play that window.
+  const [params] = useSearchParams();
+  const linked = useMemo(() => {
+    const camera = params.get('camera');
+    const start = new Date(params.get('start') ?? '');
+    const end = new Date(params.get('end') ?? '');
+    if (!camera || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+      return null;
+    }
+    return { camera, start, end };
+  }, [params]);
+
+  const [cameraCode, setCameraCode] = useState(linked?.camera ?? '');
+  const [draftRange, setDraftRange] = useState(() =>
+    linked
+      ? { start: toDatetimeLocalValue(linked.start), end: toDatetimeLocalValue(linked.end) }
+      : defaultRange(),
+  );
+  const [activeRange, setActiveRange] = useState(() =>
+    linked
+      ? {
+          startIso: linked.start.toISOString(),
+          endIso: linked.end.toISOString(),
+          startDate: linked.start,
+          endDate: linked.end,
+        }
+      : null,
+  ); // { startIso, endIso, startDate, endDate }
   const [playheadMs, setPlayheadMs] = useState(null);
   const [playerError, setPlayerError] = useState(null);
   const [overlayEnabled, setOverlayEnabled] = useState(true);
