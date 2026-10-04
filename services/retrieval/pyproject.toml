@@ -17,7 +17,7 @@ dependencies = [
     "transformers>=4.49,<5.0",
     "tzdata>=2024.1",
     "uvicorn[standard]>=0.30",
-    "vms-common[llm]",
+    "vms-common[llm,knowledge]",
     "vms-db",
 ]
 

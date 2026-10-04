@@ -17,6 +17,8 @@ from vms_db.session import create_engine, create_session_factory
 
 from retrieval.adapters.catalog import Catalog
 from retrieval.adapters.encoder import SiglipQueryEncoder
+from retrieval.adapters.grounding import Grounder
+from retrieval.adapters.knowledge import KnowledgeSearch, make_embedder
 from retrieval.adapters.twins import TwinReader
 from retrieval.adapters.vectors import VectorSearch
 from retrieval.api.assistant_routes import router as assistant_router
@@ -24,6 +26,7 @@ from retrieval.api.routes import router
 from retrieval.assistant.agent import Assistant
 from retrieval.assistant.store import ChatStore
 from retrieval.assistant.tools import ToolContext
+from retrieval.grounding_service import GroundingService
 from retrieval.pipeline import SearchPipeline
 from retrieval.settings import RetrievalSettings
 
@@ -47,6 +50,8 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
         )
         gateway = LLMGateway.from_settings(redis_settings=settings.redis)
         encoder = SiglipQueryEncoder(settings.siglip_model, settings.encoder_device)
+        embedder = make_embedder(settings.knowledge.cache_dir)
+        knowledge = KnowledgeSearch(qdrant, embedder)
         pipeline = SearchPipeline(
             settings=settings,
             encoder=encoder,
@@ -55,7 +60,9 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
             twins=TwinReader(s3),
             gateway=gateway,
             profile=gateway.profile,
+            knowledge=knowledge,
         )
+        app.state.knowledge = knowledge
         app.state.pipeline, app.state.encoder, app.state.profile = (
             pipeline,
             encoder,
@@ -63,6 +70,8 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
         )
 
         catalog = Catalog(sessions)
+        await s3.ensure_bucket(settings.masks_bucket)
+        app.state.grounding = GroundingService(Grounder(), s3, catalog, settings.masks_bucket)
         try:
             cameras = await catalog.camera_codes()
         except Exception as exc:  # the list only helps the model phrase tool arguments
@@ -87,12 +96,14 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
 
         # Weights load off the event loop so /health answers at once; /ready flips when done.
         loader = asyncio.create_task(asyncio.to_thread(encoder.load), name="siglip-load")
+        text_loader = asyncio.create_task(asyncio.to_thread(embedder.load), name="knowledge-load")
         await pipeline.refresh_zones()
         log.info("retrieval_started", profile=gateway.profile, encoder=settings.siglip_model)
         try:
             yield
         finally:
             loader.cancel()
+            text_loader.cancel()
             await gateway.aclose()
             await qdrant.close()
             await engine.dispose()

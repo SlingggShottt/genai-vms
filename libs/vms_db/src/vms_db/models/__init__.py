@@ -5,6 +5,7 @@ autogenerate can discover them through `Base.metadata`
 
 from __future__ import annotations
 
+from vms_db.models.cases import Case, CaseItem
 from vms_db.models.core import (
     Alert,
     AlertStatus,
@@ -30,6 +31,8 @@ __all__ = [
     "AlertStatus",
     "AuditLog",
     "Camera",
+    "Case",
+    "CaseItem",
     "ChatMessage",
     "ChatSession",
     "Candidate",

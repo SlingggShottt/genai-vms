@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   BarChart3,
+  Briefcase,
   FileText,
+  GanttChart,
   History,
   LayoutGrid,
   ListChecks,
@@ -31,7 +33,9 @@ const NAV_ITEMS = [
   { to: '/events', label: 'Events', icon: ListChecks, end: false, needsAlerts: true },
   { to: '/incidents', label: 'Incidents', icon: FileText, end: false },
   { to: '/assistant', label: 'Assistant', icon: MessageSquare, end: false },
+  { to: '/timeline', label: 'Timeline', icon: GanttChart, end: false },
   { to: '/reports', label: 'Reports', icon: BarChart3, end: false },
+  { to: '/cases', label: 'Cases', icon: Briefcase, end: false, needsAlerts: true },
 ];
 
 function NavRail() {

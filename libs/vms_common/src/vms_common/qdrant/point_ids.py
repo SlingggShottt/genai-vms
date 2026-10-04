@@ -35,3 +35,9 @@ def track_point_id(track_id: str, segment_id: str) -> str:
     segment, matching `vision.track_segments`' own granularity).
     """
     return str(uuid.uuid5(_NAMESPACE, f"track:{track_id}:{segment_id}"))
+
+
+def knowledge_point_id(doc_type: str, ref_id: str, part: str = "") -> str:
+    """One point per indexed text: an event's caption, or one section of an incident report
+    (`part` = "summary", "phase:action", …). Re-indexing the same text overwrites it."""
+    return str(uuid.uuid5(_NAMESPACE, f"knowledge:{doc_type}:{ref_id}:{part}"))

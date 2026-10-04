@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from collections import OrderedDict
 from datetime import UTC, datetime
 from time import perf_counter
 from zoneinfo import ZoneInfo
@@ -23,6 +24,7 @@ from vms_common.logging import get_logger
 from retrieval import llm_steps
 from retrieval.adapters.catalog import Catalog
 from retrieval.adapters.encoder import SiglipQueryEncoder
+from retrieval.adapters.knowledge import KnowledgeSearch
 from retrieval.adapters.twins import TwinReader, excerpt_lines
 from retrieval.adapters.vectors import VectorSearch
 from retrieval.domain.fusion import Hit, Window, group_windows
@@ -53,16 +55,52 @@ class SearchPipeline:
         twins: TwinReader,
         gateway: Gateway,
         profile: str,
+        knowledge: KnowledgeSearch | None = None,
     ) -> None:
         self._s = settings
         self._encoder = encoder
         self._vectors = vectors
         self._catalog = catalog
         self._twins = twins
+        self._knowledge = knowledge
+        self.recent: OrderedDict[tuple[str, str], tuple[str | None, list[str], list[str]]] = (
+            OrderedDict()
+        )
         self._gateway = gateway
         self._profile = profile
         self._tz = ZoneInfo(settings.site_timezone)
         self._zones: list[str] = []
+
+    async def _knowledge_hits(self, plan, cameras, start, end) -> list[Hit]:
+        """Captions and incident sections by meaning + words; a failure costs only this list."""
+        try:
+            assert self._knowledge is not None  # noqa: S101
+            return await self._knowledge.hits(
+                " ".join(plan.text_queries) or plan.original,
+                cameras=cameras,
+                start=start,
+                end=end,
+                limit=20,
+            )
+        except Exception as exc:
+            log.warning("knowledge_search_failed", error=str(exc))
+            return []
+
+    def _remember(self, search_id: str, results: list[SearchResult]) -> None:
+        """What each recent result looked at (its keyframe, segments, tracks), so a mask can be
+        asked for by `(search_id, result_id)` without the browser ever holding an s3:// uri."""
+        for r in results[:30]:
+            self.recent[(search_id, r.result_id)] = (
+                r.keyframe_uri,
+                list(r.segment_ids),
+                list(r.matched_track_ids),
+            )
+        while len(self.recent) > 600:
+            self.recent.popitem(last=False)
+
+    @property
+    def catalog(self) -> Catalog:
+        return self._catalog
 
     def _floor(self, start: datetime | None) -> datetime | None:
         """No search reaches back past `archive_since` (see the setting)."""
@@ -141,6 +179,8 @@ class SearchPipeline:
                 limit=20,
             )
         )
+        if self._knowledge is not None and self._knowledge.loaded:
+            jobs.append(self._knowledge_hits(plan, cameras, start, end))
         lists: list[list[Hit]] = [r for r in await asyncio.gather(*jobs)]
         timings["retrieve"] = _ms_since(t)
 
@@ -165,8 +205,10 @@ class SearchPipeline:
         if not results:
             notes.append("nothing in the archive matched; try fewer details or a wider time range")
 
+        search_id = str(uuid.uuid4())
+        self._remember(search_id, results)
         response = SearchResponse(
-            search_id=str(uuid.uuid4()),
+            search_id=search_id,
             query=req.query,
             mode=req.mode,
             profile=self._profile,
@@ -209,8 +251,10 @@ class SearchPipeline:
         results = await self._to_results(windows)
         results, expired = await self._drop_expired(windows, results)
         timings["fuse"] = _ms_since(t)
+        search_id = str(uuid.uuid4())
+        self._remember(search_id, results[:top_k])
         response = SearchResponse(
-            search_id=str(uuid.uuid4()),
+            search_id=search_id,
             query=label,
             mode="fast",
             kind="image",
@@ -266,6 +310,9 @@ class SearchPipeline:
                     categories=sorted({h.category for h in w.hits if h.category}),
                     colors=sorted({c for h in w.hits for c in h.colors}),
                     zones=sorted({z for h in w.hits for z in h.zones}),
+                    incident_ids=list(
+                        dict.fromkeys(h.incident_id for h in w.hits if h.incident_id)
+                    ),
                     event_ids=list(
                         dict.fromkeys(
                             [h.event_id for h in w.hits if h.event_id] + [e["id"] for e in ev_rows]

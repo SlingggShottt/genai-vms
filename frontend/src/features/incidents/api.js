@@ -6,6 +6,7 @@ import {
   incidentSummarySchema,
   jobSchema,
   reasoningStateSchema,
+  similarSchema,
 } from './schemas';
 
 export const incidentsKey = ['incidents'];
@@ -69,5 +70,16 @@ export function useAnalyzeEvent(eventId) {
       queryClient.invalidateQueries({ queryKey: ['event-reasoning', eventId] });
       queryClient.invalidateQueries({ queryKey: incidentsKey });
     },
+  });
+}
+
+/** Other incident reports like this one (the text index), best first. */
+export function useSimilarIncidents(id) {
+  return useQuery({
+    queryKey: [...incidentsKey, id, 'similar'],
+    queryFn: async () => similarSchema.parse(await apiClient.get(`/incidents/${id}/similar`)),
+    enabled: Boolean(id),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 }

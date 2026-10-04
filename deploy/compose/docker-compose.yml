@@ -19,6 +19,7 @@ networks:
     name: vms-net
 
 volumes:
+  hf_cache:   # Hugging Face model cache for retrieval (SigLIP 2): downloaded once
   kafka_data:
   postgres_data:
   qdrant_data:
@@ -322,6 +323,10 @@ services:
       VMS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
       VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
       VMS_QDRANT_URL: http://qdrant:6333
+      # Text knowledge (event captions, incident reports): the ONNX models are cached in a volume.
+      VMS_KNOWLEDGE_CACHE_DIR: /hf/fastembed
+    volumes:
+      - hf_cache:/hf
     restart: unless-stopped
 
   # Rule engine over twinready.v1 -> events.candidates (P3-D1). Needs migration
@@ -389,6 +394,133 @@ services:
       VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
       VMS_CORRELATION_CONFIG_PATH: /app/config/correlation.yaml
       VMS_CORRELATION_TOPOLOGY_YAML_FALLBACK: /app/config/topology.yaml
+    volumes:
+      - ../../config:/app/config:ro
+    restart: unless-stopped
+
+  # --- application services ------------------------------------------------------------------
+  # api + frontend (profile core), retrieval + reasoning (profile genai). Migrations are not run
+  # by the containers: `make migrate` first. Language models run in Ollama on the host
+  # (OLLAMA_HOST=0.0.0.0, see VMS_LLM_OLLAMA_URL); `deploy/demo/start.sh` starts the same
+  # services on the host instead when a faster edit loop is wanted.
+
+  api:
+    profiles: [core]
+    container_name: vms-api
+    build:
+      context: ../.. # repo root — see services/api/Dockerfile
+      dockerfile: services/api/Dockerfile
+    networks: [vms-net]
+    ports:
+      - "8000:8000"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      VMS_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      VMS_STORAGE_ENDPOINT_URL: http://minio:9000
+      # Presigned URLs are opened by the browser, which reaches MinIO on the published port.
+      VMS_STORAGE_PUBLIC_ENDPOINT_URL: ${VMS_STORAGE_PUBLIC_ENDPOINT_URL:-http://localhost:9000}
+      VMS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-vms-admin}
+      VMS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+      VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
+      VMS_REDIS_URL: redis://redis:6379/0
+      VMS_JWT_SECRET: ${VMS_JWT_SECRET:?set VMS_JWT_SECRET in .env}
+      VMS_ADMIN_EMAIL: ${VMS_ADMIN_EMAIL:-admin@genai-vms.dev}
+      VMS_ADMIN_PASSWORD: ${VMS_ADMIN_PASSWORD:-}
+      VMS_API_RETRIEVAL_URL: http://retrieval:8010
+      VMS_API_SERVICE_TOKEN: ${VMS_API_SERVICE_TOKEN:-}
+    restart: unless-stopped
+
+  frontend:
+    profiles: [core]
+    container_name: vms-frontend
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    networks: [vms-net]
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  retrieval:
+    profiles: [genai]
+    container_name: vms-retrieval
+    build:
+      context: ../.. # repo root — see services/retrieval/Dockerfile
+      dockerfile: services/retrieval/Dockerfile
+    networks: [vms-net]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      VMS_STORAGE_ENDPOINT_URL: http://minio:9000
+      VMS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-vms-admin}
+      VMS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+      VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
+      VMS_REDIS_URL: redis://redis:6379/0
+      VMS_QDRANT_URL: http://qdrant:6333
+      VMS_LLM_PROFILE: ${VMS_LLM_PROFILE:-local}
+      VMS_LLM_MODELS_PATH: /app/config/models.yaml
+      VMS_LLM_OLLAMA_URL: ${VMS_LLM_OLLAMA_URL:-http://host.docker.internal:11434}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      # Footage older than this is not searched (recordings removed by retention). Empty = all.
+      VMS_RETRIEVAL_ARCHIVE_SINCE: ${VMS_RETRIEVAL_ARCHIVE_SINCE:-}
+      HF_HOME: /hf
+      VMS_KNOWLEDGE_CACHE_DIR: /hf/fastembed
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../../config:/app/config:ro
+      - hf_cache:/hf
+    restart: unless-stopped
+
+  reasoning:
+    profiles: [genai]
+    container_name: vms-reasoning
+    build:
+      context: ../.. # repo root — see services/reasoning/Dockerfile
+      dockerfile: services/reasoning/Dockerfile
+    networks: [vms-net]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      VMS_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      VMS_STORAGE_ENDPOINT_URL: http://minio:9000
+      VMS_STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-vms-admin}
+      VMS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
+      VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
+      VMS_REDIS_URL: redis://redis:6379/0
+      VMS_LLM_PROFILE: ${VMS_LLM_PROFILE:-local}
+      VMS_LLM_MODELS_PATH: /app/config/models.yaml
+      VMS_LLM_OLLAMA_URL: ${VMS_LLM_OLLAMA_URL:-http://host.docker.internal:11434}
+      VMS_REASONING_VQA_BANK_PATH: /app/config/vqa_bank.yaml
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ../../config:/app/config:ro
     restart: unless-stopped

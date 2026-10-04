@@ -27,6 +27,7 @@ class Hit:
     colors: list[str] = field(default_factory=list)
     zones: list[str] = field(default_factory=list)
     event_id: str | None = None
+    incident_id: str | None = None
     caption: str | None = None
     boost: float = 1.0
 

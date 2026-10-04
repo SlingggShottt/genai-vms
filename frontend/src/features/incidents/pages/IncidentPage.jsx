@@ -5,11 +5,12 @@ import { SeverityBadge } from '@/components/SeverityBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useCurrentUser } from '@/features/auth/api';
+import { AddToCaseDialog } from '@/features/cases/components/AddToCaseDialog';
 import { ApiError } from '@/lib/apiClient';
 import { eventTypeLabel } from '@/lib/eventTypes';
 import { formatClock, formatDateTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import { useIncident, useUpdateIncident } from '../api';
+import { useIncident, useSimilarIncidents, useUpdateIncident } from '../api';
 import { EvidenceChips } from '../components/EvidenceChip';
 import { PhaseBand } from '../components/PhaseBand';
 import { PHASE_LABEL, STATUS_LABEL, evidenceIndex, provenanceNote } from '../lib';
@@ -50,9 +51,11 @@ export function IncidentPage() {
   const canEdit = user?.role === 'admin' || user?.role === 'operator';
   const { data: incident, isLoading, isError, error } = useIncident(incidentId);
   const update = useUpdateIncident(incidentId);
+  const similar = useSimilarIncidents(incident?.status === 'generating' ? null : incidentId);
   const [activeEvidence, setActiveEvidence] = useState(null);
   const [activePhase, setActivePhase] = useState(null);
   const [notes, setNotes] = useState(null);
+  const [saving, setSaving] = useState(null);
 
   const index = useMemo(() => evidenceIndex(incident?.evidence), [incident?.evidence]);
 
@@ -94,6 +97,24 @@ export function IncidentPage() {
           <SeverityBadge severity={incident.severity} />
           <span className="text-sm text-text-muted">{STATUS_LABEL[incident.status]}</span>
           <div className="ml-auto flex gap-2 print:hidden">
+            {canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setSaving({
+                    kind: 'incident',
+                    label: incident.title,
+                    ref: incident.id,
+                    camera_id: incident.camera_ids[0],
+                    ts_start: incident.window_start,
+                    ts_end: incident.window_end,
+                  })
+                }
+              >
+                Save to case
+              </Button>
+            )}
             <Button size="sm" variant="outline" onClick={() => window.print()}>
               <Printer size={14} aria-hidden="true" />
               Print or save as PDF
@@ -310,6 +331,27 @@ export function IncidentPage() {
         </>
       )}
 
+      {similar.data?.items.length > 0 && (
+        <Section title="Similar incidents">
+          <ul className="flex flex-col divide-y divide-rule rounded-panel border border-rule">
+            {similar.data.items.map((s) => (
+              <li key={s.incident_id}>
+                <Link
+                  to={`/incidents/${s.incident_id}`}
+                  className="flex flex-wrap items-center gap-2 p-2 hover:bg-surface-raised"
+                >
+                  {s.severity && <SeverityBadge severity={s.severity} />}
+                  <span className="text-sm text-text">{s.title}</span>
+                  <span className="ml-auto text-xs tabular-nums text-text-muted">
+                    {s.camera_ids.join(', ')} · {Math.round(s.score * 100)}% alike
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
       {canEdit && report && (
         <Section title="Review">
           <div className="flex max-w-xl flex-col gap-2 print:hidden">
@@ -357,6 +399,7 @@ export function IncidentPage() {
           </div>
         </Section>
       )}
+      <AddToCaseDialog item={saving} onClose={() => setSaving(null)} />
     </div>
   );
 }

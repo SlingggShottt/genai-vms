@@ -1,12 +1,17 @@
-# reasoning service image — placeholder.
+# reasoning image — job worker (phase timeline, evidence, incident reports), daily reports, and
+# the consumer that queues jobs for closed correlation groups. No GPU: every model call goes
+# through the LLM gateway to Ollama (VMS_LLM_OLLAMA_URL).
 #
-# Completed when this service's backlog story lands (see docs/backlog.md
-# and docs/design_architecture.md §4). Build pattern: uv-based Python 3.11
-# image, non-root user, multi-stage (builder installs deps, runtime copies
-# the synced venv + src/). See docs/techstack.md §9 for base image policy.
+# Build context is the REPO ROOT (see deploy/compose/docker-compose.yml). `config/` is mounted
+# read-only by Compose (models.yaml, vqa_bank.yaml).
 
-FROM python:3.11-slim AS base
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir uv
+
 WORKDIR /app
+COPY . /app
 
-# TODO: install uv, copy pyproject.toml + uv.lock, `uv sync --frozen --no-dev`,
-# copy src/, set non-root USER, set CMD/ENTRYPOINT.
+RUN uv sync --package vms-reasoning --no-dev
+
+ENTRYPOINT ["uv", "run", "--package", "vms-reasoning", "reasoning"]

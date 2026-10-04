@@ -43,6 +43,20 @@ class Catalog:
             )
             return [r[0] for r in rows]
 
+    async def incident_brief(self, incident_id: str) -> dict | None:
+        async with self._sessions() as s:
+            row = (
+                await s.execute(
+                    text(
+                        "SELECT title, coalesce(report->>'summary', ''), event_type "
+                        "FROM reasoning.incidents WHERE id::text = :i "
+                        "AND status IN ('generated', 'reviewed', 'closed')"
+                    ),
+                    {"i": incident_id},
+                )
+            ).first()
+        return {"title": row[0], "summary": row[1], "event_type": row[2]} if row else None
+
     async def twin_uris(self, segment_ids: list[str]) -> dict[str, str]:
         if not segment_ids:
             return {}

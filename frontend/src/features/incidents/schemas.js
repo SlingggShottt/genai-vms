@@ -109,3 +109,17 @@ export const reasoningStateSchema = z.object({
   job: jobSchema.nullable(),
   incident: incidentSummarySchema.nullable(),
 });
+
+export const similarSchema = z.object({
+  items: z.array(
+    z.object({
+      incident_id: z.string(),
+      title: z.string(),
+      severity: z.string().nullable(),
+      event_type: z.string().nullable(),
+      camera_ids: z.array(z.string()),
+      ts_start: z.number().nullable(),
+      score: z.number(),
+    }),
+  ),
+});

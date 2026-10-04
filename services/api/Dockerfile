@@ -1,12 +1,16 @@
-# api service image — placeholder.
+# api image — auth/RBAC, CRUD, recordings, alerts, search/assistant proxy, incidents, reports.
 #
-# Completed when this service's backlog story lands (see docs/backlog.md
-# and docs/design_architecture.md §4). Build pattern: uv-based Python 3.11
-# image, non-root user, multi-stage (builder installs deps, runtime copies
-# the synced venv + src/). See docs/techstack.md §9 for base image policy.
+# Build context is the REPO ROOT (`build.context: ../..` in deploy/compose/docker-compose.yml):
+# uv needs the whole workspace to resolve vms-common / vms-db. Same shape as the other services.
 
-FROM python:3.11-slim AS base
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir uv
+
 WORKDIR /app
+COPY . /app
 
-# TODO: install uv, copy pyproject.toml + uv.lock, `uv sync --frozen --no-dev`,
-# copy src/, set non-root USER, set CMD/ENTRYPOINT.
+RUN uv sync --package vms-api --no-dev
+
+EXPOSE 8000
+ENTRYPOINT ["uv", "run", "--package", "vms-api", "python", "-m", "api.main"]

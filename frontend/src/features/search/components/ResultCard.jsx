@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom';
 import { formatClock, formatDateTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { playbackLink } from '../lib';
+import { useCurrentUser } from '@/features/auth/api';
+import { AddToCaseDialog } from '@/features/cases/components/AddToCaseDialog';
+import { MaskOverlay } from './MaskOverlay';
 
 function Chip({ children }) {
   return (
@@ -49,8 +52,11 @@ function ReasoningTrace({ result }) {
 }
 
 /** One ranked window of footage: the scene, who/what matched, and a way into the recording. */
-export function ResultCard({ result, rank }) {
+export function ResultCard({ result, rank, searchId }) {
   const [imgFailed, setImgFailed] = useState(false);
+  const { data: user } = useCurrentUser();
+  const canSave = user?.role === 'admin' || user?.role === 'operator';
+  const [saving, setSaving] = useState(null);
   const start = new Date(result.start_ts);
   const end = new Date(result.end_ts);
   const percent = Math.round(result.score * 100);
@@ -74,6 +80,9 @@ export function ResultCard({ result, rank }) {
           <p className="flex aspect-video items-center justify-center p-3 text-center text-xs text-text-muted">
             No frame available for this result.
           </p>
+        )}
+        {result.keyframe_url && !imgFailed && searchId && (
+          <MaskOverlay searchId={searchId} resultId={result.result_id} />
         )}
         <span className="absolute left-2 top-2 rounded-pill bg-scrim px-2 py-px text-xs font-medium tabular-nums text-white">
           {percent}% match
@@ -121,6 +130,24 @@ export function ResultCard({ result, rank }) {
           <Link to={playbackLink(result)} className="text-accent hover:underline">
             Open in playback
           </Link>
+          {canSave && (
+            <button
+              type="button"
+              className="text-accent hover:underline"
+              onClick={() =>
+                setSaving({
+                  kind: 'footage',
+                  label: `${result.camera_id} ${formatClock(start)}`,
+                  ref: result.segment_ids[0] ?? null,
+                  camera_id: result.camera_id,
+                  ts_start: result.start_ts,
+                  ts_end: result.end_ts,
+                })
+              }
+            >
+              Save to case
+            </button>
+          )}
           {result.event_ids.length > 0 && (
             <span className="text-xs text-text-muted">
               {result.event_ids.length} verified event{result.event_ids.length > 1 ? 's' : ''}
@@ -128,6 +155,7 @@ export function ResultCard({ result, rank }) {
           )}
         </div>
       </div>
+      <AddToCaseDialog item={saving} onClose={() => setSaving(null)} />
     </article>
   );
 }

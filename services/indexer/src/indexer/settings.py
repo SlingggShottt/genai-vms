@@ -10,6 +10,7 @@ from pydantic_settings import SettingsConfigDict
 from vms_common.config import (
     DatabaseSettings,
     KafkaSettings,
+    KnowledgeSettings,
     QdrantSettings,
     StorageSettings,
     VMSBaseSettings,
@@ -27,3 +28,4 @@ class IndexerSettings(VMSBaseSettings):
     storage: StorageSettings = Field(default_factory=StorageSettings)
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     qdrant: QdrantSettings = Field(default_factory=QdrantSettings)
+    knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)

@@ -367,3 +367,32 @@ async def event_alert(
         )
     ).first()
     return {"alert_id": row[0] if row else None}
+
+
+@router.get("/incidents/{incident_id}/similar")
+async def similar_incidents(
+    incident_id: str, request: Request, _user: Annotated[User, Depends(get_current_user)]
+) -> dict[str, Any]:
+    """Other incident reports like this one, from the retrieval service's text index."""
+    import httpx
+
+    _uuid(incident_id, "incident")
+    settings = request.app.state.settings
+    try:
+        async with httpx.AsyncClient(base_url=settings.retrieval_url, timeout=30.0) as client:
+            response = await client.get(f"/incidents/{incident_id}/similar")
+    except httpx.HTTPError as exc:
+        raise APIError(
+            "UPSTREAM_UNAVAILABLE",
+            "Similar incidents are not available right now.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        ) from exc
+    if response.status_code == 404:
+        raise APIError("NOT_FOUND", "Incident not found.", status_code=status.HTTP_404_NOT_FOUND)
+    if response.status_code >= 400:
+        raise APIError(
+            "UPSTREAM_UNAVAILABLE",
+            "Similar incidents are not available right now.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    return response.json()

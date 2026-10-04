@@ -9,6 +9,9 @@ import { EventsPage } from '@/features/events/pages/EventsPage';
 import { IncidentPage } from '@/features/incidents/pages/IncidentPage';
 import { IncidentsPage } from '@/features/incidents/pages/IncidentsPage';
 import { LiveWallPage } from '@/features/live-wall/pages/LiveWallPage';
+import { CasePage } from '@/features/cases/pages/CasePage';
+import { CasesPage } from '@/features/cases/pages/CasesPage';
+import { TimelinePage } from '@/features/timeline/pages/TimelinePage';
 import { ReportPage } from '@/features/reports/pages/ReportPage';
 import { ReportsPage } from '@/features/reports/pages/ReportsPage';
 import { SearchPage } from '@/features/search/pages/SearchPage';
@@ -32,6 +35,9 @@ export const router = createBrowserRouter([
           { path: '/assistant/:sessionId', element: <AssistantPage /> },
           { path: '/events', element: <EventsPage /> },
           { path: '/incidents', element: <IncidentsPage /> },
+          { path: '/timeline', element: <TimelinePage /> },
+          { path: '/cases', element: <CasesPage /> },
+          { path: '/cases/:caseId', element: <CasePage /> },
           { path: '/reports', element: <ReportsPage /> },
           { path: '/reports/:reportId', element: <ReportPage /> },
           { path: '/incidents/:incidentId', element: <IncidentPage /> },

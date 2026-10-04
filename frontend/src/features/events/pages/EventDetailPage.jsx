@@ -6,6 +6,7 @@ import { useAlert } from '@/features/alerts/api';
 import { AlertNoteDialog } from '@/features/alerts/components/AlertNoteDialog';
 import { canSeeAlerts } from '@/features/alerts/schemas';
 import { useCurrentUser } from '@/features/auth/api';
+import { AddToCaseDialog } from '@/features/cases/components/AddToCaseDialog';
 import { AnalyzePanel } from '@/features/incidents/components/AnalyzePanel';
 import { ApiError } from '@/lib/apiClient';
 import { formatClock, formatDateTime } from '@/lib/time';
@@ -44,6 +45,7 @@ export function EventDetailPage() {
   const allowed = canSeeAlerts(user);
   const { data: alert, isLoading, isError, error } = useAlert(alertId, { enabled: allowed });
   const [pending, setPending] = useState({ action: null, alert: null });
+  const [saving, setSaving] = useState(null);
 
   if (!allowed) {
     return (
@@ -90,6 +92,22 @@ export function EventDetailPage() {
               Acknowledge
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() =>
+              setSaving({
+                kind: 'event',
+                label: `${alert.title}, ${formatClock(start)}`,
+                ref: alert.event_id,
+                camera_id: alert.camera_code,
+                ts_start: alert.start_ts,
+                ts_end: alert.end_ts,
+              })
+            }
+          >
+            Save to case
+          </Button>
           {alert.status !== 'resolved' && (
             <Button
               size="sm"
@@ -179,6 +197,7 @@ export function EventDetailPage() {
         </div>
       </div>
 
+      <AddToCaseDialog item={saving} onClose={() => setSaving(null)} />
       <AlertNoteDialog
         action={pending.action}
         alert={pending.alert}

@@ -8,6 +8,7 @@ from typing import Annotated, Any
 
 import httpx
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
+from pydantic import BaseModel
 from vms_common.contracts.search import SearchRequest
 from vms_db.models import User
 
@@ -100,3 +101,38 @@ async def search_image(
         files={"file": (file.filename or "query.jpg", data, file.content_type or "image/jpeg")},
         data={"cameras": cameras, "top_k": str(top_k)},
     )
+
+
+class GroundingIn(BaseModel):
+    search_id: str
+    result_id: str
+
+
+@router.post("/grounding")
+async def grounding(
+    body: GroundingIn, request: Request, user: Annotated[User, Depends(get_current_user)]
+) -> dict[str, Any]:
+    """Masks of the objects a search result matched, drawn over its keyframe by the UI."""
+    settings = request.app.state.settings
+    try:
+        async with httpx.AsyncClient(base_url=settings.retrieval_url, timeout=120.0) as client:
+            response = await client.post("/search/grounding", json=body.model_dump())
+    except httpx.HTTPError as exc:
+        raise APIError(
+            "UPSTREAM_UNAVAILABLE",
+            "Object outlines are not available right now.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        ) from exc
+    if response.status_code == 404:
+        raise APIError(
+            "NOT_FOUND",
+            "That result is no longer available; search again.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    if response.status_code >= 400:
+        raise APIError(
+            "UPSTREAM_UNAVAILABLE",
+            "Object outlines are not available right now.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    return response.json()

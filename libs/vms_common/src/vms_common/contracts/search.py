@@ -103,6 +103,7 @@ class SearchResult(BaseModel):
     colors: list[str] = Field(default_factory=list)
     zones: list[str] = Field(default_factory=list)
     event_ids: list[str] = Field(default_factory=list)
+    incident_ids: list[str] = Field(default_factory=list)
     caption: str | None = None
     sources: list[Literal["frames", "tracks", "events", "image"]] = Field(default_factory=list)
 

@@ -7,8 +7,10 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, Header, HTTPException, Request, UploadFile, status
+from pydantic import BaseModel
 from vms_common.contracts.search import SearchFilters, SearchRequest, SearchResponse
 
+from retrieval.grounding_service import GroundingRequest
 from retrieval.pipeline import SearchPipeline
 
 router = APIRouter()
@@ -70,3 +72,37 @@ async def search_image(
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, "that file is not a readable image"
         ) from exc
+
+
+@router.get("/incidents/{incident_id}/similar")
+async def similar_incidents(incident_id: str, request: Request) -> dict[str, list[dict]]:
+    """Written incidents closest to this one (by meaning and wording of their reports)."""
+    brief = await request.app.state.pipeline.catalog.incident_brief(incident_id)
+    if brief is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "incident not found")
+    knowledge = request.app.state.knowledge
+    if not knowledge.loaded:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "the text embedder is loading")
+    items = await knowledge.similar_incidents(
+        incident_id, brief["title"], brief["summary"], brief["event_type"]
+    )
+    return {"items": items}
+
+
+class GroundingIn(BaseModel):
+    search_id: str
+    result_id: str
+
+
+@router.post("/search/grounding")
+async def grounding(body: GroundingIn, request: Request) -> dict:
+    """Masks of the objects a result matched (SAM 2.1-tiny), for the overlay on its keyframe."""
+    recent = request.app.state.pipeline.recent.get((body.search_id, body.result_id))
+    if recent is None or not recent[0]:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, "that result is no longer available; search again"
+        )
+    keyframe_uri, segment_ids, track_ids = recent
+    return await request.app.state.grounding.masks(
+        GroundingRequest(keyframe_uri, segment_ids, track_ids)
+    )

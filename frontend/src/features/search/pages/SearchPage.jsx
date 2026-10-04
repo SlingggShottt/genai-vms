@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Image as ImageIcon, Search, X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -23,13 +24,23 @@ const EXAMPLES = [
  */
 export function SearchPage() {
   const { data: cameras } = useCameras();
-  const [text, setText] = useState('');
+  const [params] = useSearchParams();
+  const [text, setText] = useState(params.get('q') ?? '');
   const [mode, setMode] = useState('reason');
   const [camera, setCamera] = useState('');
   const [range, setRange] = useState('any');
   const [submitted, setSubmitted] = useState(null); // { id, kind, label, mode, filters }
   const [image, setImage] = useState(null);
   const fileRef = useRef(null);
+
+  // A link carrying ?q= (a saved search, a case) runs that search straight away.
+  useEffect(() => {
+    const q = params.get('q')?.trim();
+    if (q && q.length >= 2) {
+      setSubmitted({ id: Date.now(), kind: 'text', label: q, mode: 'reason', filters: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, for the link that opened the page
+  }, []);
 
   const filters = () => ({
     cameras: camera ? [camera] : [],
@@ -269,7 +280,12 @@ export function SearchPage() {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {shown.results.map((result, i) => (
-                <ResultCard key={result.result_id} result={result} rank={i + 1} />
+                <ResultCard
+                  key={result.result_id}
+                  result={result}
+                  rank={i + 1}
+                  searchId={shown.search_id}
+                />
               ))}
             </div>
           )}

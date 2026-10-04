@@ -123,3 +123,16 @@ def test_evidence_only_resolves_tags_it_handed_out():
     )
     valid, unknown = ev.resolve(f"One intrusion {tag} and a made-up one [E:deadbeef].")
     assert [c.ref[:8] for c in valid] == ["30b6f125"] and unknown == ["E:deadbeef"]
+
+
+def test_rle_round_trips_any_mask():
+    import numpy as np
+    from retrieval.adapters.grounding import rle_decode, rle_encode
+
+    rng = np.random.default_rng(0)
+    for mask in (
+        rng.random((7, 11)) > 0.5,
+        np.zeros((4, 4), dtype=bool),
+        np.ones((3, 5), dtype=bool),
+    ):
+        assert (rle_decode(rle_encode(mask)) == mask).all()

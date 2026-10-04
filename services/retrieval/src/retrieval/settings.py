@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import SettingsConfigDict
 from vms_common.config import (
     DatabaseSettings,
+    KnowledgeSettings,
     QdrantSettings,
     RedisSettings,
     StorageSettings,
@@ -31,10 +32,17 @@ class RetrievalSettings(VMSBaseSettings):
     encoder_device: str = "cpu"
 
     site_timezone: str = "Asia/Kolkata"
+    masks_bucket: str = "vms-masks"
     # Recordings and keyframes are removed by the retention policy while the index can outlive
     # them; footage older than this is not searched (and so is not offered as a result whose
     # picture is gone). Unset = search everything.
     archive_since: datetime | None = None
+
+    @field_validator("archive_since", mode="before")
+    @classmethod
+    def _empty_means_unset(cls, v: object) -> object:
+        return None if v == "" else v
+
     # Per-collection raw hits per query vector, before fusion.
     hits_per_query: int = Field(default=80, ge=10, le=500)
     # Hits closer than this on one camera are one candidate window (design §10.1).
@@ -49,6 +57,7 @@ class RetrievalSettings(VMSBaseSettings):
     decompose_budget_s: float = Field(default=25.0, gt=0)
 
     qdrant: QdrantSettings = Field(default_factory=QdrantSettings)
+    knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     redis: RedisSettings = Field(default_factory=RedisSettings)
