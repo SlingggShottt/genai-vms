@@ -5,6 +5,7 @@ business rules here (uniqueness, permission checks); that's the router's job.
 from __future__ import annotations
 
 import uuid
+from collections.abc import Iterable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +19,15 @@ async def get_camera_by_id(session: AsyncSession, camera_id: uuid.UUID) -> Camer
 async def get_camera_by_code(session: AsyncSession, code: str) -> Camera | None:
     result = await session.execute(select(Camera).where(Camera.code == code))
     return result.scalar_one_or_none()
+
+
+async def camera_ids_by_code(session: AsyncSession, codes: Iterable[str]) -> dict[str, uuid.UUID]:
+    """`core.cameras.id` for each configured code; a code with no camera is absent."""
+    wanted = set(codes)
+    if not wanted:
+        return {}
+    rows = await session.execute(select(Camera.code, Camera.id).where(Camera.code.in_(wanted)))
+    return {code: camera_id for code, camera_id in rows.all()}
 
 
 async def list_cameras(

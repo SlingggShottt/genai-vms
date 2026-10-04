@@ -78,7 +78,7 @@ async def internal_zones_endpoint(
 
 @router.get("/topology", response_model=TopologyInternalResponse)
 async def internal_topology_endpoint(
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
 ) -> TopologyInternalResponse:
     """Matches `libs/vms_common/fixtures/topology_internal.json` — `from_camera_id` /
     `to_camera_id` are the cameras' **codes** (e.g. `cam03`), not the UUIDs the public

@@ -9,13 +9,13 @@ via `make test-int`.
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from vms_db.models import Track
+from vms_db.models import Alert, CorrelationGroup, Track
 
 pytestmark = pytest.mark.integration
 
@@ -55,6 +55,12 @@ ROUTER_TABLE: list[tuple[str, str, frozenset[str] | None]] = [
     ("POST", "/api/v1/topology/edges", frozenset({"admin"})),
     ("PATCH", "/api/v1/topology/edges/{target_id}", frozenset({"admin"})),
     ("DELETE", "/api/v1/topology/edges/{target_id}", frozenset({"admin"})),
+    ("GET", "/api/v1/alerts", frozenset({"admin", "operator"})),
+    ("GET", "/api/v1/alerts/{alert_id}", frozenset({"admin", "operator"})),
+    ("POST", "/api/v1/alerts/{alert_id}/ack", frozenset({"admin", "operator"})),
+    ("POST", "/api/v1/alerts/{alert_id}/resolve", frozenset({"admin", "operator"})),
+    ("GET", "/api/v1/correlations", None),
+    ("GET", "/api/v1/correlations/{group_id}", None),
 ]
 
 
@@ -183,8 +189,14 @@ async def _path_kwargs_for(
     client: TestClient,
     admin_headers: dict[str, str],
     db_session_factory: async_sessionmaker,
+    seed_alert: Callable[..., Awaitable[Alert]],
+    seed_group: Callable[..., Awaitable[CorrelationGroup]],
 ) -> dict[str, str]:
     kwargs: dict[str, str] = {}
+    if "{alert_id}" in path:
+        kwargs["alert_id"] = str((await seed_alert()).id)  # fresh and open for every call
+    if "{group_id}" in path:
+        kwargs["group_id"] = str((await seed_group(event_ids=[str(uuid.uuid4())])).id)
     if "{target_id}" in path:
         if "/topology/edges/" in path:
             kwargs["target_id"] = _create_edge_id(client, admin_headers)
@@ -285,6 +297,8 @@ async def test_router_table_role_matrix(
     role_tokens: dict[str, str],
     auth_headers: Callable[[str], dict[str, str]],
     db_session_factory: async_sessionmaker,
+    seed_alert: Callable[..., Awaitable[Alert]],
+    seed_group: Callable[..., Awaitable[CorrelationGroup]],
     role: str,
     method: str,
     path: str,
@@ -292,7 +306,9 @@ async def test_router_table_role_matrix(
 ) -> None:
     admin_headers = auth_headers(admin_access_token)
     resolved_path = path.format(
-        **await _path_kwargs_for(path, client, admin_headers, db_session_factory)
+        **await _path_kwargs_for(
+            path, client, admin_headers, db_session_factory, seed_alert, seed_group
+        )
     )
 
     status_code = _call(
@@ -316,7 +332,11 @@ def test_router_table_rejects_unauthenticated(
     # Unauthenticated requests 401 before any resource lookup, so the
     # placeholder values themselves don't need to resolve to anything real.
     resolved_path = path.format(
-        target_id=str(uuid.uuid4()), camera_id="does-not-matter", track_id="does-not-matter"
+        target_id=str(uuid.uuid4()),
+        camera_id="does-not-matter",
+        track_id="does-not-matter",
+        alert_id=str(uuid.uuid4()),
+        group_id=str(uuid.uuid4()),
     )
     status_code = _call(client, method, resolved_path, None)
     assert status_code == 401

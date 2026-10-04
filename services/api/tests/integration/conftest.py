@@ -11,14 +11,18 @@ module-naming details for sibling test files.
 from __future__ import annotations
 
 import os
-from collections.abc import Callable, Iterator
+import uuid
+from collections.abc import Awaitable, Callable, Iterator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
 from alembic import command
 from alembic.config import Config
+from api.adapters.alerts import create_if_absent
+from api.domain.alerts import AlertDraft
 from api.main import create_app
-from api.settings import AdminSeedSettings, ApiSettings
+from api.settings import AdminSeedSettings, AlertSettings, ApiSettings
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from redis.asyncio import Redis
@@ -29,7 +33,8 @@ from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import HttpWaitStrategy
 from vms_common.config import DatabaseSettings, JWTSettings, RedisSettings, StorageSettings
 from vms_common.storage.s3 import S3Client
-from vms_db.session import create_engine, create_session_factory
+from vms_db.models import Alert, CorrelationGroup
+from vms_db.session import create_engine, create_session_factory, session_scope
 
 VMS_DB_ALEMBIC_INI = Path(__file__).resolve().parents[4] / "libs" / "vms_db" / "alembic.ini"
 
@@ -165,6 +170,9 @@ def api_settings(
         service_token=_SERVICE_TOKEN,
         redis=RedisSettings(url=redis_url),
         storage=storage_settings,
+        # No Kafka in the shared fixtures: tests drive the consumers' `handle` directly, and
+        # test_alert_consumers_kafka.py turns them on against a real broker.
+        alerts=AlertSettings(_env_file=None, consumers_enabled=False),
     )
 
 
@@ -194,3 +202,144 @@ def auth_headers() -> Callable[[str], dict[str, str]]:
         return {"Authorization": f"Bearer {token}"}
 
     return _make
+
+
+@pytest.fixture
+def seed_alert(db_session_factory: async_sessionmaker) -> Callable[..., Awaitable[Alert]]:
+    """Insert an alert the way the event consumer would (`create_if_absent`), then move it to
+    `status` if asked. Every alert gets a unique event id; pass `camera=` to isolate a test's
+    alerts from the rest of the shared database."""
+
+    async def _seed(
+        *,
+        camera: str = "cam02",
+        severity: str = "high",
+        event_type: str = "intrusion",
+        status: str = "open",
+        group_id: uuid.UUID | None = None,
+        start_ts: datetime | None = None,
+        keyframes: int = 2,
+        event_id: str | None = None,
+    ) -> Alert:
+        event_id = event_id or str(uuid.uuid4())
+        start = start_ts or datetime.now(UTC)
+        draft = AlertDraft(
+            event_id=event_id,
+            site_id="rvce-campus",
+            camera_id=camera,
+            event_type=event_type,
+            severity=severity,
+            rule_id=f"{event_type}.test",
+            zone_id=None,
+            title=f"{event_type.capitalize()} on {camera}",
+            caption="A person near the fence.",
+            verification_status="verified",
+            confidence=0.8,
+            start_ts=start,
+            end_ts=start + timedelta(seconds=20),
+            keyframe_uris=[
+                f"s3://vms-keyframes/{camera}/{event_id}/{i}.jpg" for i in range(keyframes)
+            ],
+        )
+        async with session_scope(db_session_factory) as session:
+            alert = await create_if_absent(session, draft, group_id=group_id)
+            assert alert is not None
+            if status != "open":  # what ack/resolve would have recorded
+                moved_at = datetime.now(UTC)
+                alert.status = status
+                alert.acknowledged_at = moved_at if status in ("acknowledged", "resolved") else None
+                alert.resolved_at = moved_at if status == "resolved" else None
+                await session.flush()
+        return alert
+
+    return _seed
+
+
+@pytest.fixture
+def seed_group(
+    db_session_factory: async_sessionmaker,
+) -> Callable[..., Awaitable[CorrelationGroup]]:
+    """Insert a row of `events.correlation_groups` as the correlation service would have."""
+
+    async def _seed(
+        *,
+        event_ids: list[str],
+        status: str = "open",
+        merged_into: uuid.UUID | None = None,
+        cameras: tuple[str, ...] = ("cam02",),
+        severity: str = "high",
+        revision: int = 1,
+    ) -> CorrelationGroup:
+        start = datetime.now(UTC)
+        group = CorrelationGroup(
+            id=uuid.uuid4(),
+            site_id="rvce-campus",
+            status=status,
+            revision=revision,
+            start_ts=start,
+            end_ts=start + timedelta(seconds=20),
+            max_severity=severity,
+            camera_ids=list(cameras),
+            event_types=["intrusion"],
+            event_ids=list(event_ids),
+            members=[
+                {
+                    "event_id": event_id,
+                    "site_id": "rvce-campus",
+                    "camera_id": cameras[0],
+                    "event_type": "intrusion",
+                    "severity": severity,
+                    "start_ts": start.isoformat(),
+                    "end_ts": (start + timedelta(seconds=20)).isoformat(),
+                }
+                for event_id in event_ids
+            ],
+            merged_into=merged_into,
+            publish_pending=False,
+            created_at=start,
+            closed_at=start if status == "closed" else None,
+        )
+        async with session_scope(db_session_factory) as session:
+            session.add(group)
+        return group
+
+    return _seed
+
+
+FIXTURES_DIR = (
+    Path(__file__).resolve().parents[4] / "libs" / "vms_common" / "src" / "vms_common" / "fixtures"
+)
+
+
+@pytest.fixture
+def fixtures_dir() -> Path:
+    return FIXTURES_DIR
+
+
+@pytest.fixture
+def make_user(
+    client: TestClient, admin_access_token: str, auth_headers: Callable[[str], dict[str, str]]
+) -> Callable[[str], dict[str, str]]:
+    """`make_user("operator")` creates a user as admin and logs them in; returns
+    `{"id", "email", "token"}`."""
+
+    def _make(role: str) -> dict[str, str]:
+        email = f"{role}-{uuid.uuid4().hex[:8]}@example.com"
+        password = "correct-horse-battery-1"  # noqa: S105 - fixture value
+        created = client.post(
+            "/api/v1/users",
+            json={"email": email, "full_name": role.title(), "password": password, "role": role},
+            headers=auth_headers(admin_access_token),
+        )
+        assert created.status_code == 201, created.text
+        login = client.post("/api/v1/auth/login", json={"email": email, "password": password})
+        assert login.status_code == 200, login.text
+        return {"id": created.json()["id"], "email": email, "token": login.json()["access_token"]}
+
+    return _make
+
+
+@pytest.fixture
+def unique_camera() -> str:
+    """A camera code no other test uses, so a test can list *its* alerts out of the shared db."""
+    return f"cam-{uuid.uuid4().hex[:8]}"

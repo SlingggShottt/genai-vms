@@ -578,10 +578,10 @@
       came back in random order after a reload, so the message order is now canonical.
 
 ### P3-J3 · Alerts backend & notifier plugins — 5 pts · Must · E08 · FR-ALR-01…03
-- [ ] API consumer for `event.v1`, `correlation.v1` creates/updates `core.alerts` per severity threshold.
-- [ ] `WS /api/v1/ws` with JWT auth, role filtering, message types per design §9; Redis pub/sub fan-out (works with 2 API replicas).
-- [ ] Ack/resolve endpoints with notes + audit log.
-- [ ] `Notifier` interface with `DashboardNotifier` (on) and `EmailNotifier`, `TelegramNotifier` (implemented, disabled by default via `VMS_NOTIFY_CHANNELS`).
+- [x] API consumer for `event.v1`, `correlation.v1` creates/updates `core.alerts` per severity threshold.
+- [x] `WS /api/v1/ws` with JWT auth, role filtering, message types per design §9; Redis pub/sub fan-out (works with 2 API replicas).
+- [x] Ack/resolve endpoints with notes + audit log.
+- [x] `Notifier` interface with `DashboardNotifier` (on) and `EmailNotifier`, `TelegramNotifier` (implemented, disabled by default via `VMS_NOTIFY_CHANNELS`).
 
 ### P3-J4 · Alerts & events UI — 3 pts · Must · E08 · FR-ALR-01, FR-ALR-02
 - [ ] Alert tray (AlertItem §B.7), live via WS, acknowledge/resolve with note dialog; `aria-live` per §B.10.

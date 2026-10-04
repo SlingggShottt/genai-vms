@@ -1,6 +1,6 @@
 """ORM models for the `core` schema — accounts, roles, cameras, zones, audit
-(design_architecture.md §6.1). Owner: J. `core.alerts`, `core.cases`
-land with the stories that need them (P3-J3, P6-J4).
+(design_architecture.md §6.1). Owner: J. `core.cases` lands with the
+story that needs it (P6-J4).
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from vms_common.ids import uuid7
 from vms_common.types import CameraCode
@@ -275,4 +275,86 @@ class AuditLog(Base):
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+
+
+class AlertStatus(enum.StrEnum):
+    """design_architecture.md §7.6: verified -> acknowledged -> resolved (an operator may also
+    resolve straight away, e.g. a false alarm)."""
+
+    OPEN = "open"
+    ACKNOWLEDGED = "acknowledged"
+    RESOLVED = "resolved"
+
+
+ALERT_SEVERITIES = ("low", "medium", "high", "critical")
+
+
+class Alert(Base):
+    """`core.alerts` — something an operator should look at: one row per verified event at or
+    above the configured severity (P3-J3, FR-ALR-01/02).
+
+    `event_id` is unique: the idempotency key, so a redelivered `event.v1` cannot raise a
+    second alert. The row snapshots what the tray needs (title, caption, keyframes) so listing
+    alerts never depends on the events service. `group_id` is the correlation group the event
+    belongs to (set from `correlation.v1`); it is not a foreign key — the group lives in the
+    `events` schema and is merged or aged out independently.
+
+    The CHECK ties `status` to its timestamps, so a row can never claim to be acknowledged
+    without having been: open has neither, acknowledged has `acknowledged_at`, resolved has
+    `resolved_at` (and may have skipped acknowledgement).
+    """
+
+    __tablename__ = "alerts"
+    __table_args__ = (
+        CheckConstraint("status IN ('open', 'acknowledged', 'resolved')", name="status"),
+        CheckConstraint("severity IN ('low', 'medium', 'high', 'critical')", name="severity"),
+        CheckConstraint(
+            "(status = 'open' AND acknowledged_at IS NULL AND resolved_at IS NULL)"
+            " OR (status = 'acknowledged' AND acknowledged_at IS NOT NULL AND resolved_at IS NULL)"
+            " OR (status = 'resolved' AND resolved_at IS NOT NULL)",
+            name="lifecycle",
+        ),
+        Index("ix_core_alerts_status_created_at", "status", "created_at"),
+        Index("ix_core_alerts_group_id", "group_id"),
+        Index("ix_core_alerts_camera_id_created_at", "camera_id", "created_at"),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
+    event_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    site_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    camera_id: Mapped[CameraCode] = mapped_column(String(100), nullable=False)
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    severity: Mapped[str] = mapped_column(String(20), nullable=False)
+    rule_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    zone_id: Mapped[str | None] = mapped_column(Text, nullable=True)
+    title: Mapped[str] = mapped_column(Text, nullable=False)
+    caption: Mapped[str | None] = mapped_column(Text, nullable=True)
+    verification_status: Mapped[str] = mapped_column(String(20), nullable=False)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    start_ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_ts: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    keyframe_uris: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default="{}"
+    )
+    group_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
+    acknowledged_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True
+    )
+    acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ack_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolved_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey(f"{SCHEMA}.users.id", ondelete="SET NULL"), nullable=True
+    )
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    resolve_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
