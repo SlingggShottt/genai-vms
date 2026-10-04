@@ -16,6 +16,7 @@ from vms_db.models.core import (
     Zone,
     ZoneType,
 )
+from vms_db.models.correlation import CorrelationGroup, CorrelationLinkRow
 from vms_db.models.events import Candidate
 from vms_db.models.media import Segment
 from vms_db.models.vision import MinuteCount, Track, TrackSegment
@@ -24,6 +25,8 @@ __all__ = [
     "AuditLog",
     "Camera",
     "Candidate",
+    "CorrelationGroup",
+    "CorrelationLinkRow",
     "EdgeType",
     "MinuteCount",
     "RefreshToken",

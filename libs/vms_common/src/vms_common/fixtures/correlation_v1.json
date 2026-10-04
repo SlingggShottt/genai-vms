@@ -1,0 +1,44 @@
+{
+  "schema_version": "correlation.v1",
+  "message_id": "0192f3e0-2222-7000-8000-0000000000b1",
+  "produced_at": "2026-10-05T10:18:42.000Z",
+  "group_id": "0192f3e0-0001-7000-8000-00000000000a",
+  "site_id": "rvce-campus",
+  "status": "closed",
+  "revision": 3,
+  "event_ids": [
+    "0192f3d1-0003-7000-8000-000000000003",
+    "0192f3d1-0001-7000-8000-000000000001",
+    "0192f3d1-0002-7000-8000-000000000002"
+  ],
+  "camera_ids": [
+    "cam02",
+    "cam03",
+    "cam04"
+  ],
+  "event_types": [
+    "abandoned_object",
+    "intrusion",
+    "running"
+  ],
+  "start_ts": "2026-10-05T10:15:00.000Z",
+  "end_ts": "2026-10-05T10:16:11.000Z",
+  "max_severity": "high",
+  "links": [
+    {
+      "from_event": "0192f3d1-0001-7000-8000-000000000001",
+      "to_event": "0192f3d1-0002-7000-8000-000000000002",
+      "edge_type": "transit",
+      "delta_s": 23.0,
+      "score": 0.5365
+    },
+    {
+      "from_event": "0192f3d1-0003-7000-8000-000000000003",
+      "to_event": "0192f3d1-0002-7000-8000-000000000002",
+      "edge_type": "transit",
+      "delta_s": 53.0,
+      "score": 0.6973
+    }
+  ],
+  "merged_into": null
+}

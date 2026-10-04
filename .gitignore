@@ -51,6 +51,7 @@ ml/**/*.zip
 config/cameras.yaml
 config/camera_sim.yaml
 config/zones.yaml
+config/topology.yaml
 
 # OS / editor
 .DS_Store

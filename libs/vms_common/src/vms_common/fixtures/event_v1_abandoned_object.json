@@ -1,0 +1,31 @@
+{
+  "schema_version": "event.v1",
+  "message_id": "0192f3d1-1111-7000-8000-0000000000a3",
+  "produced_at": "2026-10-05T10:15:14.870Z",
+  "event_id": "0192f3d1-0003-7000-8000-000000000003",
+  "site_id": "rvce-campus",
+  "camera_id": "cam03",
+  "event_type": "abandoned_object",
+  "severity": "high",
+  "start_ts": "2026-10-05T10:15:00.000Z",
+  "end_ts": "2026-10-05T10:15:12.000Z",
+  "rule_id": "abandoned_object",
+  "rule_score": 0.77,
+  "zone_id": null,
+  "track_ids": [
+    "cam03-t12"
+  ],
+  "segment_ids": [
+    "cam03_20261005T101500Z_000118"
+  ],
+  "keyframe_uris": [
+    "s3://vms-keyframes/cam03/2026/10/05/10/000119/0001.jpg"
+  ],
+  "verification": {
+    "status": "verified",
+    "confidence": 0.77,
+    "caption": "A black backpack lies beside the bench; nobody is near it.",
+    "model": "ollama/qwen2.5vl:3b",
+    "latency_ms": 4890
+  }
+}

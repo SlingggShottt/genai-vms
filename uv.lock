@@ -3736,11 +3736,19 @@ name = "vms-correlation"
 version = "0.1.0"
 source = { editable = "services/correlation" }
 dependencies = [
+    { name = "httpx" },
+    { name = "pyyaml" },
     { name = "vms-common" },
+    { name = "vms-db" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "vms-common", editable = "libs/vms_common" }]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "vms-common", editable = "libs/vms_common" },
+    { name = "vms-db", editable = "libs/vms_db" },
+]
 
 [[package]]
 name = "vms-db"
