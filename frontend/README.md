@@ -147,3 +147,66 @@ Phase 2 (both tracks) is now fully implemented.
   zone, as on the Playback page) while every displayed time is IST. The WebSocket token is a url
   parameter (browsers cannot set headers on a WebSocket): a failed connection attempt shows that url in
   the browser console.
+
+- **P3-J5** — zones and camera links, under Settings (`/settings/{cameras,zones,links}`; the
+  shared tabs are `app/SettingsLayout.jsx`). Admins edit; operators and viewers see the same pages
+  read-only (the api answers anyone else's write with 403, and the buttons are not offered).
+  - **Zone editor** (`features/zones`, `/settings/zones?camera=<id>`): _Add zone_, then _Capture
+    frame_ takes a still from the camera's live view (`captureFrame.js`, at the stream's own
+    resolution) and the outline is drawn on it with `PolygonEditor`. Click the frame to add a point
+    (onto an edge if you hit one); drag a point; each point is a real button, so Tab reaches it, the
+    arrow keys nudge it 1 % (Shift: 5 %) and Delete removes it; _Add point_ / _Remove last point_ /
+    _Clear outline_ do the same for someone who can't aim. Points are normalised 0..1 of the frame,
+    which is the api's contract. A zone has a name, a type (General, Restricted, Entrance, Exit) and
+    optional normal hours (an after-hours alert fires for a person outside them; the window may run
+    past midnight). It is checked before it is sent — 3 to 32 points, no crossing edges
+    (`polygon.js`, which also guards a sliver) — with messages that say how to fix it. The captured
+    frame is kept after saving, so adding or editing another zone needs no new capture; the camera's
+    other zones are drawn on it, dashed and named, with a dark glow so they read on any footage.
+    Switching camera starts clean and frees the frame's blob URL.
+  - **Camera links** (`features/topology`, `/settings/links`; "camera links", not "topology edges"):
+    a table plus a node diagram (`CameraGraph`: cameras on a circle, dashed line = overlap, solid
+    with an arrow = transit, an arrowhead at each end when people walk both ways, the timing on the
+    line, links between the same two cameras in lanes of their own). The diagram is a picture; the
+    table beside it is the text equivalent, and the diagram also carries a sentence-long
+    `aria-label`. The form follows the api's rules (`lib.js`): an overlap takes a tolerance (0–600 s),
+    a transit a shortest and longest trip (0–3600 s, longest not shorter) and a direction; when
+    editing, the cameras and type are locked, because for the api they are the link's identity.
+  - Deleting asks first (`components/ConfirmDialog.jsx`: names the action, can't be dismissed while
+    it runs, returns focus). Errors say what happened and how to fix it
+    (`lib/errorMessage.js`: the api's own 400/404/409 message, or fixed wording for a 403 and for a
+    network failure).
+  - Fixtures for both are generated from the api's response models
+    (`services/api/tests/unit/test_frontend_fixtures_config.py`), as in P3-J4.
+  - The test setup (`test/setup.js`) now defines `PointerEvent`, which jsdom lacks: without it
+    `fireEvent.pointerDown({ button, clientX })` builds a plain `Event` that drops both, and a drag
+    test passes or fails for the wrong reason.
+  - **Found on the way, fixed in the api**: after a save the list sometimes did not refresh. The api
+    commits in the exit code of a `yield` dependency, which FastAPI (0.118+) runs _after_ the response
+    is sent, so the refetch could read the old rows (and nothing refetches twice). Every write
+    endpoint now takes `SessionDep` (`scope="function"`: commit first, then respond); see
+    `services/api/README.md`. Cameras, users and the rest had the same race.
+
+  Verified for real, in headless Brave against a real `services/api` (uvicorn) with a scratch
+  Postgres and a real MediaMTX stream (the 1.2 Mbps `cam01_lite.mp4` over WebRTC): sign in through
+  the UI; the live view plays and a captured frame is a real 1280×720 picture; draw, drag, nudge,
+  insert-on-edge and delete points with the mouse and keyboard (focus lands on a neighbour); save a
+  zone and read it back from the api (normalised outline, the dragged and nudged points where they
+  were left, Mon–Fri 22:00–06:00); edit, clear its schedule, a crossing outline refused in the UI with
+  nothing sent, delete with the question first; two links between the same cameras, the api's 409 for
+  a duplicate shown in the form, edit with the cameras locked, delete; an operator sees both pages
+  read-only and the api refuses their write (403); no sideways scrolling at 1024 px. 59 checks, 12
+  consecutive full runs with 0 failures. Before the commit-order fix the same script failed in about
+  2 of 8 runs; the failing run showed the refetch returning `items=0` for a link the api already held.
+  Looking at the screenshots (not only the assertions) found two more things, both fixed: saved
+  zones were nearly invisible on busy footage, and two labels in the links diagram collided. A
+  227-variant mutation check (one deliberate bug at a time) of the new logic and components is killed
+  220/227; the first run missed 33, which found real test gaps (the api's limits as literals, the
+  boundary of "too small", a click on an edge's extension, each way two segments can touch, the
+  "Saving…" state, focus on pointer-down) and 4 branches that could never run (removed). The 7 that
+  survive are equivalent: tie-breaks and exact floating-point boundaries, `count < 3` for a triangle,
+  focusing index −1, and `isConnected` where jsdom behaves the same.
+  Not verified: Firefox and Safari, a real screen reader, the light theme, touch input, the HLS
+  fallback for capturing a frame (WebRTC was used), and that the events service picks a new zone up
+  (it reads `/internal/v1/zones`; nothing here ran it). Zones can only be drawn while a camera is
+  streaming, because the api has no snapshot endpoint.

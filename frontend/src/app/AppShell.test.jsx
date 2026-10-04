@@ -57,6 +57,13 @@ describe('AppShell', () => {
     expect(screen.getByText('the page')).toBeInTheDocument();
   });
 
+  it('links Settings to the settings pages, and keeps it lit on each of them', async () => {
+    renderShell('admin');
+    const link = await within(nav()).findByRole('link', { name: 'Settings' });
+    // `/settings`, not `/settings/cameras`: so Zones and Camera links light it up too.
+    expect(link).toHaveAttribute('href', '/settings');
+  });
+
   it('gives an admin the same', async () => {
     renderShell('admin');
     expect(await within(nav()).findByRole('link', { name: 'Events' })).toBeInTheDocument();

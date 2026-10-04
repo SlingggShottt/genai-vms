@@ -48,7 +48,7 @@ function NavRail() {
       ))}
       <div className="mt-auto flex flex-col items-center gap-1">
         <NavLink
-          to="/settings/cameras"
+          to="/settings"
           title="Settings"
           aria-label="Settings"
           className={({ isActive }) =>

@@ -17,3 +17,8 @@ export const userSchema = z.object({
   is_active: z.boolean(),
   created_at: z.string(),
 });
+
+/** Only admins can change zones, camera links and cameras (the api answers anyone else with 403). */
+export function isAdmin(user) {
+  return user?.role === 'admin';
+}
