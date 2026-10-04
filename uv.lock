@@ -19,6 +19,7 @@ resolution-markers = [
 [manifest]
 members = [
     "genai-vms",
+    "vms-annotation-kit",
     "vms-api",
     "vms-camera-sim",
     "vms-common",
@@ -4571,6 +4572,21 @@ wheels = [
 ]
 
 [[package]]
+name = "vms-annotation-kit"
+version = "0.1.0"
+source = { editable = "tools/annotation_kit" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "vms-common" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pydantic", specifier = ">=2.9" },
+    { name = "vms-common", editable = "libs/vms_common" },
+]
+
+[[package]]
 name = "vms-api"
 version = "0.1.0"
 source = { editable = "services/api" }
@@ -4621,6 +4637,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
+    { name = "pyyaml" },
     { name = "qdrant-client" },
     { name = "redis" },
     { name = "structlog" },
@@ -4648,6 +4665,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.9" },
     { name = "pydantic-settings", specifier = ">=2.5" },
     { name = "pyjwt", specifier = ">=2.9" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "pyyaml", marker = "extra == 'llm'", specifier = ">=6.0" },
     { name = "qdrant-client", specifier = ">=1.11,<1.12" },
     { name = "redis", specifier = ">=5.0" },

@@ -8,13 +8,12 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, status
 from pydantic import AwareDatetime
-from sqlalchemy.ext.asyncio import AsyncSession
 from vms_db.models import User
 
 from api.adapters.cameras import get_camera_by_code
 from api.adapters.recordings import list_segments_in_range
 from api.adapters.twin_frames import frames_for_segments
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 from api.api.security import get_current_user
 from api.schemas import OverlayFrameOut, OverlayObjectOut, TwinFramesResponse
@@ -34,7 +33,7 @@ async def twin_frames_endpoint(
     request: Request,
     start: Annotated[AwareDatetime, Query()],
     end: Annotated[AwareDatetime, Query()],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _current_user: Annotated[User, Depends(get_current_user)],
 ) -> TwinFramesResponse:
     if end <= start:

@@ -1,0 +1,18 @@
+{
+  "schema_version": "phase_labels.v1",
+  "clip_id": "meva-2018-03-05-16-30-school-g421",
+  "source_video": "2018-03-05.16-30-00.16-35-00.school",
+  "event_type": "intrusion",
+  "primary_view": "cam02",
+  "views": [
+    {"camera": "cam02", "video_uri": "s3://vms-evidence/clips/meva-2018-03-05-16-30-school-g421/cam02.mp4"},
+    {"camera": "cam04", "video_uri": "s3://vms-evidence/clips/meva-2018-03-05-16-30-school-g421/cam04.mp4"}
+  ],
+  "phases": [
+    {"phase": "baseline", "start_s": 0.0, "end_s": 3.5},
+    {"phase": "precursor", "start_s": 3.5, "end_s": 9.0},
+    {"phase": "escalation", "start_s": 9.0, "end_s": 12.5},
+    {"phase": "action", "start_s": 12.5, "end_s": 19.0}
+  ],
+  "annotator": "K"
+}

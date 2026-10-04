@@ -1,0 +1,62 @@
+<View>
+  <Header value="Crowding: $phase phase, view $view" />
+  <Video name="video" value="$video" framerate="25" />
+  <Header value="Caption" />
+  <Header value="Describe only what is visible in this view during this phase, in one or two sentences. Say what people and objects do, not who they are or what they intend. If the draft is right, keep it; if not, rewrite it." />
+  <TextArea name="caption" toName="video" rows="3" editable="true" required="true" maxSubmissions="1" placeholder="What happens in this view during this phase?" />
+  <Header value="How crowded is the area?" />
+  <Choices name="crowding.density" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Few people (fewer than 5)" />
+    <Choice value="Busy (5 to 10)" />
+    <Choice value="Crowded (more than 10)" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Are people standing close together?" />
+  <Choices name="crowding.close_together" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Are most people moving, or standing still?" />
+  <Choices name="crowding.movement" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Most are moving" />
+    <Choice value="Most are standing still" />
+    <Choice value="A mix of both" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Are most people moving in the same direction?" />
+  <Choices name="crowding.same_direction" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the crowd blocking a doorway, path or exit?" />
+  <Choices name="crowding.blocking" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Are people waiting in an orderly line?" />
+  <Choices name="crowding.queue" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is anyone pushing, running or showing signs of panic?" />
+  <Choices name="crowding.distress" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is any staff member or guard visible?" />
+  <Choices name="crowding.staff_visible" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is this clip usable? Choose No if this phase cannot be seen in this view." />
+  <Choices name="usable" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+  </Choices>
+</View>

@@ -1,0 +1,62 @@
+<View>
+  <Header value="Abandoned object: $phase phase, view $view" />
+  <Video name="video" value="$video" framerate="25" />
+  <Header value="Caption" />
+  <Header value="Describe only what is visible in this view during this phase, in one or two sentences. Say what people and objects do, not who they are or what they intend. If the draft is right, keep it; if not, rewrite it." />
+  <TextArea name="caption" toName="video" rows="3" editable="true" required="true" maxSubmissions="1" placeholder="What happens in this view during this phase?" />
+  <Header value="What kind of item was left?" />
+  <Choices name="abandoned_object.item_type" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Backpack" />
+    <Choice value="Handbag" />
+    <Choice value="Suitcase" />
+    <Choice value="Something else" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the person who left the item still visible?" />
+  <Choices name="abandoned_object.owner_visible" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Does the person walk away from the item?" />
+  <Choices name="abandoned_object.owner_walks_away" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Was the item put down on purpose, rather than dropped or set down for a moment?" />
+  <Choices name="abandoned_object.placed_on_purpose" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the item unattended right now?" />
+  <Choices name="abandoned_object.unattended" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Does anyone else approach or touch the item?" />
+  <Choices name="abandoned_object.others_approach" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the item in a place where people pass close to it?" />
+  <Choices name="abandoned_object.in_walkway" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Does anyone react to the item, for example by looking at it or pointing?" />
+  <Choices name="abandoned_object.others_react" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is this clip usable? Choose No if this phase cannot be seen in this view." />
+  <Choices name="usable" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+  </Choices>
+</View>

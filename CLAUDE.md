@@ -82,7 +82,7 @@ Track D = Divyansh, Track J = Jatin. See `docs/design_architecture.md §3` and `
 
 **New API endpoint (services/api)** → router in `api/`, request/response schemas, `require_role(...)`, error envelope codes, add to role × endpoint test matrix, add to `design_architecture.md §9` if new area.
 
-**New event rule** → `services/events/src/events/domain/rules/<rule>.py` with `@rule("<id>")` and param schema → defaults in `config/rules.yaml` → positive/negative unit tests with synthetic twin sequences.
+**New event rule** → `services/events/src/events/domain/rules/<rule>.py` with `@rule("<id>")` and param schema → defaults in `config/rules.yaml` → positive/negative unit tests with synthetic twin sequences → questions for its event type in `config/vqa_bank.yaml` (a test fails until they exist).
 
 **New GenAI task** → add task to every profile in `config/models.yaml` → prompt file → Pydantic output model → call via gateway → recorded responses for `FakeGateway` tests.
 

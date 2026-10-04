@@ -514,10 +514,14 @@
 - [ ] Graceful degradation: gateway unavailable → event published as `verification.status=skipped` for low severity, held (retry queue) for high.
 
 ### P3-D5 · Phase annotation kit — 5 pts · Must · E10 · FR-RSN-02
-- [ ] `ml/annotation/phase_guideline.md` with definitions and 3 worked examples per event type (taxonomy design §8.2).
-- [ ] Label Studio temporal labelling config (video timeline with 5 phase labels + event type + primary view).
-- [ ] Clip extraction script producing annotation tasks from UCF-Crime (8 classes) and MEVA multi-view incidents (≥ 250 candidate clips, all views per MEVA incident).
-- [ ] Export converter → `phase_labels.jsonl` matching the frozen export schema; inter-annotator agreement script (temporal IoU between K & P on a 20-clip overlap set).
+- [x] `ml/annotation/phase_guideline.md` with definitions and 3 worked examples per event type (taxonomy design §8.2).
+  - A draft: the taxonomy still needs the project guide's approval (design §8.2). The examples are illustrative scenarios, not from the datasets.
+- [x] Label Studio temporal labelling config (video timeline with 5 phase labels + event type + primary view).
+  - One config per number of views (1-4); all four validate with Label Studio's own `LabelInterface`, which also caught that a label `alias` would replace the stored phase name. Not driven in a running Label Studio, and the shape of a real timeline export (frame numbering) is assumed from its documentation.
+- [x] Clip extraction script producing annotation tasks from UCF-Crime (8 classes) and MEVA multi-view incidents (≥ 250 candidate clips, all views per MEVA incident).
+  - MEVA, run on the real annotation repo: 361 candidates from 179 slots (2,131 before capping near-duplicates), every one with 2-3 synchronised views; cuts verified frame-aligned with real ffmpeg. **MEVA is everyday activity, not incidents**: abandoned packages appear in 1 clip and thefts in 4, none multi-view, so its candidates are activity episodes (drop-offs, pick-ups, hand-overs), whether to count them is the guide's call. UCF-Crime is **not verified against the real files** (host unreachable): the reader follows the published annotation convention and was run on fixtures only.
+- [x] Export converter → `phase_labels.jsonl` matching the frozen export schema; inter-annotator agreement script (temporal IoU between K & P on a 20-clip overlap set).
+  - Schema frozen as `phase_labels.v1`. No agreement figures exist yet: they need K and P's annotations.
 
 
 ## Jatin — 23 pts
@@ -546,10 +550,13 @@
 - [ ] Camera links editor (table + simple node diagram) for overlap/transit edges.
 
 ### P3-J6 · Caption & VQA annotation kit — 5 pts · Must · E10 · FR-RSN-03
-- [ ] `config/vqa_bank.yaml`: 5–8 questions per event type.
-- [ ] Label Studio template for per-phase, per-view caption + VQA verification.
+- [x] `config/vqa_bank.yaml`: 5–8 questions per event type.
+- [x] Label Studio template for per-phase, per-view caption + VQA verification.
+  - Generated from the bank, one config per event type (`ml/annotation/caption_vqa/*.xml`); all six parse and validate with Label Studio's own `LabelInterface`. Not driven in a running Label Studio UI.
 - [ ] Kaggle notebook generating draft captions/VQA answers with the largest open VLM that fits (e.g. Qwen2.5-VL-7B) on phase-labelled clips; drafts imported as pre-annotations.
-- [ ] Converter → `phavr_labels.jsonl`; script reports pseudo-label edit rate after human verification.
+  - Written (`ml/annotation/caption_vqa/prelabel_kaggle.ipynb`) and its pipeline run end to end with a placeholder model in the tests; **never run against Qwen2.5-VL-7B** (needs a Kaggle T4). Tick this once a real trial run on a few clips has produced drafts.
+- [x] Converter → `phavr_labels.jsonl`; script reports pseudo-label edit rate after human verification.
+  - Its input, `phase_labels.jsonl`, is the phase annotation kit's export (P3-D5), frozen as `phase_labels.v1`; the converter's output is checked against J6's reader in a test.
 
 ---
 
