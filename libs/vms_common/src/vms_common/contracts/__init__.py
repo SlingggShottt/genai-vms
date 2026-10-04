@@ -20,8 +20,8 @@ from vms_common.contracts.reasoning import (
     IncidentReportV1,
     PhaseTimelineV1,
 )
-from vms_common.contracts.segment import SegmentV1
 from vms_common.contracts.search import QueryPlan, SearchRequest, SearchResponse, SearchResult
+from vms_common.contracts.segment import SegmentV1
 from vms_common.contracts.topology import TopologyEdgeInternal, TopologyInternalResponse
 from vms_common.contracts.twin import (
     Frame,

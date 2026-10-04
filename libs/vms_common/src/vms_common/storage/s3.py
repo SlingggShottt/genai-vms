@@ -52,6 +52,17 @@ class S3Client:
         response = await asyncio.to_thread(self._client.get_object, Bucket=loc.bucket, Key=loc.key)
         return await asyncio.to_thread(response["Body"].read)
 
+    async def exists(self, uri: str) -> bool:
+        """Whether the object is there (a HEAD request); false once retention has removed it."""
+        loc = parse_uri(uri)
+        try:
+            await asyncio.to_thread(self._client.head_object, Bucket=loc.bucket, Key=loc.key)
+        except ClientError as exc:
+            if exc.response.get("Error", {}).get("Code", "") in {"404", "NoSuchKey", "NotFound"}:
+                return False
+            raise
+        return True
+
     async def upload_file(self, uri: str, local_path: str) -> None:
         """Upload a local file to `uri`. Use for segments/large blobs."""
         loc = parse_uri(uri)
