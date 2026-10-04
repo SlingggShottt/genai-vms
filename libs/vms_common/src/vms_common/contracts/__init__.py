@@ -13,6 +13,7 @@ from vms_common.contracts.embeddings import (
     load_embeddings_npz,
 )
 from vms_common.contracts.segment import SegmentV1
+from vms_common.contracts.topology import TopologyEdgeInternal, TopologyInternalResponse
 from vms_common.contracts.twin import (
     Frame,
     FrameObject,
@@ -38,6 +39,8 @@ __all__ = [
     "ObjectMotion",
     "Scene",
     "SegmentV1",
+    "TopologyEdgeInternal",
+    "TopologyInternalResponse",
     "TrackSummary",
     "TwinReadyV1",
     "TwinV1",

@@ -8,14 +8,21 @@ timestamps, ids as strings.
 from __future__ import annotations
 
 import re
+import uuid
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 from vms_common.types import CameraCode, CameraId
-from vms_db.models import Camera, Track, User, UserRole, Zone, ZoneType
+from vms_db.models import Camera, EdgeType, TopologyEdge, Track, User, UserRole, Zone, ZoneType
 
 from api.domain.recordings import DensityBucket, Gap, SegmentWindow
+from api.domain.topology import (
+    DEFAULT_OVERLAP_TOLERANCE_S,
+    MAX_TOLERANCE_S,
+    MAX_TRANSIT_S,
+    validate_edge,
+)
 from api.domain.zones import validate_polygon
 
 _RTSP_URL_PATTERN = re.compile(r"^rtsp://\S+$")  # FR-CAM-01: validate RTSP URL format
@@ -392,3 +399,103 @@ class ZoneUpdateRequest(BaseModel):
         cls, value: list[tuple[float, float]] | None
     ) -> list[tuple[float, float]] | None:
         return validate_polygon(value) if value is not None else value
+
+
+def _canonical_uuid(value: str) -> str:
+    try:
+        return str(uuid.UUID(value))
+    except ValueError as exc:
+        raise ValueError(f"{value!r} is not a valid camera id") from exc
+
+
+class TopologyEdgeOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    # UUIDs of core.cameras.id, NOT codes — see api/topology.py's module docstring.
+    from_camera_id: CameraId
+    to_camera_id: CameraId
+    edge_type: EdgeType
+    min_s: float | None
+    max_s: float | None
+    tolerance_s: float | None
+    bidirectional: bool
+    created_at: datetime
+
+    @classmethod
+    def from_model(cls, edge: TopologyEdge) -> TopologyEdgeOut:
+        return cls(
+            id=str(edge.id),
+            from_camera_id=str(edge.from_camera_id),
+            to_camera_id=str(edge.to_camera_id),
+            edge_type=edge.edge_type,
+            min_s=edge.min_s,
+            max_s=edge.max_s,
+            tolerance_s=edge.tolerance_s,
+            bidirectional=edge.bidirectional,
+            created_at=edge.created_at,
+        )
+
+
+class TopologyEdgesPage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[TopologyEdgeOut]
+
+
+class TopologyEdgeCreateRequest(BaseModel):
+    """What is optional depends on the type: an overlap edge takes `tolerance_s`
+    (default 5 s) and is always bidirectional; a transit edge takes `min_s` and
+    `max_s` and is one-way unless `bidirectional` is true. Anything that does not fit
+    the type is a 400 with the reason, not a silent drop.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    from_camera_id: str
+    to_camera_id: str
+    edge_type: EdgeType
+    min_s: float | None = Field(default=None, ge=0, le=MAX_TRANSIT_S)
+    max_s: float | None = Field(default=None, ge=0, le=MAX_TRANSIT_S)
+    tolerance_s: float | None = Field(default=None, ge=0, le=MAX_TOLERANCE_S)
+    bidirectional: bool | None = None
+
+    @field_validator("from_camera_id", "to_camera_id")
+    @classmethod
+    def _ids_are_uuids(cls, value: str) -> str:
+        return _canonical_uuid(value)
+
+    @model_validator(mode="after")
+    def _fill_defaults_and_check_the_type(self) -> Self:
+        if self.from_camera_id == self.to_camera_id:
+            raise ValueError("an edge must connect two different cameras")
+        if self.edge_type == EdgeType.OVERLAP:
+            if self.tolerance_s is None:
+                self.tolerance_s = DEFAULT_OVERLAP_TOLERANCE_S
+            if self.bidirectional is None:
+                self.bidirectional = True
+        elif self.bidirectional is None:
+            self.bidirectional = False
+        validate_edge(
+            self.edge_type.value,
+            min_s=self.min_s,
+            max_s=self.max_s,
+            tolerance_s=self.tolerance_s,
+            bidirectional=bool(self.bidirectional),
+        )
+        return self
+
+
+class TopologyEdgeUpdateRequest(BaseModel):
+    """Only an edge's parameters can change; its cameras and type are its identity (delete
+    and recreate to change them). An omitted field keeps its value, an explicit `null`
+    clears it — so `{"min_s": null}` on a transit edge is a 400, the result must still be a
+    valid edge of its type.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    min_s: float | None = Field(default=None, ge=0, le=MAX_TRANSIT_S)
+    max_s: float | None = Field(default=None, ge=0, le=MAX_TRANSIT_S)
+    tolerance_s: float | None = Field(default=None, ge=0, le=MAX_TOLERANCE_S)
+    bidirectional: bool | None = None

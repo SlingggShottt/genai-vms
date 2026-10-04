@@ -491,8 +491,23 @@
 ## Jatin — 23 pts
 
 ### P3-J1 · Camera links (topology) API — 2 pts · Must · E03 · FR-CAM-04
-- [ ] CRUD topology edges (`overlap` with tolerance, `transit` with min/max, bidirectional flag) with validation.
-- [ ] `GET /internal/v1/topology`.
+- [x] CRUD topology edges (`overlap` with tolerance, `transit` with min/max, bidirectional flag) with validation.
+      `GET/POST /topology/edges` (`?camera_id=` for edges touching a camera), `PATCH/DELETE /topology/edges/{id}`;
+      read: any role, write: admin (in the role matrix). Overlap takes `tolerance_s` (default 5 s, always two-way),
+      transit takes `min_s..max_s` (one-way unless `bidirectional`); anything that does not fit the type, a self-link,
+      a missing camera (404) or cameras on different sites are rejected with the reason. Duplicates are 409, including
+      the reverse of an overlap edge and a transit edge a bidirectional one already covers. `core.topology_edges`
+      (migration `0005`) enforces the same rules itself with CHECK constraints, a unique pair and a partial unique
+      index on the unordered overlap pair, so concurrent creates give one 201 and 409s, never a 500 (tested with 8
+      parallel requests). PATCH changes parameters only. 61 unit tests (rules, schemas, contract, model), 24 API
+      integration tests and 2 migration tests (real Postgres, incl. downgrade-then-upgrade); a 41-variant mutation
+      check kills 40, the survivor being an equivalent mutant (applying a `null` to a field validation already
+      guarantees is null). Found on the way: migration `0003` (zones) leaves `core.zone_type` behind on downgrade,
+      so downgrade-then-upgrade fails — not changed here (merged migrations are never edited); `0005` drops its type.
+- [x] `GET /internal/v1/topology`.
+      Service-token gated; reports camera **codes** (what correlation sees in `event.v1`), shape =
+      `vms_common.contracts.topology.TopologyInternalResponse` + `fixtures/topology_internal.json` (round-trip tested; the
+      integration test validates the live response against the contract). Not done here: the editor UI (P3-J5).
 
 ### P3-J2 · Correlation service — 5 pts · Must · E08 · FR-COR-01…04
 - [ ] Consumes `event.v1`; implements linking + union-find grouping + close rule (design §7.5) with `config/correlation.yaml` compatibility matrix.

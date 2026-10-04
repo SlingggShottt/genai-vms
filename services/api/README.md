@@ -65,6 +65,24 @@ cameras). `libs/vms_common/contracts/zones.py` (P2-D3's proposed day-1
 contract) needed no field changes, just its docstring updated now that
 it's the real thing.
 
+**P3-J1** — Camera links / topology (`api/topology.py`): `GET/POST /topology/edges`
+(`?camera_id=` filters to edges touching a camera), `PATCH/DELETE /topology/edges/{id}`
+(admin write, any role read). An edge is `overlap` (cameras see the same area: carries
+`tolerance_s`, default 5 s, always bidirectional) or `transit` (`to` reachable from `from` in
+`min_s..max_s` seconds, one-way unless `bidirectional`). Validation answers 400 with the
+reason: parameters must suit the type (`api/domain/topology.py`, pure), a camera cannot link to
+itself, and both cameras must exist (404) and share a site (correlation groups are per site).
+Duplicates are 409 — including the reverse of an overlap edge (overlap is symmetric) and a
+transit edge a bidirectional one already covers — checked up front and again by the database
+(unique constraint + a partial unique index on the unordered overlap pair), so a race between
+two requests yields one 201 and 409s, never a 500. PATCH changes only the parameters; an edge's
+cameras and type are its identity (delete and recreate), and the result of a PATCH must still be
+a valid edge of its type. `core.topology_edges` (migration `0005`) has CHECK constraints for the
+same rules, so no writer can store a malformed edge; deleting a camera deletes its edges.
+`GET /internal/v1/topology` (service-token gated) returns the graph with camera **codes**, the
+shape `libs/vms_common/contracts/topology.py` + `fixtures/topology_internal.json` define, for the
+correlation service (P3-J2).
+
 **P2-J3** — Recordings & twin overlay endpoints, all roles read
 (`api/recordings.py`, `api/twin.py`):
 - `GET /recordings/{camera_id}/segments` — `media.segments` in `[start,
