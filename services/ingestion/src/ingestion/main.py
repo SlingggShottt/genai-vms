@@ -8,6 +8,7 @@ import asyncio
 
 from vms_common.kafka.producer import KafkaProducerClient
 from vms_common.logging import configure_logging, get_logger
+from vms_common.metrics import serve as serve_metrics
 from vms_common.redis import get_redis_client
 from vms_common.storage.s3 import S3Client
 
@@ -20,6 +21,7 @@ log = get_logger(__name__)
 
 async def _amain() -> None:
     configure_logging()
+    serve_metrics(9101)  # Prometheus scrape port, design §15
     settings = IngestionSettings()
 
     s3 = S3Client(

@@ -22,6 +22,8 @@ from vms_common.qdrant.knowledge import (
 )
 from vms_common.qdrant.point_ids import knowledge_point_id
 
+from indexer.metrics import knowledge_docs_total
+
 log = get_logger(__name__)
 
 
@@ -107,6 +109,7 @@ class EventKnowledgeConsumer(BaseConsumer[EventV1]):
         doc = event_doc(message)
         if doc is not None:
             await upsert_docs(self._qdrant, self._embedder, [doc])
+            knowledge_docs_total.labels(doc_type="event_caption").inc()
 
 
 class IncidentKnowledgeConsumer(BaseConsumer[IncidentReadyV1]):
@@ -146,4 +149,5 @@ class IncidentKnowledgeConsumer(BaseConsumer[IncidentReadyV1]):
             event_type=row[5],
         )
         await upsert_docs(self._qdrant, self._embedder, docs)
+        knowledge_docs_total.labels(doc_type="incident_section").inc(len(docs))
         log.info("incident_indexed", incident_id=message.incident_id, sections=len(docs))

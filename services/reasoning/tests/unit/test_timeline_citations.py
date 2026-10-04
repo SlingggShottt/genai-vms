@@ -95,3 +95,14 @@ def test_pick_evenly_keeps_first_and_last():
     picked = pick_evenly(list(range(10)), 4)
     assert picked[0] == 0 and picked[-1] == 9 and len(picked) == 4
     assert pick_evenly([1, 2], 5) == [1, 2]
+
+
+def test_progress_messages_are_grouped_into_the_stages_the_dashboard_graphs():
+    from reasoning.worker import _coarse
+
+    assert _coarse("gathering events") == "context"
+    assert _coarse("collecting footage") == "footage"
+    assert _coarse("locating the phases") == "phases"
+    assert _coarse("reading action · cam01") == "evidence"
+    assert _coarse("writing the report") == "synthesis"
+    assert _coarse("something new") == "other"

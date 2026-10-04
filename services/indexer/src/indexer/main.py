@@ -9,6 +9,7 @@ import asyncio
 from qdrant_client import AsyncQdrantClient
 from vms_common.contracts.twinready import TwinReadyV1
 from vms_common.logging import configure_logging, get_logger
+from vms_common.metrics import serve as serve_metrics
 from vms_common.qdrant.collections import ensure_collections
 from vms_common.qdrant.knowledge import KnowledgeEmbedder
 from vms_common.storage.s3 import S3Client
@@ -28,6 +29,7 @@ TWIN_TOPIC = "vms.twin.v1"
 
 async def _amain() -> None:
     configure_logging()
+    serve_metrics(9103)  # Prometheus scrape port, design §15
     settings = IndexerSettings()
 
     s3 = S3Client(

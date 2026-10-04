@@ -135,6 +135,12 @@ class ReasoningStore:
                 },
             )
 
+    async def queued_count(self) -> int:
+        async with self._sessions() as s:
+            return (
+                await s.execute(text("SELECT count(*) FROM reasoning.jobs WHERE status = 'queued'"))
+            ).scalar_one()
+
     async def auto_jobs_since(self, since: datetime) -> int:
         async with self._sessions() as s:
             return (

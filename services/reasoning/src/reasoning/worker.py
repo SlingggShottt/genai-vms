@@ -29,6 +29,7 @@ from reasoning.adapters.footage import Footage, FootFrame
 from reasoning.adapters.store import JobRow, ReasoningStore
 from reasoning.domain.context import build_context
 from reasoning.domain.evidence import PhaseReading, build_bundle
+from reasoning.metrics import job_seconds, jobs_total, queue_depth
 from reasoning.reports.daily import ReportQueue
 from reasoning.reports.daily import generate as generate_report
 from reasoning.settings import ReasoningSettings
@@ -69,9 +70,11 @@ class ReasoningWorker:
         self._reports = reports
         self._sessions = sessions
         self._last_schedule_check = 0.0
+        self._stage: tuple[str, float] | None = None
 
     async def run_forever(self) -> None:
         while True:
+            queue_depth.set(await self._store.queued_count())
             job = await self._store.claim(self._s.job_lease_s)
             if job is not None:
                 await self.process(job)
@@ -125,16 +128,31 @@ class ReasoningWorker:
         except JobFailedError as exc:
             log.warning("job_failed", reason=str(exc))
             await self._fail(job, incident_id, str(exc))
+            jobs_total.labels(outcome="failed").inc()
         except asyncio.CancelledError:
             raise
         except Exception as exc:  # the queue must survive any one bad job
             log.exception("job_crashed")
             await self._fail(job, incident_id, f"unexpected error: {type(exc).__name__}: {exc}")
+            jobs_total.labels(outcome="crashed").inc()
+        else:
+            jobs_total.labels(outcome="done").inc()
         finally:
+            self._close_stage()
             clear_context()
 
     async def _step(self, job: JobRow, stage: str, fraction: float) -> None:
+        self._close_stage()
+        self._stage = (_coarse(stage), time.monotonic())
         await self._store.progress(job.id, stage, fraction, lease_s=self._s.job_lease_s)
+
+    def _close_stage(self) -> None:
+        """Record how long the stage that just ended took (stages are the coarse names the
+        dashboard graphs, not the per-camera progress text)."""
+        if self._stage is not None:
+            name, started = self._stage
+            job_seconds.labels(stage=name).observe(time.monotonic() - started)
+            self._stage = None
 
     async def _run(self, job: JobRow, incident_id: uuid.UUID) -> None:
         s = self._s
@@ -330,3 +348,17 @@ class ReasoningWorker:
 
 def _utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+_STAGES = (
+    ("gathering", "context"),
+    ("collecting", "footage"),
+    ("locating", "phases"),
+    ("reading", "evidence"),
+    ("writing", "synthesis"),
+)
+
+
+def _coarse(stage: str) -> str:
+    """ "reading action · cam01" -> "evidence": the stage a progress message belongs to."""
+    return next((name for word, name in _STAGES if stage.startswith(word)), "other")

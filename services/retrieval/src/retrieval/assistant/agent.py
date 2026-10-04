@@ -25,6 +25,7 @@ from retrieval.assistant.evidence import Evidence
 from retrieval.assistant.router import lead_sentence, route
 from retrieval.assistant.store import ChatStore, Turn, render_history, split_history
 from retrieval.assistant.tools import TOOLS, ToolContext, tool_catalogue
+from retrieval.metrics import assistant_turns_total
 
 log = get_logger(__name__)
 
@@ -212,6 +213,7 @@ class Assistant:
                 # rests on, so show it — but as "consulted", never as the model's own citation.
                 citations = [{**c.as_json(), "consulted": True} for c in evidence.all()[:6]]
                 consulted = True
+            assistant_turns_total.labels(outcome=status).inc()
             if status != "failed" or text:
                 message_id = await asyncio.shield(
                     self._store.add(

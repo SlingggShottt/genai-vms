@@ -827,6 +827,7 @@
 - [ ] Documented, tested fallback: GPU services on host Compose exposed to the cluster via `ExternalName`/Endpoints.
 
 ### P7-D3 · Observability — 5 pts · Should · E17 · NFR-OBS-01, NFR-OBS-02
+> **Status 2026-10-04 — partly built:** `vms_common.metrics.serve(port)` exposes the workers' metrics (ingestion 9101, perception 9102, indexer 9103, events 9104, correlation 9105, reasoning 9106; the api and retrieval serve `/metrics`); new series for search stages, assistant turns, reasoning stages/outcomes/queue depth, indexer lag and perception latency; `obs` Compose profile with Prometheus and Grafana and a provisioned 14-panel dashboard (`deploy/compose/obs/`). **Not done:** `vms_kafka_consumer_lag`, `vms_gpu_memory_bytes` (needs an exporter), alert rules, the kube-prometheus-stack values.
 - [ ] All metrics in design §15 exported; kube-prometheus-stack with ServiceMonitors (and Compose `obs` profile).
 - [ ] Grafana dashboards: Pipeline health (lag, fps, segments), GenAI (latency/tokens per provider, queue depth), API (RPS, p95, errors).
 

@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from vms_common.contracts.event import EventV1
 from vms_common.kafka.producer import KafkaProducerClient
 from vms_common.logging import configure_logging, get_logger
+from vms_common.metrics import serve as serve_metrics
 from vms_db.session import create_engine, create_session_factory
 
 from correlation.adapters.config_loader import load_correlation_config
@@ -25,6 +26,7 @@ log = get_logger(__name__)
 
 async def _amain() -> None:
     configure_logging()
+    serve_metrics(9105)  # Prometheus scrape port, design §15
     settings = CorrelationSettings()
 
     try:

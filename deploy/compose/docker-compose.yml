@@ -19,6 +19,8 @@ networks:
     name: vms-net
 
 volumes:
+  prometheus_data:
+  grafana_data:
   hf_cache:   # Hugging Face model cache for retrieval (SigLIP 2): downloaded once
   kafka_data:
   postgres_data:
@@ -523,4 +525,38 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ../../config:/app/config:ro
+    restart: unless-stopped
+
+  # --- observability (profile obs): make up PROFILE=infra,core,genai,obs --------------------------
+  prometheus:
+    profiles: [obs]
+    container_name: vms-prometheus
+    image: prom/prometheus:v2.55.1
+    networks: [vms-net]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./obs/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  grafana:
+    profiles: [obs]
+    container_name: vms-grafana
+    image: grafana/grafana:11.3.0
+    networks: [vms-net]
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./obs/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./obs/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
     restart: unless-stopped

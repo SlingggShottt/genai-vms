@@ -27,7 +27,7 @@ import asyncio
 import shutil
 import tempfile
 from collections.abc import Callable
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import cv2
@@ -52,6 +52,7 @@ from perception.domain.sampling import AdaptiveSampler
 from perception.domain.segmenting import build_crop_key, build_perception_keyframe_key
 from perception.domain.twin_builder import build_twin
 from perception.domain.zones import zones_for_bbox
+from perception.metrics import latency_seconds, segments_total
 from perception.settings import PerceptionSettings
 
 log = get_logger(__name__)
@@ -188,6 +189,8 @@ class PerceptionConsumer(BaseConsumer[SegmentV1]):
             await self._tracker_for(message.camera_id).checkpoint(out_of_order=out_of_order)
             if not out_of_order:
                 self._last_processed_end[message.camera_id] = message.end_ts
+            segments_total.labels(camera=message.camera_id).inc()
+            latency_seconds.observe(max(0.0, (datetime.now(UTC) - message.end_ts).total_seconds()))
             log.info("twin_published", segment_id=message.segment_id, tracks=len(twin.tracks))
         finally:
             await asyncio.to_thread(shutil.rmtree, work_dir, ignore_errors=True)

@@ -22,6 +22,7 @@ from vms_common.ids import uuid7_str
 from vms_common.llm import Gateway, LLMError, render_prompt
 from vms_common.logging import get_logger
 
+from reasoning.metrics import daily_reports_total
 from reasoning.reports.facts import (
     DailyFacts,
     collect,
@@ -84,6 +85,7 @@ async def generate(
             ),
             {"i": report_id, "f": facts.model_dump_json(), "n": narrative, "src": source},
         )
+    daily_reports_total.labels(narrative=source).inc()
     log.info("daily_report_ready", report_id=str(report_id), source=source)
 
 

@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from vms_common.kafka.producer import KafkaProducerClient
 from vms_common.llm import LLMGateway
 from vms_common.logging import configure_logging, get_logger
+from vms_common.metrics import serve as serve_metrics
 from vms_common.storage.s3 import S3Client
 from vms_common.vqa_bank import load_vqa_bank
 from vms_db.session import create_engine, create_session_factory
@@ -27,6 +28,7 @@ log = get_logger(__name__)
 async def _amain() -> None:
     settings = ReasoningSettings()
     configure_logging(level=settings.log_level)
+    serve_metrics(9106)  # Prometheus scrape port, design §15
     engine = create_engine(settings.db)
     sessions = create_session_factory(engine)
     store = ReasoningStore(sessions)

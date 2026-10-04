@@ -36,6 +36,7 @@ from retrieval.domain.plan import (
 )
 from retrieval.domain.rerank import RerankItem, blend, format_candidate
 from retrieval.jit import JitRefiner
+from retrieval.metrics import search_stage_seconds, searches_total
 from retrieval.settings import RetrievalSettings
 
 log = get_logger(__name__)
@@ -100,6 +101,12 @@ class SearchPipeline:
             )
         while len(self.recent) > 600:
             self.recent.popitem(last=False)
+
+    @staticmethod
+    def _observe(kind: str, mode: str, timings: dict[str, float]) -> None:
+        searches_total.labels(kind=kind, mode=mode).inc()
+        for stage, ms in timings.items():
+            search_stage_seconds.labels(stage=stage).observe(ms / 1000)
 
     @property
     def catalog(self) -> Catalog:
@@ -220,6 +227,7 @@ class SearchPipeline:
             timings_ms={**timings, "total": round(sum(timings.values()), 1)},
             notes=notes,
         )
+        self._observe("text", req.mode, timings)
         await self._log(response, kind="text", user_id=user_id)
         return response
 
@@ -268,6 +276,7 @@ class SearchPipeline:
             if expired
             else [],
         )
+        self._observe("image", "fast", timings)
         await self._log(response, kind="image", user_id=user_id)
         return response
 

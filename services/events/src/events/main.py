@@ -14,6 +14,7 @@ from vms_common.contracts.twinready import TwinReadyV1
 from vms_common.kafka.producer import KafkaProducerClient
 from vms_common.llm import LLMGateway
 from vms_common.logging import configure_logging, get_logger
+from vms_common.metrics import serve as serve_metrics
 from vms_common.redis import get_redis_client
 from vms_common.storage.s3 import S3Client
 from vms_db.session import create_engine, create_session_factory
@@ -40,6 +41,7 @@ ZONES_REFRESH_STARTUP_GRACE_S = 0.1  # let the first refresh populate the cache 
 
 async def _amain() -> None:
     configure_logging()
+    serve_metrics(9104)  # Prometheus scrape port, design §15
     settings = EventsSettings()
 
     try:

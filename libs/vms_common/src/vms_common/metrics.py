@@ -41,3 +41,24 @@ def histogram(
 ) -> Histogram:
     kwargs = {"buckets": buckets} if buckets is not None else {}
     return Histogram(_metric_name(area, name, unit), description, labelnames, **kwargs)
+
+
+_served: set[int] = set()
+
+
+def serve(port: int) -> None:
+    """Expose this process's metrics at `http://0.0.0.0:<port>/metrics` for Prometheus (the
+    workers have no HTTP server of their own; the api and retrieval mount `/metrics` instead).
+    Safe to call twice and never fatal: a port already in use costs the metrics, not the service."""
+    if port in _served:
+        return
+    from prometheus_client import start_http_server
+
+    from vms_common.logging import get_logger
+
+    try:
+        start_http_server(port)
+    except OSError as exc:
+        get_logger(__name__).warning("metrics_port_unavailable", port=port, error=str(exc))
+        return
+    _served.add(port)
