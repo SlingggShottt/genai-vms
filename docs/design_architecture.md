@@ -901,6 +901,12 @@ Results are written to `ml/evaluation/results/<date>/<harness>.json` plus a Mark
 - Backpressure: adaptive sampling in perception; reasoning jobs queue in PG with `SELECT … FOR UPDATE SKIP LOCKED`.
 - Health: `/health` (liveness) and `/ready` (dependencies) on every service; Kubernetes probes use them.
 
+**As built (P7-D5, P7-J5, partly).**
+- *Dead letters:* `python -m vms_common.kafka.dlq_replay --list | --topic T [--dry-run] [--limit N]` re-publishes `vms.dlq.v1` messages to the topic in their `x-origin-topic` header, with its own consumer group so a second run replays only what is new; consumers are idempotent, so a message that was handled in the meantime is harmless.
+- *Restarts mid-stream:* `ml/evaluation/resilience/chaos.py` restarts the consumers (`indexer`, `events`, `correlation`) in turn while footage flows and then checks four invariants — no gap in the segment sequence, every segment has its twin, Qdrant holds exactly the frame and track points the twins describe, no event in two live groups (results in `ml/evaluation/results/p7-resilience.md`). The recorder (`ingestion`) is not a target: while it is down nothing is recorded, which is a gap in the footage, not a lost message.
+- *Rate limits:* `api/api/ratelimit.py`, a fixed one-minute window per client and endpoint group in Redis (login 10, search 30, assistant 20, analyses/reports 6; `VMS_API_RATELIMIT_*`), 429 with `Retry-After`; fails open if Redis is unreachable.
+- *Headers:* the api sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Cache-Control: no-store`; the frontend's nginx sets the first three. **No Content-Security-Policy yet** — it has to be written against the deployment's real MediaMTX / MinIO origins. The role × endpoint matrix now covers the database-only endpoints added in Phases 4–7, and a second check covers the login/operator requirement of the ones that proxy to other services.
+
 **Security**
 - JWT (HS256 dev, RS256 option), short-lived access token, rotating refresh tokens stored hashed.
 - RBAC dependency `require_role(...)`; role × endpoint test matrix in CI.

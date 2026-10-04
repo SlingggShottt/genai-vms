@@ -65,6 +65,22 @@ class AdminSeedSettings(VMSBaseSettings):
         return self
 
 
+class RateLimitSettings(VMSBaseSettings):
+    """`VMS_API_RATELIMIT_*` — requests allowed per minute per client (NFR-SEC, P7-J5). A fixed
+    window kept in Redis; if Redis is unreachable the limiter lets requests through rather than
+    taking the api down with it."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="VMS_API_RATELIMIT_", env_file=".env", extra="ignore"
+    )
+
+    enabled: bool = Field(default=True)
+    login_per_minute: int = Field(default=10, gt=0)  # per client address: slows password guessing
+    search_per_minute: int = Field(default=30, gt=0)  # a search can occupy the GPU for a minute
+    assistant_per_minute: int = Field(default=20, gt=0)
+    heavy_per_minute: int = Field(default=6, gt=0)  # analyses and reports queue GPU work
+
+
 class AlertSettings(VMSBaseSettings):
     """`VMS_ALERTS_*` — which events become alerts and how they reach the api (P3-J3)."""
 
@@ -182,4 +198,5 @@ class ApiSettings(VMSBaseSettings):
     storage: StorageSettings = Field(default_factory=StorageSettings)
     kafka: KafkaSettings = Field(default_factory=KafkaSettings)
     alerts: AlertSettings = Field(default_factory=AlertSettings)
+    ratelimit: RateLimitSettings = Field(default_factory=RateLimitSettings)
     notify: NotifySettings = Field(default_factory=NotifySettings)

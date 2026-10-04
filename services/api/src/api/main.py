@@ -29,7 +29,7 @@ from api.api.errors import register_exception_handlers
 from api.api.health import router as health_router
 from api.api.incidents import router as incidents_router
 from api.api.internal import router as internal_router
-from api.api.middleware import RequestIDMiddleware
+from api.api.middleware import RequestIDMiddleware, SecurityHeadersMiddleware
 from api.api.recordings import router as recordings_router
 from api.api.reports import router as reports_router
 from api.api.search import router as search_router
@@ -180,6 +180,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.add_middleware(RequestIDMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
 
     register_exception_handlers(app)
     app.include_router(health_router)

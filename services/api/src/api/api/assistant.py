@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from vms_db.models import User
 
 from api.api.errors import APIError
+from api.api.ratelimit import limit
 from api.api.security import get_current_user
 
 router = APIRouter(prefix="/assistant", tags=["assistant"])
@@ -85,7 +86,7 @@ async def delete_session(
     await _json(request, user, "DELETE", f"/assistant/sessions/{session_id}")
 
 
-@router.post("/sessions/{session_id}/messages")
+@router.post("/sessions/{session_id}/messages", dependencies=[Depends(limit("assistant"))])
 async def post_message(
     session_id: str,
     body: MessageIn,

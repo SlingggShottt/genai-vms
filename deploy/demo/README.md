@@ -50,10 +50,19 @@ GPU).
    summary is written by the model but every number in it is checked against the figures (the page
    says when it fell back to the standard summary). *Print or save as PDF*.
 
+7. **Object outlines.** Search results outline the person or object that matched (SAM 2.1-tiny, on the CPU;
+   the first outline of a frame takes about a second). *Look closer* (reason mode) makes a vision model
+   check what the records could not tell, in the picture itself — several minutes on this GPU.
+8. **Timeline and cases** (`/timeline`, `/cases`). Drag across a camera's lane to pick a period, zoom to it,
+   open the recording or *Save to case*; press a marker to see the event or report. *Save to case* is also on
+   search results, events and incident reports. A report page lists *Similar incidents*.
+9. **Dashboards.** `make up PROFILE=infra,obs` adds Prometheus (:9090) and Grafana (:3000, `admin` /
+   `GRAFANA_ADMIN_PASSWORD`, default `admin`); the "GenAI-VMS overview" dashboard is provisioned.
+
 ## Known limits (say them before they are found)
 
 - Phase location and captions use the **zero-shot** Qwen2.5-VL-3B: the fine-tuned adapters are not
   trained. Expect generic wording and frequent use of the detector-timing fallback.
 - The demo clip loops, so many results look alike; there is one real camera (`cam01`), so nothing
   is correlated across cameras here.
-- No cloud keys are set, so everything runs on the local 4 GB GPU.
+- No cloud keys are set, so everything runs on the local 4 GB GPU. Ollama swaps between the vision and the text model when activity moves between them (about 20 s); the first search or question after a pause pays for it.

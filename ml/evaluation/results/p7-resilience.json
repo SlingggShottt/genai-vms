@@ -1,0 +1,51 @@
+{
+ "segments": 0,
+ "I1_sequence_gaps": {},
+ "I2_segments_without_twin": [],
+ "I3_frames": {
+  "expected": 0,
+  "in_qdrant": 0
+ },
+ "I3_tracks": {
+  "expected": 0,
+  "in_qdrant": 0
+ },
+ "I4_events_in_two_groups": 0,
+ "passed": false,
+ "lag_left": {
+  "perception": 0,
+  "indexer": 0,
+  "events": 0,
+  "correlation": 0
+ },
+ "started": "2026-10-04 09:04 UTC",
+ "duration_s": 420,
+ "interval_s": 70,
+ "targets": [
+  "indexer",
+  "events",
+  "correlation"
+ ],
+ "restarts": [
+  [
+   "vms-indexer",
+   0.3289646269986406
+  ],
+  [
+   "vms-events",
+   0.4961233239955618
+  ],
+  [
+   "vms-correlation",
+   0.35243789599917363
+  ],
+  [
+   "vms-indexer",
+   0.3082357960010995
+  ],
+  [
+   "vms-events",
+   0.29399571400426794
+  ]
+ ]
+}

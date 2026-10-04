@@ -16,6 +16,7 @@ from vms_db.models import Incident, ReasoningJob, User, UserRole
 
 from api.api.deps import SessionDep
 from api.api.errors import APIError
+from api.api.ratelimit import limit
 from api.api.security import get_current_user, require_role
 
 router = APIRouter(tags=["incidents"])
@@ -270,7 +271,10 @@ async def _group_of(session, event_id: str) -> tuple[uuid.UUID | None, list[str]
 
 
 @router.post(
-    "/events/{event_id}/analyze", response_model=JobOut, status_code=status.HTTP_202_ACCEPTED
+    "/events/{event_id}/analyze",
+    response_model=JobOut,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(limit("heavy"))],
 )
 async def analyze_event(
     event_id: str, session: SessionDep, user: Annotated[User, Depends(_operator_up)]

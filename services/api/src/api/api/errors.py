@@ -41,12 +41,14 @@ class APIError(Exception):
         *,
         status_code: int = status.HTTP_400_BAD_REQUEST,
         details: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
         self.status_code = status_code
         self.details = details or {}
+        self.headers = headers or {}
 
 
 def _request_id(request: Request) -> str:
@@ -59,6 +61,7 @@ def _error_response(
     code: str,
     message: str,
     details: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
 ) -> JSONResponse:
     """Build the envelope response, stamping `X-Request-ID` on the response
     itself rather than relying solely on `RequestIDMiddleware` — a response
@@ -76,7 +79,7 @@ def _error_response(
                 "request_id": request_id,
             }
         },
-        headers={"X-Request-ID": request_id} if request_id else None,
+        headers={**(headers or {}), **({"X-Request-ID": request_id} if request_id else {})} or None,
     )
 
 
@@ -85,7 +88,9 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(APIError)
     async def _api_error_handler(request: Request, exc: APIError) -> JSONResponse:
-        return _error_response(request, exc.status_code, exc.code, exc.message, exc.details)
+        return _error_response(
+            request, exc.status_code, exc.code, exc.message, exc.details, exc.headers
+        )
 
     @app.exception_handler(RequestValidationError)
     async def _validation_error_handler(

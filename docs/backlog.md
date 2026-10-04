@@ -838,6 +838,7 @@
 - [ ] Measures NFR-PERF-01…05 p50/p95 from metrics + logs; results JSON + Markdown summary.
 
 ### P7-D5 · Resilience tests — 3 pts · Must · E17 · NFR-REL-01…04
+> **Status 2026-10-04 — partly built:** `python -m vms_common.kafka.dlq_replay` (list, filter by topic, dry run, limit; unit-tested planning), `ml/evaluation/resilience/chaos.py` (see `ml/evaluation/results/p7-resilience.md` for the run), and the LLM-unavailable behaviour is covered in `ml/evaluation/results/p7-degradation.md`. **Not done:** restarting the recorder and perception under load, k8s pod-kill runs.
 - [ ] Chaos script restarts each worker mid-stream; verifies zero missing segments/events and no duplicates.
 - [ ] DLQ replay tool; GPU/LLM-down scenario shows graceful degradation.
 
@@ -862,6 +863,7 @@
 - [ ] Runs on ≥ 60 assistant questions and all test-set incidents; results summary.
 
 ### P7-J5 · Usability kit & security hardening — 5 pts · Must · E18, E17 · EV-05, NFR-SEC-*
+> **Status 2026-10-04 — hardening partly built:** rate limiting on login / search / assistant / analyses & reports (Redis, 429 + `Retry-After`, fails open), security headers in the api and in the frontend's nginx, the role × endpoint matrix extended to the endpoints added since (166 matrix tests), `gitleaks` was already in pre-commit. **Not done:** the usability kit (SUS questionnaire, task scripts, consent note, results template — for K & P), Caddy and a Content-Security-Policy (needs the deployment's real origins).
 - [ ] SUS questionnaire, 4 task scripts, consent note and results template for K & P.
 - [ ] Hardening: rate limiting on auth/search/assistant, CORS allow-list, security headers (Caddy), presign expiry check, role × endpoint matrix passing, gitleaks clean.
 

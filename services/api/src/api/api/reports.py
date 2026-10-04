@@ -18,6 +18,7 @@ from vms_db.models import DailyReport, User, UserRole
 
 from api.api.deps import SessionDep
 from api.api.errors import APIError
+from api.api.ratelimit import limit
 from api.api.security import get_current_user, require_role
 
 router = APIRouter(prefix="/reports/daily", tags=["reports"])
@@ -83,7 +84,12 @@ async def list_reports(
     return [_summary(r) for r in rows]
 
 
-@router.post("", response_model=ReportSummary, status_code=status.HTTP_202_ACCEPTED)
+@router.post(
+    "",
+    response_model=ReportSummary,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(limit("heavy"))],
+)
 async def request_report(
     body: ReportRequest, session: SessionDep, user: Annotated[User, Depends(_operator_up)]
 ) -> ReportSummary:

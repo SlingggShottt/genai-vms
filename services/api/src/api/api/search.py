@@ -13,6 +13,7 @@ from vms_common.contracts.search import SearchRequest
 from vms_db.models import User
 
 from api.api.errors import APIError
+from api.api.ratelimit import limit
 from api.api.security import get_current_user
 
 router = APIRouter(prefix="/search", tags=["search"])
@@ -72,14 +73,14 @@ async def _forward(request: Request, user: User, path: str, **kwargs: Any) -> di
     return await _presigned(request, response.json())
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(limit("search"))])
 async def search(
     body: SearchRequest, request: Request, user: Annotated[User, Depends(get_current_user)]
 ) -> dict[str, Any]:
     return await _forward(request, user, "/search", json=body.model_dump(mode="json"))
 
 
-@router.post("/image")
+@router.post("/image", dependencies=[Depends(limit("search"))])
 async def search_image(
     request: Request,
     user: Annotated[User, Depends(get_current_user)],
@@ -108,7 +109,7 @@ class GroundingIn(BaseModel):
     result_id: str
 
 
-@router.post("/grounding")
+@router.post("/grounding", dependencies=[Depends(limit("search"))])
 async def grounding(
     body: GroundingIn, request: Request, user: Annotated[User, Depends(get_current_user)]
 ) -> dict[str, Any]:

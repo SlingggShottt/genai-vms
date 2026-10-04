@@ -19,6 +19,7 @@ from api.adapters.refresh_tokens import (
 from api.adapters.users import get_user_by_email, get_user_by_id
 from api.api.deps import SessionDep
 from api.api.errors import APIError
+from api.api.ratelimit import limit
 from api.api.security import get_current_user
 from api.domain.security import verify_password
 from api.schemas import LoginRequest, LogoutRequest, RefreshRequest, TokenResponse, UserOut
@@ -48,7 +49,7 @@ async def _issue_token_pair(
     return response, row
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", response_model=TokenResponse, dependencies=[Depends(limit("login"))])
 async def login(
     body: LoginRequest,
     request: Request,

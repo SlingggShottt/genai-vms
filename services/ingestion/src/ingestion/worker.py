@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import shutil
 import tempfile
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -25,6 +26,7 @@ from ingestion.adapters.probe import StreamInfo, probe_stream
 from ingestion.adapters.segmenter import (
     CompletedSegment,
     build_ffmpeg_segment_command,
+    watch_for_stall,
     watch_segments,
 )
 from ingestion.domain.backoff import reconnect_backoff_seconds
@@ -118,11 +120,13 @@ async def _run_once(
         camera_id=camera.code,
         segment_list_path=segment_list_path,
         segment_seconds=settings.segment_seconds,
+        io_timeout_seconds=settings.io_timeout_seconds,
     )
     process = await asyncio.create_subprocess_exec(
         *cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL
     )
 
+    progress = {"at": time.monotonic()}  # refreshed by every completed segment
     consume_task = asyncio.create_task(
         _consume_segments(
             camera,
@@ -134,16 +138,20 @@ async def _run_once(
             producer=producer,
             gap_before=gap_before,
             status=status,
+            progress=progress,
         )
     )
     wait_task = asyncio.create_task(process.wait())
+    stall_task = asyncio.create_task(watch_for_stall(progress, settings.stall_timeout_seconds))
 
     try:
         done, pending = await asyncio.wait(
-            {consume_task, wait_task}, return_when=asyncio.FIRST_COMPLETED
+            {consume_task, wait_task, stall_task}, return_when=asyncio.FIRST_COMPLETED
         )
         for task in pending:
             task.cancel()
+        if stall_task in done and stall_task.exception():
+            raise stall_task.exception()  # the segmenter hung; the finally below kills it
         if consume_task in done and consume_task.exception():
             raise consume_task.exception()  # a segment failed to upload/publish
         raise RuntimeError(f"ffmpeg segmenter for {camera.code} exited (code {process.returncode})")
@@ -168,12 +176,14 @@ async def _consume_segments(
     producer: KafkaProducerClient,
     gap_before: bool,
     status: dict[str, str],
+    progress: dict[str, float],
 ) -> None:
     """Consume completed segments forever (until the caller cancels this task)."""
     async for completed in watch_segments(
         segment_list_path=segment_list_path, out_dir=work_dir, worker_start=datetime.now(UTC)
     ):
         status["value"] = "online"
+        progress["at"] = time.monotonic()
         await _handle_segment(
             camera,
             completed,

@@ -31,6 +31,11 @@ class IngestionSettings(VMSBaseSettings):
     camera_list_refresh_seconds: float = Field(default=60.0, gt=0)  # FR-CAM-05
 
     segment_seconds: int = Field(default=10, gt=0)  # FR-ING-02
+    # A segmenter that completes no segment for this long is stalled (a publisher that died without
+    # closing its connection): it is killed and the camera reconnects. Must exceed the longest
+    # keyframe interval of a source (a segment can only be cut on a keyframe).
+    stall_timeout_seconds: float = Field(default=60.0, gt=0)
+    io_timeout_seconds: float = Field(default=15.0, gt=0)  # ffmpeg RTSP socket timeout
     keyframe_fps: float = Field(default=1.0, gt=0)  # FR-ING-04
     work_dir: str = Field(default_factory=_default_work_dir)
 
