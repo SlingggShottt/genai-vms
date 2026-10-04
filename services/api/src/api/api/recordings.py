@@ -14,7 +14,7 @@ from vms_db.models import User
 
 from api.adapters.cameras import get_camera_by_code
 from api.adapters.recordings import list_segments_in_range, sum_minute_counts_in_range
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 from api.api.security import get_current_user
 from api.domain.recordings import (
@@ -70,7 +70,7 @@ async def list_segments_endpoint(
     request: Request,
     start: Annotated[AwareDatetime, Query()],
     end: Annotated[AwareDatetime, Query()],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _current_user: Annotated[User, Depends(get_current_user)],
 ) -> RecordingsSegmentsResponse:
     _require_valid_range(start, end)
@@ -95,7 +95,7 @@ async def playlist_endpoint(
     request: Request,
     start: Annotated[AwareDatetime, Query()],
     end: Annotated[AwareDatetime, Query()],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _current_user: Annotated[User, Depends(get_current_user)],
 ) -> Response:
     _require_valid_range(start, end)
@@ -114,7 +114,7 @@ async def density_endpoint(
     camera_id: str,
     start: Annotated[AwareDatetime, Query()],
     end: Annotated[AwareDatetime, Query()],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _current_user: Annotated[User, Depends(get_current_user)],
     bucket: Annotated[int, Query(gt=0)] = DEFAULT_DENSITY_BUCKET_SECONDS,
 ) -> RecordingsDensityResponse:

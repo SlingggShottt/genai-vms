@@ -466,11 +466,47 @@
       labels. The engine is pure and deterministic, so the replay half is straightforward once the data exists.
 
 ### P3-D3 · LLM gateway & model registry — 5 pts · Must · E09 · FR-CFG-01…03
-- [ ] `LLMGateway.chat` / `.vision` over LiteLLM for ollama, gemini, groq, openrouter; `response_model` validation + retry; fallbacks; timeouts.
-- [ ] `config/models.yaml` with `local`, `hybrid`, `cloud` profiles; `VMS_LLM_PROFILE` switch.
-- [ ] Redis GPU lease (acquire/heartbeat/release, Ollama unload on family switch) and Redis response cache.
-- [ ] `FakeGateway` for tests; metrics `vms_llm_request_seconds`, `vms_llm_tokens_total`.
+- [x] `LLMGateway.chat` / `.vision` over LiteLLM for ollama, gemini, groq, openrouter; `response_model` validation + retry; fallbacks; timeouts.
+      `libs/vms_common/llm/` (design §11.1 documents the behaviour as built): per model of a task in order — cache →
+      GPU lease → provider call → validate (a malformed reply is shown its errors and re-asked, `validation_retries`
+      default 2; fenced / prose-wrapped / `<think>` JSON needs no retry) → cache. Any provider failure moves to the
+      next model; the exception type follows the primary (`LLMUnavailableError` → 503, `LLMOutputError` → 422,
+      `LLMRequestError` = caller bug). Streaming and tool calls included; `vision()` enforces `max_images` and shrinks
+      to `max_image_edge`. **Verified live only for ollama**: the real gateway → LiteLLM → Ollama → `qwen2.5:3b` and
+      `qwen2.5vl:3b` on the RTX 3050 (structured plan, vision verdict on an image, repeat served from the cache,
+      lease unloading the displaced model). Gemini / Groq / OpenRouter run through the same LiteLLM path but were
+      **not called live** (no keys here) — only their missing-key and error-mapping paths are tested.
+      Two things only the real run showed: litellm makes a *blocking* `/api/show` call to Ollama while pricing a call
+      (and `register_model()` does too, at the wrong host) — avoided by declaring the models in its price map; and
+      Ollama refuses 4-image requests at its default 4096-token context, so `num_ctx` is now a registry setting.
+- [x] `config/models.yaml` with `local`, `hybrid`, `cloud` profiles; `VMS_LLM_PROFILE` switch.
+      The design's registry plus a `tasks:` block for provider-independent behaviour; all three profiles are validated
+      at load for completeness (a profile missing a task, an unknown key, a bad fallback, an `extends` cycle all stop
+      startup). Switching `VMS_LLM_PROFILE` re-resolves every task with no code change (tested for rerank and
+      event_verify across the three profiles). Groq entries use `openai/gpt-oss-120b`: LiteLLM's catalogue lists the
+      design's `llama-3.3-70b-versatile` as deprecated since 2026-08-16.
+- [x] Redis GPU lease (acquire/heartbeat/release, Ollama unload on family switch) and Redis response cache.
+      Lease = Lua on Redis's clock: same family shares, a different family waits, a queued family goes first, a waiter
+      that gives up withdraws its place, a crashed holder lapses after its TTL, Redis down ⇒ no unleased local run (the
+      fallback answers instead). Cache key = task + model + messages (incl. image data) + schema + params; only
+      validated results; an outage is a miss. 24 lease + 9 cache unit tests on fakeredis and 10 on a real Redis container
+      (`make test-int`); the lease caught one design bug in testing (a waiter that timed out left a ghost queue
+      marker that refused new calls for 2 s).
+- [x] `FakeGateway` for tests; metrics `vms_llm_request_seconds`, `vms_llm_tokens_total`.
+      `vms_common.llm.testing.FakeGateway` (scripted queues, bare values, exceptions, callables, JSON recordings with
+      recorded failures; same JSON extraction/validation as production; running out of answers fails loudly) and
+      `ScriptedBackend` for the gateway's own tests. Metrics as designed plus retries, fallbacks, cache and lease-wait
+      series (design §15). 320 unit tests; a 66-variant mutation check (break the gateway/lease/registry/cache/parser/
+      adapter on purpose) kills all 66. Its first pass had 7 survivors: five were real test gaps (now covered), one was
+      a redundant cache-key input (removed), one an equivalent mutant (dropped).
 - [ ] Benchmark note: latency + VRAM for `qwen2.5vl:3b` and `qwen2.5:3b` on 4 GB; model tags verified.
+      **Benchmark done, tag verification half done.** `ml/evaluation/results/p3-d3-llm-benchmark.md` (harness:
+      `ml/evaluation/llm_benchmark.py`): the text model is 100 % on the GPU (2.4 GB, 0.25 s warm); the vision model
+      is only ~53 % on the GPU (rest on CPU; 18–31 % beside perception) — 1 / 2 / 4 images ≈ 3 / 5 / 11 s warm,
+      8–14 s cold — and each image costs ≈ 1,050 tokens at any pixel size. Both Ollama tags verified (exist, pulled, run).
+      **Open:** the Gemini and Groq ids were checked only against LiteLLM's catalogue, never against the live APIs.
+      With keys in `.env`, `VMS_LLM_PROFILE=cloud` plus one call per `models.yaml` entry closes this; fix any tag
+      that answers "model not found" in `config/models.yaml`.
 
 ### P3-D4 · VLM verification gate — 3 pts · Must · E07 · FR-EVT-02…05
 - [ ] Builds ≤ 4 keyframes with drawn boxes; prompt `event_verify/1.0`; verdict JSON validated.
@@ -478,10 +514,14 @@
 - [ ] Graceful degradation: gateway unavailable → event published as `verification.status=skipped` for low severity, held (retry queue) for high.
 
 ### P3-D5 · Phase annotation kit — 5 pts · Must · E10 · FR-RSN-02
-- [ ] `ml/annotation/phase_guideline.md` with definitions and 3 worked examples per event type (taxonomy design §8.2).
-- [ ] Label Studio temporal labelling config (video timeline with 5 phase labels + event type + primary view).
-- [ ] Clip extraction script producing annotation tasks from UCF-Crime (8 classes) and MEVA multi-view incidents (≥ 250 candidate clips, all views per MEVA incident).
-- [ ] Export converter → `phase_labels.jsonl` matching the frozen export schema; inter-annotator agreement script (temporal IoU between K & P on a 20-clip overlap set).
+- [x] `ml/annotation/phase_guideline.md` with definitions and 3 worked examples per event type (taxonomy design §8.2).
+  - A draft: the taxonomy still needs the project guide's approval (design §8.2). The examples are illustrative scenarios, not from the datasets.
+- [x] Label Studio temporal labelling config (video timeline with 5 phase labels + event type + primary view).
+  - One config per number of views (1-4); all four validate with Label Studio's own `LabelInterface`, which also caught that a label `alias` would replace the stored phase name. Not driven in a running Label Studio, and the shape of a real timeline export (frame numbering) is assumed from its documentation.
+- [x] Clip extraction script producing annotation tasks from UCF-Crime (8 classes) and MEVA multi-view incidents (≥ 250 candidate clips, all views per MEVA incident).
+  - MEVA, run on the real annotation repo: 361 candidates from 179 slots (2,131 before capping near-duplicates), every one with 2-3 synchronised views; cuts verified frame-aligned with real ffmpeg. **MEVA is everyday activity, not incidents**: abandoned packages appear in 1 clip and thefts in 4, none multi-view, so its candidates are activity episodes (drop-offs, pick-ups, hand-overs), whether to count them is the guide's call. UCF-Crime is **not verified against the real files** (host unreachable): the reader follows the published annotation convention and was run on fixtures only.
+- [x] Export converter → `phase_labels.jsonl` matching the frozen export schema; inter-annotator agreement script (temporal IoU between K & P on a 20-clip overlap set).
+  - Schema frozen as `phase_labels.v1`. No agreement figures exist yet: they need K and P's annotations.
 
 
 ## Jatin — 23 pts
@@ -552,10 +592,13 @@
 - [ ] Camera links editor (table + simple node diagram) for overlap/transit edges.
 
 ### P3-J6 · Caption & VQA annotation kit — 5 pts · Must · E10 · FR-RSN-03
-- [ ] `config/vqa_bank.yaml`: 5–8 questions per event type.
-- [ ] Label Studio template for per-phase, per-view caption + VQA verification.
+- [x] `config/vqa_bank.yaml`: 5–8 questions per event type.
+- [x] Label Studio template for per-phase, per-view caption + VQA verification.
+  - Generated from the bank, one config per event type (`ml/annotation/caption_vqa/*.xml`); all six parse and validate with Label Studio's own `LabelInterface`. Not driven in a running Label Studio UI.
 - [ ] Kaggle notebook generating draft captions/VQA answers with the largest open VLM that fits (e.g. Qwen2.5-VL-7B) on phase-labelled clips; drafts imported as pre-annotations.
-- [ ] Converter → `phavr_labels.jsonl`; script reports pseudo-label edit rate after human verification.
+  - Written (`ml/annotation/caption_vqa/prelabel_kaggle.ipynb`) and its pipeline run end to end with a placeholder model in the tests; **never run against Qwen2.5-VL-7B** (needs a Kaggle T4). Tick this once a real trial run on a few clips has produced drafts.
+- [x] Converter → `phavr_labels.jsonl`; script reports pseudo-label edit rate after human verification.
+  - Its input, `phase_labels.jsonl`, is the phase annotation kit's export (P3-D5), frozen as `phase_labels.v1`; the converter's output is checked against J6's reader in a test.
 
 ---
 

@@ -13,12 +13,22 @@ dependencies = [
     "redis>=5.0",
     "numpy>=1.26",
     "pyjwt>=2.9",
+    "pyyaml>=6.0",
     # Pinned close to deploy/compose/docker-compose.yml's qdrant/qdrant:v1.11.5
     # server — qdrant-client warns above a 1-minor gap from the server it
     # talks to (verified: 1.19 against a v1.16 test container warns, though
     # doesn't fail; the real gap against the pinned v1.11.5 server would be
     # larger and untested).
     "qdrant-client>=1.11,<1.12",
+]
+
+[project.optional-dependencies]
+llm = [
+    "httpx>=0.27",
+    "jinja2>=3.1",
+    "litellm>=1.103,<1.104",
+    "pillow>=10.4",
+    "pyyaml>=6.0",
 ]
 
 [build-system]

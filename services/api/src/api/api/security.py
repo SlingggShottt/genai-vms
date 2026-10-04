@@ -12,12 +12,11 @@ from typing import Annotated
 
 from fastapi import Depends, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.ext.asyncio import AsyncSession
 from vms_common.auth import InvalidTokenError, decode_access_token
 from vms_db.models import User, UserRole
 
 from api.adapters.users import get_user_by_id
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 
 _bearer = HTTPBearer(auto_error=False)
@@ -26,7 +25,7 @@ _bearer = HTTPBearer(auto_error=False)
 async def get_current_user(
     request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
 ) -> User:
     """Decode the access token and re-load the user from the DB on every
     call — a JWT claim can't reflect a role change or deactivation

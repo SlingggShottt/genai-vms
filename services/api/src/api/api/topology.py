@@ -20,7 +20,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 from vms_db.models import TopologyEdge, User, UserRole
 
 from api.adapters.cameras import get_camera_by_id
@@ -32,7 +31,7 @@ from api.adapters.topology import (
     list_edges,
     update_edge,
 )
-from api.api.deps import get_session
+from api.api.deps import SessionDep
 from api.api.errors import APIError
 from api.api.security import get_current_user, require_role
 from api.domain.topology import EdgeShape, find_conflict, validate_edge
@@ -75,7 +74,7 @@ def _shape(edge: TopologyEdge) -> EdgeShape:
 
 @router.get("/edges", response_model=TopologyEdgesPage)
 async def list_edges_endpoint(
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _current_user: Annotated[User, Depends(get_current_user)],
     camera_id: Annotated[str | None, Query(description="only edges touching this camera")] = None,
 ) -> TopologyEdgesPage:
@@ -87,7 +86,7 @@ async def list_edges_endpoint(
 @router.post("/edges", response_model=TopologyEdgeOut, status_code=status.HTTP_201_CREATED)
 async def create_edge_endpoint(
     body: TopologyEdgeCreateRequest,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _admin: Annotated[User, Depends(_admin_only)],
 ) -> TopologyEdgeOut:
     from_id, to_id = uuid.UUID(body.from_camera_id), uuid.UUID(body.to_camera_id)
@@ -142,7 +141,7 @@ async def create_edge_endpoint(
 async def update_edge_endpoint(
     edge_id: str,
     body: TopologyEdgeUpdateRequest,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _admin: Annotated[User, Depends(_admin_only)],
 ) -> TopologyEdgeOut:
     edge = await get_edge_by_id(session, _parse_uuid(edge_id, what="edge"))
@@ -194,7 +193,7 @@ async def update_edge_endpoint(
 @router.delete("/edges/{edge_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_edge_endpoint(
     edge_id: str,
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: SessionDep,
     _admin: Annotated[User, Depends(_admin_only)],
 ) -> None:
     edge = await get_edge_by_id(session, _parse_uuid(edge_id, what="edge"))

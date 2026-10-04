@@ -15,7 +15,7 @@ each nested settings object independently reads its own prefixed env vars:
 
 from __future__ import annotations
 
-from pydantic import Field
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -105,3 +105,53 @@ class LLMProfileSettings(VMSBaseSettings):
     model_config = SettingsConfigDict(env_prefix="VMS_LLM_", env_file=".env", extra="ignore")
 
     profile: str = Field(default="local", pattern="^(local|hybrid|cloud)$")
+
+
+class LLMSettings(LLMProfileSettings):
+    """Everything the LLM gateway reads from the environment — `VMS_LLM_*`.
+
+    The provider keys keep the names LiteLLM and the provider docs use
+    (`GEMINI_API_KEY`, ...) and are also accepted as `VMS_LLM_<NAME>`
+    (FR-CFG-03: keys come from env/secrets only). They are `SecretStr` so a
+    stray `repr(settings)` or log line never prints one.
+    """
+
+    # The aliased fields below are also settable by field name (`LLMSettings(genai_host=...)`),
+    # which pydantic otherwise ignores silently for a field with a validation_alias.
+    model_config = SettingsConfigDict(populate_by_name=True)
+
+    models_path: str = Field(default="config/models.yaml", description="Model registry file")
+
+    # Where Ollama listens. The two-laptop demo sets VMS_GENAI_HOST on the machine that
+    # does not run Ollama itself (design_architecture.md §11.3); VMS_LLM_OLLAMA_URL wins.
+    ollama_url: str | None = Field(default=None, description="e.g. http://laptop-b:11434")
+    genai_host: str = Field(
+        default="localhost",
+        validation_alias=AliasChoices("VMS_LLM_GENAI_HOST", "VMS_GENAI_HOST"),
+    )
+
+    gemini_api_key: SecretStr = Field(
+        default=SecretStr(""),
+        validation_alias=AliasChoices("VMS_LLM_GEMINI_API_KEY", "GEMINI_API_KEY"),
+    )
+    groq_api_key: SecretStr = Field(
+        default=SecretStr(""),
+        validation_alias=AliasChoices("VMS_LLM_GROQ_API_KEY", "GROQ_API_KEY"),
+    )
+    openrouter_api_key: SecretStr = Field(
+        default=SecretStr(""),
+        validation_alias=AliasChoices("VMS_LLM_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"),
+    )
+
+    # GPU lease (design_architecture.md §11.3): one lease per GPU node.
+    lease_node: str = Field(default="local", description="Names the GPU this process leases")
+    lease_ttl_seconds: float = Field(
+        default=30.0, gt=0, description="Holder expires unless renewed"
+    )
+    lease_wait_seconds: float = Field(
+        default=120.0, ge=0, description="How long a call queues for the GPU before giving up"
+    )
+
+    @property
+    def effective_ollama_url(self) -> str:
+        return self.ollama_url or f"http://{self.genai_host}:11434"
