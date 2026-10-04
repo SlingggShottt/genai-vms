@@ -68,7 +68,9 @@ async function rawRequest(path, { method = 'GET', body, headers = {}, skipAuth =
 // instead of each firing their own POST /auth/refresh.
 let refreshPromise = null;
 
-async function refreshAccessToken() {
+// Exported for the live WebSocket (lib/ws.js): the server closes a socket with 4401 when its
+// access token expires, and the client re-mints one the same way a 401 does.
+export async function refreshAccessToken() {
   const refreshToken = getRefreshToken();
   if (!refreshToken) throw new AuthError('Not logged in.');
 

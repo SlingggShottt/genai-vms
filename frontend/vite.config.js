@@ -14,6 +14,7 @@ export default defineConfig({
       '/api': {
         target: process.env.VMS_API_URL || 'http://localhost:8000',
         changeOrigin: true,
+        ws: true, // WS /api/v1/ws (live alerts)
       },
     },
   },

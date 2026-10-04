@@ -584,8 +584,9 @@
 - [x] `Notifier` interface with `DashboardNotifier` (on) and `EmailNotifier`, `TelegramNotifier` (implemented, disabled by default via `VMS_NOTIFY_CHANNELS`).
 
 ### P3-J4 · Alerts & events UI — 3 pts · Must · E08 · FR-ALR-01, FR-ALR-02
-- [ ] Alert tray (AlertItem §B.7), live via WS, acknowledge/resolve with note dialog; `aria-live` per §B.10.
-- [ ] Events page with filters; event detail with keyframes, VLM caption, clip playback, correlated events list.
+- [x] Alert tray (AlertItem §B.7), live via WS, acknowledge/resolve with note dialog; `aria-live` per §B.10.
+- [x] Events page with filters; event detail with keyframes, VLM caption, clip playback, correlated events list.
+  - Scope note: the page lists events that raised an alert (`GET /alerts`); it switches to `GET /events` (every verified event) when P3-D4's `events.events` lands. See `frontend/README.md`.
 
 ### P3-J5 · Zone & camera-link editors — 3 pts · Must · E03 · FR-CAM-03, FR-CAM-04
 - [ ] Polygon editor over a camera snapshot (add/move/delete points, name, type, schedule).
