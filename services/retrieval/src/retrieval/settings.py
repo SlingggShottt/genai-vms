@@ -6,6 +6,8 @@ Config is read only through vms_common.config settings classes — never os.envi
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 from vms_common.config import (
@@ -29,6 +31,10 @@ class RetrievalSettings(VMSBaseSettings):
     encoder_device: str = "cpu"
 
     site_timezone: str = "Asia/Kolkata"
+    # Recordings and keyframes are removed by the retention policy while the index can outlive
+    # them; footage older than this is not searched (and so is not offered as a result whose
+    # picture is gone). Unset = search everything.
+    archive_since: datetime | None = None
     # Per-collection raw hits per query vector, before fusion.
     hits_per_query: int = Field(default=80, ge=10, le=500)
     # Hits closer than this on one camera are one candidate window (design §10.1).

@@ -170,6 +170,11 @@ class ApiSettings(VMSBaseSettings):
     # api.api.security.require_service_token), not "accept anything".
     service_token: str = Field(default="")
 
+    # Where the retrieval service listens (`/search*` is proxied there) and how long a search may
+    # take: `reason` mode runs a language model over the candidates, which on a 4 GB GPU is slow.
+    retrieval_url: str = Field(default="http://localhost:8010")
+    search_timeout_seconds: float = Field(default=150.0, gt=0)
+
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     jwt: JWTSettings = Field(default_factory=JWTSettings)
     admin: AdminSeedSettings = Field(default_factory=AdminSeedSettings)

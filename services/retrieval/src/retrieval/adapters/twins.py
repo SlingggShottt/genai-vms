@@ -25,6 +25,13 @@ class TwinReader:
             log.warning("twin_unreadable", uri=uri, error=str(exc))
             return None
 
+    async def exists(self, uri: str) -> bool:
+        try:
+            return await self._s3.exists(uri)
+        except Exception as exc:  # unreachable storage must not empty every search
+            log.warning("media_check_failed", uri=uri, error=str(exc))
+            return True
+
     async def load_many(self, uris: list[str]) -> dict[str, TwinV1]:
         twins = await asyncio.gather(*(self.load(u) for u in uris))
         return {u: t for u, t in zip(uris, twins, strict=True) if t is not None}

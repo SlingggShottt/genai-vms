@@ -64,6 +64,13 @@ class SearchPipeline:
         self._tz = ZoneInfo(settings.site_timezone)
         self._zones: list[str] = []
 
+    def _floor(self, start: datetime | None) -> datetime | None:
+        """No search reaches back past `archive_since` (see the setting)."""
+        floor = self._s.archive_since
+        if floor is None:
+            return start
+        return floor if start is None else max(start, floor)
+
     async def refresh_zones(self) -> None:
         try:
             self._zones = await self._catalog.known_zones()
@@ -98,6 +105,7 @@ class SearchPipeline:
         cameras = req.filters.cameras or plan.spatial.cameras
         start = req.filters.start or plan.temporal.start
         end = req.filters.end or plan.temporal.end
+        start = self._floor(start)
 
         t = perf_counter()
         queries = list(dict.fromkeys([*plan.visual_queries[:3], plan.original]))
@@ -141,6 +149,12 @@ class SearchPipeline:
             [lst for lst in lists if lst], window_s=self._s.window_s, top_k=max(req.top_k, 12)
         )
         results = await self._to_results(windows)
+        results, expired = await self._drop_expired(windows, results)
+        if expired:
+            notes.append(
+                f"{expired} older match{'es' if expired > 1 else ''} hidden: "
+                "the recording has been removed by the retention policy"
+            )
         timings["fuse"] = _ms_since(t)
 
         if req.mode == "reason" and results:
@@ -183,7 +197,7 @@ class SearchPipeline:
         hits = await self._vectors.tracks(
             vec,
             cameras=filters.cameras,
-            start=filters.start,
+            start=self._floor(filters.start),
             end=filters.end,
             categories=[],
             limit=self._s.hits_per_query,
@@ -193,6 +207,7 @@ class SearchPipeline:
         t = perf_counter()
         windows = group_windows([hits], window_s=self._s.window_s, top_k=top_k)
         results = await self._to_results(windows)
+        results, expired = await self._drop_expired(windows, results)
         timings["fuse"] = _ms_since(t)
         response = SearchResponse(
             search_id=str(uuid.uuid4()),
@@ -202,6 +217,9 @@ class SearchPipeline:
             profile=self._profile,
             results=results[:top_k],
             timings_ms={**timings, "total": round(sum(timings.values()), 1)},
+            notes=[f"{expired} older matches hidden: the recording has been removed"]
+            if expired
+            else [],
         )
         await self._log(response, kind="image", user_id=user_id)
         return response
@@ -258,6 +276,20 @@ class SearchPipeline:
                 )
             )
         return out
+
+    async def _drop_expired(
+        self, windows: list[Window], results: list[SearchResult]
+    ) -> tuple[list[SearchResult], int]:
+        """Results whose picture is gone (retention deletes keyframes and recordings after a
+        few days while the index outlives them) are not shown: a card with nothing behind it
+        cannot be opened in playback either. `windows` is filtered in step so the two lists
+        keep their positions."""
+        alive = await asyncio.gather(
+            *(self._twins.exists(r.keyframe_uri) if r.keyframe_uri else _true() for r in results)
+        )
+        keep = [i for i, ok in enumerate(alive) if ok]
+        windows[:] = [windows[i] for i in keep]
+        return [results[i] for i in keep], len(results) - len(keep)
 
     async def _reason(
         self,
@@ -385,6 +417,10 @@ class SearchPipeline:
 
 async def _none() -> None:
     return None
+
+
+async def _true() -> bool:
+    return True
 
 
 def _ms_since(t: float) -> float:
