@@ -727,9 +727,14 @@ Relative times ("this morning") are resolved by the LLM using the provided curre
 - `VMS_RETRIEVAL_ARCHIVE_SINCE` floors every search at the oldest footage that still exists, and results whose keyframe has been removed by retention are dropped and counted in `notes`.
 - Local text tasks run on `qwen2.5:3b` and vision tasks on `qwen2.5vl:3b` (both `num_ctx` 8192). On the same evidence the text model answered an assistant question correctly where the VL model contradicted it, so the split of the original design stands; the price is an Ollama reload when activity moves between the two (once per analysis job).
 
+- `knowledge` is live: the indexer embeds each verified event's caption and each incident-report section (dense `BAAI/bge-small-en-v1.5` + BM25 via FastEmbed, ONNX on CPU) and search fuses them with the visual lists; `GET /incidents/{id}/similar` searches the incident sections.
+- JIT refinement (`jit: true`, opt-in): the rerank is asked for *yes/no questions* about what the records cannot tell; only real questions (ending in `?`) reach `jit_vqa`, whose answer is cached per `(segment, question)` and returned to a rescoring pass.
+
 ### 10.2 Image search & grounding (owner J)
 - **Image query:** upload or `{frame_uri, bbox}` → crop → SigLIP2 vision (CPU in retrieval) → `tracks` collection with optional filters → group by track → results sorted by score then time.
 - **Grounding:** `POST perception:8030/internal/grounding {keyframe_uri, bbox}` → SAM 2.1-tiny box prompt → RLE mask cached in `vms-masks` → UI draws the mask. Lazy: only when a result card becomes visible.
+
+**As built (grounding).** `POST /search/grounding {search_id, result_id}` — retrieval remembers what each recent result looked at, so the browser never holds an `s3://` uri — finds the matched tracks' boxes in the keyframe's twin and asks SAM 2.1-tiny for their masks (CPU, ~1.2 s per keyframe, one image encoding for all boxes). Masks are run-length encoded (row-major, alternating background/object runs), downscaled to ≤ 640 px wide, cached in `vms-masks`, and drawn on a canvas over the card once it is on screen.
 
 ### 10.3 RAG assistant (owner D)
 - **Agent loop:** gateway `chat` with tools, max 5 tool rounds per user turn, then must answer.

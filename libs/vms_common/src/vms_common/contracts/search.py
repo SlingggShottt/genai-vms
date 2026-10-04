@@ -79,6 +79,21 @@ class SearchRequest(BaseModel):
     mode: SearchMode = "fast"
     filters: SearchFilters = Field(default_factory=SearchFilters)
     top_k: int = Field(default=12, ge=1, le=30)
+    jit: bool = Field(
+        default=False,
+        description="reason mode only: let a vision model check missing facts in the picture",
+    )
+
+
+class JitAnswerOut(BaseModel):
+    """A fact a vision model checked in the result's keyframe (design §10.1 JIT refinement)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    question: str
+    answer: Literal["yes", "no", "unsure"]
+    detail: str = ""
+    cached: bool = False
 
 
 class SearchResult(BaseModel):
@@ -96,6 +111,7 @@ class SearchResult(BaseModel):
     reasoning_score: float | None = Field(default=None, ge=0, le=1)
     trace: str | None = None
     missing: list[str] = Field(default_factory=list)
+    jit_answers: list[JitAnswerOut] = Field(default_factory=list)
     keyframe_uri: str | None = None
     crop_uris: list[str] = Field(default_factory=list)
     matched_track_ids: list[str] = Field(default_factory=list)

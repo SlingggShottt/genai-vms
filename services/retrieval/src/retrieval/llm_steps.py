@@ -14,7 +14,7 @@ from vms_common.llm import Gateway, render_prompt
 from retrieval.domain.rerank import RerankBatch, RerankItem
 
 DECOMPOSE_VERSION = "1.0"
-RERANK_VERSION = "1.0"
+RERANK_VERSION = "1.1"
 
 
 class _DraftEntity(BaseModel):

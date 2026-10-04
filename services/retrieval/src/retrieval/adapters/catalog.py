@@ -26,6 +26,11 @@ class Catalog:
     def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
         self._sessions = sessions
 
+    @property
+    def session_factory(self) -> async_sessionmaker[AsyncSession]:
+        """The session factory, for modules that run their own small queries (JIT cache)."""
+        return self._sessions
+
     async def known_zones(self) -> list[str]:
         async with self._sessions() as s:
             rows = await s.execute(

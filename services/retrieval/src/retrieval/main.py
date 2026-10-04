@@ -27,6 +27,7 @@ from retrieval.assistant.agent import Assistant
 from retrieval.assistant.store import ChatStore
 from retrieval.assistant.tools import ToolContext
 from retrieval.grounding_service import GroundingService
+from retrieval.jit import JitRefiner
 from retrieval.pipeline import SearchPipeline
 from retrieval.settings import RetrievalSettings
 
@@ -50,6 +51,7 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
         )
         gateway = LLMGateway.from_settings(redis_settings=settings.redis)
         encoder = SiglipQueryEncoder(settings.siglip_model, settings.encoder_device)
+        jit = JitRefiner(gateway, Catalog(sessions), s3)
         embedder = make_embedder(settings.knowledge.cache_dir)
         knowledge = KnowledgeSearch(qdrant, embedder)
         pipeline = SearchPipeline(
@@ -61,6 +63,7 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
             gateway=gateway,
             profile=gateway.profile,
             knowledge=knowledge,
+            jit=jit,
         )
         app.state.knowledge = knowledge
         app.state.pipeline, app.state.encoder, app.state.profile = (

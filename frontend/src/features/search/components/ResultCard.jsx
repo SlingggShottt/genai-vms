@@ -17,6 +17,24 @@ function Chip({ children }) {
 }
 
 /** Reasoning trace (§B.7): why the model ranked this result, and what it could not tell. */
+function PictureChecks({ answers }) {
+  if (!answers?.length) return null;
+  const mark = { yes: 'Yes', no: 'No', unsure: 'Cannot tell' };
+  return (
+    <div className="rounded-tile border border-rule p-2 text-xs">
+      <p className="font-medium text-text">Checked in the picture</p>
+      <ul className="mt-1 flex flex-col gap-0.5 text-text-muted">
+        {answers.map((a) => (
+          <li key={a.question}>
+            {a.question} <strong className="font-medium text-text">{mark[a.answer]}</strong>
+            {a.detail ? ` — ${a.detail}` : ''}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ReasoningTrace({ result }) {
   const [open, setOpen] = useState(true);
   if (result.reasoning_score == null && !result.trace) return null;
@@ -125,6 +143,7 @@ export function ResultCard({ result, rank, searchId }) {
         </div>
 
         <ReasoningTrace result={result} />
+        <PictureChecks answers={result.jit_answers} />
 
         <div className={cn('mt-auto flex items-center gap-3 pt-1 text-sm')}>
           <Link to={playbackLink(result)} className="text-accent hover:underline">
@@ -147,6 +166,14 @@ export function ResultCard({ result, rank, searchId }) {
             >
               Save to case
             </button>
+          )}
+          {result.incident_ids?.length > 0 && (
+            <Link
+              to={`/incidents/${result.incident_ids[0]}`}
+              className="text-accent hover:underline"
+            >
+              Incident report
+            </Link>
           )}
           {result.event_ids.length > 0 && (
             <span className="text-xs text-text-muted">

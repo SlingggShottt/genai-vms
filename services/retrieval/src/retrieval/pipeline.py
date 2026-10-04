@@ -35,6 +35,7 @@ from retrieval.domain.plan import (
     plan_colors,
 )
 from retrieval.domain.rerank import RerankItem, blend, format_candidate
+from retrieval.jit import JitRefiner
 from retrieval.settings import RetrievalSettings
 
 log = get_logger(__name__)
@@ -56,6 +57,7 @@ class SearchPipeline:
         gateway: Gateway,
         profile: str,
         knowledge: KnowledgeSearch | None = None,
+        jit: JitRefiner | None = None,
     ) -> None:
         self._s = settings
         self._encoder = encoder
@@ -63,6 +65,7 @@ class SearchPipeline:
         self._catalog = catalog
         self._twins = twins
         self._knowledge = knowledge
+        self._jit = jit
         self.recent: OrderedDict[tuple[str, str], tuple[str | None, list[str], list[str]]] = (
             OrderedDict()
         )
@@ -199,7 +202,7 @@ class SearchPipeline:
 
         if req.mode == "reason" and results:
             t = perf_counter()
-            results = await self._reason(req.query, plan, windows, results, notes)
+            results = await self._reason(req.query, plan, windows, results, notes, jit=req.jit)
             timings["rerank"] = _ms_since(t)
         results = results[: req.top_k]
         if not results:
@@ -345,8 +348,11 @@ class SearchPipeline:
         windows: list[Window],
         results: list[SearchResult],
         notes: list[str],
+        *,
+        jit: bool = False,
     ) -> list[SearchResult]:
         top = results[: self._s.rerank_top_n]
+        win_by_id = {r.result_id: w for w, r in zip(windows, results, strict=False)}
         try:
             scored = await asyncio.wait_for(
                 self._rerank(query, plan, windows[: len(top)], top), self._s.llm_budget_s
@@ -358,6 +364,20 @@ class SearchPipeline:
             notes.append("reasoning rerank returned nothing usable; showing fused order")
             return results
 
+        merged = self._merge(results, scored)
+        if jit:
+            if self._jit is None:
+                notes.append("picture checks are not available; showing the reasoned order")
+            else:
+                merged = await self._refine(query, plan, win_by_id, merged, notes)
+        return merged
+
+    def _merge(
+        self, results: list[SearchResult], scored: dict[str, RerankItem]
+    ) -> list[SearchResult]:
+        """Blend the model's score into each judged result and order the list. Candidates the
+        model never saw keep their fused score but are capped below the lowest judged one, so
+        an unjudged result cannot outrank one the model called a good match."""
         w = self._s.reasoning_weight
         merged: list[SearchResult] = []
         for r in results:
@@ -375,8 +395,6 @@ class SearchPipeline:
                     }
                 )
             )
-        # Candidates the model never saw keep their fused score but must not outrank ones it
-        # judged to be good matches: cap them at the lowest judged blend.
         judged = [m.score for m in merged if m.reasoning_score is not None]
         floor = min(judged) if judged else 1.0
         merged = [
@@ -388,12 +406,72 @@ class SearchPipeline:
         merged.sort(key=lambda m: (-m.score, m.start_ts))
         return merged
 
+    async def _refine(
+        self,
+        query: str,
+        plan: QueryPlan,
+        win_by_id: dict[str, Window],
+        results: list[SearchResult],
+        notes: list[str],
+    ) -> list[SearchResult]:
+        """JIT: a vision model checks what the rerank said was missing, in the picture; the
+        answers go back to the rerank as facts and the affected results are rescored."""
+        assert self._jit is not None  # noqa: S101
+        answers = await self._jit.refine(
+            results,
+            top_n=self._s.jit_top_n,
+            per_candidate=self._s.jit_questions,
+            budget_s=self._s.jit_budget_s,
+        )
+        if not answers:
+            notes.append("no picture checks could be made; showing the reasoned order")
+            return results
+        targets = [r for r in results if r.result_id in answers and r.result_id in win_by_id]
+        extra = {
+            rid: [
+                f"picture check: {a.question} -> {a.answer}"
+                + (f" ({a.detail})" if a.detail else "")
+                for a in found
+            ]
+            for rid, found in answers.items()
+        }
+        try:
+            rescored = await asyncio.wait_for(
+                self._rerank(
+                    query, plan, [win_by_id[r.result_id] for r in targets], targets, extra=extra
+                ),
+                self._s.llm_budget_s,
+            )
+        except (LLMError, TimeoutError) as exc:
+            notes.append(f"rescoring after the picture checks was skipped ({type(exc).__name__})")
+            rescored = {}
+        w = self._s.reasoning_weight
+        out: list[SearchResult] = []
+        for r in results:
+            found = answers.get(r.result_id)
+            if not found:
+                out.append(r)
+                continue
+            item = rescored.get(r.result_id)
+            update: dict = {"jit_answers": found, "missing": []}
+            if item is not None:
+                update.update(
+                    reasoning_score=item.score,
+                    trace=item.trace or r.trace,
+                    score=blend(r.fused_score, item.score, w),
+                )
+            out.append(r.model_copy(update=update))
+        out.sort(key=lambda m: (-m.score, m.start_ts))
+        return out
+
     async def _rerank(
         self,
         query: str,
         plan: QueryPlan,
         windows: list[Window],
         results: list[SearchResult],
+        *,
+        extra: dict[str, list[str]] | None = None,
     ) -> dict[str, RerankItem]:
         seg_ids = list({s for r in results for s in r.segment_ids})
         uris = await self._catalog.twin_uris(seg_ids)
@@ -410,6 +488,8 @@ class SearchPipeline:
             )
             if r.caption:
                 lines.insert(0, f"event description: {r.caption}")
+            for fact in (extra or {}).get(r.result_id, []):
+                lines.insert(0, fact)  # first, so the 8-line cap never drops a checked fact
             when = r.start_ts.astimezone(self._tz).strftime("%d %b %H:%M:%S")
             blocks[f"c{i}"] = format_candidate(
                 f"c{i}", camera=r.camera_id, when=when, lines=lines[:8]

@@ -55,6 +55,11 @@ class RetrievalSettings(VMSBaseSettings):
     # Hard stop for the whole LLM part of one search, so a slow GPU degrades to the fast result.
     llm_budget_s: float = Field(default=75.0, gt=0)
     decompose_budget_s: float = Field(default=25.0, gt=0)
+    # JIT refinement (opt-in per search): candidates checked, questions per candidate, and the
+    # time the vision checks may take in all. A text→vision model swap alone costs ~20 s here.
+    jit_top_n: int = Field(default=3, ge=1, le=10)
+    jit_questions: int = Field(default=2, ge=1, le=4)
+    jit_budget_s: float = Field(default=150.0, gt=0)
 
     qdrant: QdrantSettings = Field(default_factory=QdrantSettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)

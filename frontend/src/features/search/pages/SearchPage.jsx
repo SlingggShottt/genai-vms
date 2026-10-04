@@ -27,6 +27,7 @@ export function SearchPage() {
   const [params] = useSearchParams();
   const [text, setText] = useState(params.get('q') ?? '');
   const [mode, setMode] = useState('reason');
+  const [jit, setJit] = useState(false);
   const [camera, setCamera] = useState('');
   const [range, setRange] = useState('any');
   const [submitted, setSubmitted] = useState(null); // { id, kind, label, mode, filters }
@@ -51,7 +52,14 @@ export function SearchPage() {
     event.preventDefault();
     if (text.trim().length < 2) return;
     setImage(null);
-    setSubmitted({ id: Date.now(), kind: 'text', label: text.trim(), mode, filters: filters() });
+    setSubmitted({
+      id: Date.now(),
+      kind: 'text',
+      label: text.trim(),
+      mode,
+      jit,
+      filters: filters(),
+    });
   }
 
   function submitImage(file) {
@@ -83,7 +91,13 @@ export function SearchPage() {
     enabled: Boolean(submitted) && submitted.kind === 'text' && submitted.mode === 'reason',
     retry: false,
     staleTime: Infinity,
-    queryFn: () => runSearch({ query: submitted.label, mode: 'reason', ...submitted.filters }),
+    queryFn: () =>
+      runSearch({
+        query: submitted.label,
+        mode: 'reason',
+        jit: submitted.jit,
+        ...submitted.filters,
+      }),
   });
 
   const reasonedOk = reasoned.isSuccess && reasoned.data.results.length > 0;
@@ -187,9 +201,22 @@ export function SearchPage() {
               ))}
             </select>
           </label>
+          {mode === 'reason' && (
+            <label className="flex items-center gap-2 text-text-muted">
+              <input
+                type="checkbox"
+                checked={jit}
+                onChange={(e) => setJit(e.target.checked)}
+                className="h-4 w-4 accent-[var(--accent)]"
+              />
+              Look closer
+            </label>
+          )}
           <span className="text-xs text-text-muted">
             {mode === 'reason'
-              ? 'Reason mode rereads the best matches with a language model. It takes longer.'
+              ? jit
+                ? 'Reason mode rereads the best matches, then a vision model checks what the records could not say. This takes several minutes on the local GPU.'
+                : 'Reason mode rereads the best matches with a language model. It takes longer.'
               : 'Fast mode ranks by visual similarity only.'}
           </span>
         </div>

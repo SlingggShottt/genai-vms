@@ -623,7 +623,7 @@
 - [ ] 30 golden query → plan tests (with `FakeGateway` recordings) covering attributes, time, zones, implicit actions.
 
 ### P4-D2 · Coarse hybrid retrieval — 8 pts · Must · E11 · FR-SRC-03, FR-SRC-10
-> **Status 2026-10-04 — partly built:** SigLIP 2 text encoder on CPU, `frames` + `tracks` search with plan filters, RRF, 10 s windows, per-stage timings. **Not done:** dense + sparse search on `knowledge` (Postgres full-text over verified-event captions stands in), the p95 ≤ 1 s measurement (a warm `fast` search takes ~1.5 s here).
+> **Status 2026-10-04 — partly built:** SigLIP 2 text encoder on CPU, `frames` + `tracks` search with plan filters, RRF, 10 s windows, per-stage timings. `knowledge` (dense + BM25) is searched and fused with Postgres full-text on captions. **Not done:** the p95 ≤ 1 s measurement (a warm `fast` search takes ~1.5 s here).
 - [ ] SigLIP 2 text encoder on CPU; visual queries against `frames` and `tracks` with payload filters from the plan.
 - [ ] Dense + sparse search on `knowledge` (event captions) for text queries.
 - [ ] Reciprocal rank fusion; grouping hits into segment-window candidates (merge within 10 s per camera); top-K = 30.
@@ -651,17 +651,19 @@
 - [ ] Results grouped by track, sorted by score then time, same response shape as text search.
 
 ### P4-J2 · Object-level grounding — 5 pts · Must · E11 · FR-SRC-07
+> **Status 2026-10-04 — partly built, in retrieval rather than perception:** `POST /search/grounding` (api proxy) turns `(search_id, result_id)` into SAM 2.1-tiny masks of the objects the result matched, run-length encoded, cached in `vms-masks`. It runs on **CPU in the retrieval process** (~1.2 s warm, so the p95 ≤ 700 ms target is not met; the GPU stays free for the language models).
 - [ ] `perception/grounding` module: `POST /internal/grounding {keyframe_uri, bbox}` → SAM 2.1-tiny mask → RLE cached in `vms-masks`.
 - [ ] Shares the perception process/GPU; loads lazily; p95 ≤ 700 ms warm (measured).
 - [ ] API `POST /search/grounding` proxies with caching by `(keyframe_uri, bbox)`.
 
 ### P4-J3 · JIT refinement — 5 pts · Must · E11 · FR-SRC-05
+> **Status 2026-10-04 — partly built (opt-in):** with `jit: true` the rerank's yes/no questions about missing facts are put to `jit_vqa` on the result's keyframe (≤ 3 results × 2 questions, 150 s budget), cached in `retrieval.jit_cache` (migration 0013), and fed back to a rescoring pass; the UI shows them as "Checked in the picture". **Not done:** consuming `candidate.v1`, indexing answers into `knowledge`, the 8 s default budget (a text→vision model swap alone is ~20 s here); some vision replies come back empty and are skipped.
 - [ ] Consumes `candidate.v1` with `missing[]`; asks `jit_vqa` on candidate keyframes; answers stored in `retrieval.jit_cache` keyed by `(segment_id, question_hash)`.
 - [ ] Returns answers to the rerank stage; time budget per search (default 8 s), skipped gracefully when exceeded.
 - [ ] Answers also indexed into `knowledge` (doc_type `jit_answer`) so later searches benefit.
 
 ### P4-J4 · Search API, logging & event-caption indexing — 3 pts · Must · E11 · FR-SRC-09
-> **Status 2026-10-04 — partly built:** the api proxies `/search*` with auth, presigned urls and timeouts; `retrieval.search_logs` is written. **Not done:** indexing event captions into `knowledge`.
+> **Status 2026-10-04 — partly built:** the api proxies `/search*` with auth, presigned urls and timeouts; `retrieval.search_logs` is written. Event captions are indexed into `knowledge` by the indexer (see P6-J3).
 - [ ] API proxies `/search*` to retrieval with auth and timeouts.
 - [ ] `retrieval.search_logs` stores query, plan, candidates, final results, per-stage latency, profile.
 - [ ] Indexer consumes `event.v1` and writes captions into `knowledge` (dense + sparse) with payload.
@@ -788,11 +790,13 @@
 - [ ] Status/notes editing (operator+); incident PDF via the same PDF pipeline.
 
 ### P6-J3 · Incident indexing & similar incidents — 3 pts · Should · E13 · FR-INC-05
+> **Status 2026-10-04 — partly built:** the indexer writes event captions and incident-report sections to `knowledge` (dense bge-small + BM25, `vms_common.qdrant.knowledge`), search fuses them, and `GET /incidents/{id}/similar` returns up to 5 other reports (same event type boosted) shown on the report page. **Not done:** the assistant tool endpoints exposed per the frozen contract as a separate service API.
 - [ ] Indexer consumes `incidentready.v1`, indexes report sections into `knowledge`.
 - [ ] `GET /incidents/{id}/similar` returns ≤ 5 by hybrid similarity + same event type boost; shown in UI.
 - [ ] Assistant tool endpoints for events/incidents/timeline exposed per frozen contract.
 
 ### P6-J4 · Investigation timeline & cases — 8 pts · Should · E16 · FR-INV-01…03
+> **Status 2026-10-04 — partly built:** cases (`core.cases`, `core.case_items`, migration 0012; API; Cases pages; *Save to case* from search results, events, incident reports and timeline selections) and a per-camera timeline of events and incident reports with drag-to-select, zoom and save. **Not done:** synchronised playback of up to 4 cameras from one playhead, "Search in range", the 300 ms drift measurement. The demo has one real camera.
 - [ ] Multi-camera timeline (lanes, events, correlation links, incidents) for a selected range.
 - [ ] Synchronized playback of up to 4 cameras driven by one playhead (drift ≤ 300 ms).
 - [ ] Shift-drag range → "Search in range" / "Save to case"; cases CRUD with bookmarked items and notes.

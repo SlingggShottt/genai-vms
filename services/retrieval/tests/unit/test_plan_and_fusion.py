@@ -136,3 +136,13 @@ def test_rle_round_trips_any_mask():
         np.ones((3, 5), dtype=bool),
     ):
         assert (rle_decode(rle_encode(mask)) == mask).all()
+
+
+def test_only_real_questions_are_sent_to_the_vision_model():
+    from retrieval.jit import askable, question_hash
+
+    got = askable(
+        ["Is the bag blue?", "No information about the colour of the bag", "ok?", "Does he run?"]
+    )
+    assert got == ["Is the bag blue?", "Does he run?"]
+    assert question_hash("Is the bag blue?") == question_hash("is the BAG blue")

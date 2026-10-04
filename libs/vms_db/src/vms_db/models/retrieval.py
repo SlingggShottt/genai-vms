@@ -89,3 +89,23 @@ class ChatMessage(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class JitCache(Base):
+    """`retrieval.jit_cache` — answers a vision model gave to a question about one segment's
+    keyframe, so the same question about the same footage is never asked twice (design §10.1,
+    P4-J3). Keyed by `(segment_id, question_hash)`; the hash is of the normalised question."""
+
+    __tablename__ = "jit_cache"
+    __table_args__ = {"schema": SCHEMA}
+
+    segment_id: Mapped[str] = mapped_column(String(200), primary_key=True)
+    question_hash: Mapped[str] = mapped_column(String(40), primary_key=True)
+    question: Mapped[str] = mapped_column(Text, nullable=False)
+    answer: Mapped[str] = mapped_column(String(20), nullable=False)  # yes | no | unsure
+    detail: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    keyframe_uri: Mapped[str | None] = mapped_column(Text, nullable=True)
+    model: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

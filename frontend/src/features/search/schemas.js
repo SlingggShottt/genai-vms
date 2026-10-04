@@ -13,6 +13,16 @@ export const searchResultSchema = z.object({
   reasoning_score: z.number().nullable().optional(),
   trace: z.string().nullable().optional(),
   missing: z.array(z.string()).default([]),
+  jit_answers: z
+    .array(
+      z.object({
+        question: z.string(),
+        answer: z.enum(['yes', 'no', 'unsure']),
+        detail: z.string().default(''),
+        cached: z.boolean().default(false),
+      }),
+    )
+    .default([]),
   keyframe_url: z.string().nullable().optional(),
   crop_urls: z.array(z.string()).default([]),
   matched_track_ids: z.array(z.string()).default([]),
@@ -20,6 +30,7 @@ export const searchResultSchema = z.object({
   colors: z.array(z.string()).default([]),
   zones: z.array(z.string()).default([]),
   event_ids: z.array(z.string()).default([]),
+  incident_ids: z.array(z.string()).default([]),
   caption: z.string().nullable().optional(),
   sources: z.array(z.string()).default([]),
 });

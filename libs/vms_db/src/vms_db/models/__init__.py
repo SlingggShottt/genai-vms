@@ -23,7 +23,7 @@ from vms_db.models.correlation import CorrelationGroup, CorrelationLinkRow
 from vms_db.models.events import Candidate, Event
 from vms_db.models.media import Segment
 from vms_db.models.reasoning import DailyReport, Incident, ReasoningJob
-from vms_db.models.retrieval import ChatMessage, ChatSession, SearchLog
+from vms_db.models.retrieval import ChatMessage, ChatSession, JitCache, SearchLog
 from vms_db.models.vision import MinuteCount, Track, TrackSegment
 
 __all__ = [
@@ -42,6 +42,7 @@ __all__ = [
     "EdgeType",
     "Event",
     "Incident",
+    "JitCache",
     "MinuteCount",
     "ReasoningJob",
     "RefreshToken",
