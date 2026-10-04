@@ -104,7 +104,7 @@ async def analysis_job(engine) -> str:
             await c.execute(
                 text(
                     "SELECT id::text FROM events.events WHERE status <> 'rejected' "
-                    "AND end_ts > now() - interval '2 hours' ORDER BY start_ts DESC LIMIT 1"
+                    "AND end_ts > now() - interval '24 hours' ORDER BY start_ts DESC LIMIT 1"
                 )
             )
         ).scalar()
@@ -134,21 +134,31 @@ async def analysis_job(engine) -> str:
 
 
 async def gate_held(engine) -> str:
+    """The gate works oldest-first through candidates that ended in the last 6 hours; with no
+    model it must hold (retry with back-off) what it cannot judge, not drop it."""
     async with engine.connect() as c:
         row = (
             await c.execute(
                 text(
                     "SELECT count(*), count(*) FILTER (WHERE verify_attempts > 0), "
-                    "max(verify_attempts) FROM events.candidates c "
+                    "coalesce(max(verify_attempts), 0) FROM events.candidates c "
                     "WHERE NOT EXISTS (SELECT 1 FROM events.events e WHERE e.id = c.id) "
                     "AND c.end_ts > :t AND c.severity IN ('medium','high','critical')"
                 ),
-                {"t": datetime.now(UTC) - timedelta(hours=1)},
+                {"t": datetime.now(UTC) - timedelta(hours=6)},
             )
         ).one()
+        decided = (
+            await c.execute(
+                text("SELECT count(*) FROM events.events WHERE created_at > :t"),
+                {"t": datetime.now(UTC) - timedelta(hours=6)},
+            )  # noqa: E501
+        ).scalar_one()
     return (
-        f"{row[0]} alert-worthy candidates from the last hour have no decision yet; "
-        f"{row[1]} are being retried with back-off (most attempts so far: {row[2]}); none dropped"
+        f"{row[0]} alert-worthy candidates from the last 6 h have no decision yet; "
+        f"{row[1]} have been tried and are waiting to be retried with back-off (most attempts: "
+        f"{row[2]}), the rest are queued behind them; {decided} events were decided in the same "
+        "period; none were dropped"
     )
 
 
