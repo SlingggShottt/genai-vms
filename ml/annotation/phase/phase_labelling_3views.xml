@@ -1,0 +1,41 @@
+<View>
+  <Header value="$event_type: $candidate_id" />
+  <Video name="video" value="$video" framerate="30" timelineHeight="110" />
+  <Video name="video_2" value="$video_2" framerate="30" />
+  <Video name="video_3" value="$video_3" framerate="30" />
+  <Header value="The first video is the one to mark. The others show the same moment from other cameras: scrub them to the same time to look." />
+  <Header value="Phases" />
+  <Header value="Drag out each phase on the first video's timeline. Phases go in order, do not overlap, and may be left out. Leave a stretch unmarked if no phase fits it." />
+  <TimelineLabels name="phase" toName="video">
+    <Label value="baseline" hotkey="1" background="#8ea3b5" hint="The normal scene before any relevant deviation." />
+    <Label value="precursor" hotkey="2" background="#6aa6b0" hint="The first observable signals tied to the later incident: approaching, watching, lingering." />
+    <Label value="escalation" hotkey="3" background="#8f8fc4" hint="The build-up and decision point, when the incident becomes likely." />
+    <Label value="action" hotkey="4" background="#b58fb5" hint="The core incident act itself." />
+    <Label value="aftermath" hotkey="5" background="#9fb58f" hint="The consequences and any responses to the incident." />
+  </TimelineLabels>
+  <Header value="Which view shows the incident best?" />
+  <Choices name="primary_view" toName="video" choice="single" showInline="true" required="true" value="$views" />
+  <Header value="What kind of incident is this?" />
+  <Choices name="event_type" toName="video" choice="single" required="true">
+    <Choice value="intrusion" />
+    <Choice value="loitering" />
+    <Choice value="crowding" />
+    <Choice value="abandoned_object" />
+    <Choice value="running" />
+    <Choice value="theft" />
+    <Choice value="activity" />
+    <Choice value="abuse" />
+    <Choice value="arrest" />
+    <Choice value="assault" />
+    <Choice value="burglary" />
+    <Choice value="fighting" />
+    <Choice value="robbery" />
+    <Choice value="shoplifting" />
+    <Choice value="vandalism" />
+  </Choices>
+  <Header value="Is this clip usable? Choose No if no incident can be seen in it." />
+  <Choices name="usable" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+  </Choices>
+</View>
