@@ -12,7 +12,12 @@ const SEVERITIES = ['critical', 'high', 'medium', 'low'];
 /** Incident reports (FR-INC): what the system worked out about each serious event, newest first. */
 export function IncidentsPage() {
   const [severity, setSeverity] = useState([]);
-  const { data, isLoading, isError } = useIncidents({ severity });
+  // A report that failed (a worker stopped mid-way, the footage had expired) is not an incident
+  // an operator can act on; it stays visible on the event's own page.
+  const { data, isLoading, isError } = useIncidents({
+    severity,
+    status: ['generating', 'generated', 'reviewed', 'closed'],
+  });
 
   function toggle(level) {
     setSeverity((prev) =>

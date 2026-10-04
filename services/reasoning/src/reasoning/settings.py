@@ -24,8 +24,9 @@ class ReasoningSettings(VMSBaseSettings):
 
     log_level: str = "INFO"
     poll_s: float = Field(default=2.0, gt=0)
-    # A running job whose worker died becomes claimable again after this long.
-    job_lease_s: float = Field(default=1800.0, gt=0)
+    # A running job whose worker died becomes claimable again after this long. Every step renews
+    # it, and a single model call is bounded by the gateway's 120 s timeout, so 5 minutes is safe.
+    job_lease_s: float = Field(default=300.0, gt=0)
 
     # The synced window around an incident (design §8.1: -15 s … +15 s).
     pad_before_s: float = Field(default=15.0, ge=0)

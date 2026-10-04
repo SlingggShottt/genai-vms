@@ -203,7 +203,9 @@ def finalize_plan(
         temporal = QueryTemporal(start=start, end=end)
 
     visual = [q.strip() for q in plan.visual_queries if q.strip()][:3] or [query.strip()]
-    hints = list(dict.fromkeys([*plan.event_types_hint, *event_hints_in(query)]))
+    # Event types only from words the operator wrote: a small model volunteers hints the query
+    # never implied, and a hint filters in verified events of that type.
+    hints = event_hints_in(query)
     return plan.model_copy(
         update={
             "entities": entities,

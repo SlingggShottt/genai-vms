@@ -617,6 +617,8 @@ Adapted from MP-PVIR's report schema.
 ```
 **Validation:** Pydantic model → every `evidence` id must exist in the bundle → retry with the error message (≤ 2) → else `status=failed` with raw output stored.
 
+**As built (P5-D4, P6-D1, `services/reasoning`).** The api never runs a model: `POST /events/{id}/analyze` inserts a `reasoning.jobs` row for the correlation group holding the event (one live job per group), the worker claims it with `FOR UPDATE SKIP LOCKED`, and `GET /events/{id}/reasoning`, `/reasoning/jobs`, `/incidents` read the rows back. Closed groups at or above `VMS_REASONING_AUTO_MIN_SEVERITY` (high) are queued automatically, at most `auto_max_per_hour` times. Until the TG/PhaVR adapters exist (P5-D2/P5-J2) `phase_tg` and `phase_vr` run the zero-shot base model; a labelling that gives no boundary information falls back to the detector's own timing (`fallback_used` in `evidence.v1.provenance`). A report claim that still cites no valid evidence after two retries is dropped, never given a borrowed citation. Tables: migration 0009 (`reasoning.jobs`, `reasoning.incidents`, `retrieval.search_logs`).
+
 ## 9. API surface (`services/api`, owner J unless noted)
 
 Base path `/api/v1`. JSON errors use the envelope in `style_guide.md §A.5`.
@@ -717,6 +719,13 @@ sequenceDiagram
 Relative times ("this morning") are resolved by the LLM using the provided current time and site timezone, then clamped by validation.
 
 **`candidate.v1`** (D → J): `{candidate_id, camera_id, segment_ids, window, keyframe_uris, twin_excerpt, fused_score, matched_track_ids, missing: [sub_question]}`
+
+**As built (P4-D1…D4, `services/retrieval`)** — see the service README for detail.
+- `fast` plans from vocabulary alone (no model, so it stays interactive); `reason` adds `query_decompose` and then rereads the top 10 windows with `rerank`. Categories are mapped onto the detector's vocabulary and relative times come from the query text, whatever the model returned.
+- Colours and zones *boost* a track rather than filter it (the colour naming is rough); camera, time and category are hard filters.
+- Verified events join the fusion through Postgres full-text over their VLM caption — a stand-in for the `knowledge` collection, which is not written yet.
+- `VMS_RETRIEVAL_ARCHIVE_SINCE` floors every search at the oldest footage that still exists, and results whose keyframe has been removed by retention are dropped and counted in `notes`.
+- All local text and vision tasks run on one resident model (`qwen2.5vl:3b`, `num_ctx` 8192): on a 4 GB GPU a second model means Ollama reloads between the events gate and a search.
 
 ### 10.2 Image search & grounding (owner J)
 - **Image query:** upload or `{frame_uri, bbox}` → crop → SigLIP2 vision (CPU in retrieval) → `tracks` collection with optional filters → group by track → results sorted by score then time.

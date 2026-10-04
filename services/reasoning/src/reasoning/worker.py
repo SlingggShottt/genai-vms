@@ -90,6 +90,7 @@ class ReasoningWorker:
 
     async def _run(self, job: JobRow, incident_id: uuid.UUID) -> None:
         s = self._s
+        await self._store.abandon_incidents(job.id)
         # --- context ---------------------------------------------------------------
         await self._step(job, "gathering events", 0.03)
         group_id = job.group_id

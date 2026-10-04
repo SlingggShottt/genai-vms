@@ -211,6 +211,18 @@ class ReasoningStore:
             )
             return [SegmentInfo(*r) for r in rows]
 
+    async def abandon_incidents(self, job_id: uuid.UUID) -> None:
+        """A job claimed again after its worker died: the half-written reports it left are
+        marked failed so the list does not show them as still being written."""
+        async with self._sessions() as s, s.begin():
+            await s.execute(
+                text(
+                    "UPDATE reasoning.incidents SET status = 'failed', updated_at = now() "
+                    "WHERE job_id = :j AND status = 'generating'"
+                ),
+                {"j": job_id},
+            )
+
     # --- incidents ----------------------------------------------------------------------
 
     async def create_incident(
