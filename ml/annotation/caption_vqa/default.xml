@@ -1,0 +1,44 @@
+<View>
+  <Header value="Default: $phase phase, view $view" />
+  <Video name="video" value="$video" framerate="25" />
+  <Header value="Caption" />
+  <Header value="Describe only what is visible in this view during this phase, in one or two sentences. Say what people and objects do, not who they are or what they intend. If the draft is right, keep it; if not, rewrite it." />
+  <TextArea name="caption" toName="video" rows="3" editable="true" required="true" maxSubmissions="1" placeholder="What happens in this view during this phase?" />
+  <Header value="How many people are visible?" />
+  <Choices name="default.people_visible" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="None" />
+    <Choice value="1" />
+    <Choice value="2 or 3" />
+    <Choice value="4 or more" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is anyone carrying an item such as a bag?" />
+  <Choices name="default.carrying_item" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is any staff member or guard visible?" />
+  <Choices name="default.staff_visible" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is anything unusual happening?" />
+  <Choices name="default.unusual_activity" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the scene well lit?" />
+  <Choices name="default.well_lit" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is this clip usable? Choose No if this phase cannot be seen in this view." />
+  <Choices name="usable" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+  </Choices>
+</View>

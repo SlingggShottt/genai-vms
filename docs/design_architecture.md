@@ -740,8 +740,17 @@ class LLMGateway:
     async def vision(self, task: str, prompt: str, images: list[ImageInput], *,
                      response_model: type[BaseModel] | None = None) -> ChatResult: ...
 ```
-- Providers: `ollama`, `gemini`, `groq`, `openrouter` via LiteLLM; `hf_local` (transformers + bitsandbytes + PEFT) for fine-tuned adapters.
+- Providers: `ollama`, `gemini`, `groq`, `openrouter` via LiteLLM; `hf_local` (transformers + bitsandbytes + PEFT) for fine-tuned adapters, plugged in through `LLMGateway.register_backend` (P5-D5). A provider without a registered backend counts as unavailable, so its fallbacks still run.
 - Features: JSON-schema output with Pydantic validation + retry; per-task timeout; fallback chain; response cache (Redis, key = hash(task, model, messages)); token/latency metrics per provider; prompt templates versioned in `libs/vms_common/llm/prompts/`.
+- `vision(..., system=None)` also takes an optional system prompt. `Gateway` is the typing `Protocol` both `LLMGateway` and the test double satisfy; services depend on it, never on the concrete class.
+
+**Behaviour (P3-D3, as built)**
+- *Per call:* for each model of the task in order — cache lookup → GPU lease (local models only) → provider call → validation → cache store. Any provider failure (timeout, rate limit, missing key, 5xx, unknown model) moves on to the next model; there is no in-place retry of a failed provider call (callers such as Kafka consumers already retry).
+- *Validation retry:* a reply that is not valid JSON for `response_model` is shown back to the model with the (input-free) validation errors and asked again, up to `validation_retries` (default 2) more times, all under one lease hold. JSON wrapped in code fences, prose or `<think>` blocks is accepted without a retry. The schema also goes to the provider (`response_format`), which for Ollama means grammar-constrained decoding.
+- *Errors:* `LLMUnavailableError` (→ 503; `LLMTimeoutError`, `GPULeaseTimeoutError` are subclasses), `LLMOutputError` (→ 422), `LLMRequestError` (caller bug: unknown task, `vision()` on a text task, image cap). When every model failed the exception type follows the task's **primary** model and `.failures` lists each model's reason.
+- *Cache:* only validated results, only for tasks with `cache_ttl_s > 0`, never with tools or streaming. The key covers task, provider/model/adapter, messages (images included, as data URLs), response schema, temperature and `max_tokens`. A Redis outage is a miss, not an error.
+- *Streaming:* `async for chunk in await gateway.chat(..., stream=True)`; the last chunk carries `finish_reason`, `usage` and the assembled `tool_calls`. A stream that fails before its first chunk falls back to the next model; one that fails midway raises (no splicing two models' answers). Close abandoned streams with `contextlib.aclosing` so the lease is released promptly.
+- *Image caps:* `vision()` enforces the task's `max_images` (error) and `max_image_edge` (shrinks). Note: Ollama's Qwen2.5-VL charges ≈ 1,050 prompt tokens per image **regardless of pixel size**, so the pixel cap bounds transfer and memory but not latency — the image *count* does.
 
 ### 11.2 Model registry (`config/models.yaml`, abridged)
 ```yaml
@@ -770,18 +779,30 @@ profiles:
 evaluation:
   judge:                 {provider: groq, model: "llama-3.3-70b-versatile"}   # different family from generator
 ```
-Model names/tags are **verified at setup** (P3-D3) — free-tier catalogues change often.
+The file as shipped differs from the abridged sketch above in three ways:
+- A top-level `tasks:` block holds each task's provider-independent behaviour (`modality: text|vision`, `max_tokens`, `temperature`, `max_images`, `max_image_edge`, `cache_ttl_s`, `validation_retries`, optionally `timeout_s`); a profile entry may override any of these except `modality`. Every profile must cover every task and nothing else — checked for all three profiles at load.
+- A profile entry replaces its parent's entry for that task *whole* (no field-wise merge), so an Ollama-only key such as `num_ctx` can never leak onto a cloud model.
+- Ollama entries carry `num_ctx` (context window in tokens). See §11.3 for why it is not optional on 4 GB.
+- `evaluation.judge` is reachable through the gateway as the task `eval_judge`.
+
+Model names/tags are **verified at setup** (P3-D3) — free-tier catalogues change often. Verified 2026-10-01: the two Ollama tags exist and run on the target GPU (`ml/evaluation/results/p3-d3-llm-benchmark.md`). **Not verified against the live APIs** (no keys on the build machine): the Gemini and Groq ids, checked only against LiteLLM's catalogue, which lists `llama-3.3-70b-versatile` as deprecated from 2026-08-16 — the Groq entries therefore use `openai/gpt-oss-120b` instead of the sketch's Llama.
 
 ### 11.3 GPU lease & VRAM budget
-A Redis lock `gpu:lease:{node}` (TTL + heartbeat) gives one GenAI model family the GPU at a time. Switching families unloads Ollama models (`keep_alive: 0`) or the `hf_local` base. Perception on node A is **not** leased (always on).
+A Redis lease per GPU node gives one GenAI model *family* the GPU at a time. A family is `<provider>:<model>` (`ollama:qwen2.5vl:3b`; all `hf_local` adapters of one base share a family, since swapping a LoRA adapter does not reload the base). Cloud models never take the lease.
+- Calls of the same family share the lease; a different family waits for every holder to release (up to `VMS_LLM_LEASE_WAIT_SECONDS`, then `GPULeaseTimeoutError` — which the gateway treats like any failed model, so a cloud fallback still answers).
+- A waiting family is first in line: while one is queued the current family admits no *new* holders, so a stream of cheap calls cannot starve an expensive one. A waiter that gives up withdraws its place.
+- Each holder has a TTL renewed by a heartbeat (`VMS_LLM_LEASE_TTL_SECONDS`, 30 s); a crashed process stops renewing and frees the GPU. Everything is decided in Lua scripts on Redis's clock.
+- The lease remembers the family last *loaded*. When a different family is granted, the gateway unloads the previous one (Ollama `keep_alive: 0`; `hf_local` unloads its base once P5-D5 lands) — best effort, since Ollama also evicts on its own.
+- If Redis is unreachable a local model is **not** run unleased: the call fails over to its fallback or raises `LLMUnavailableError`.
+- Perception on node A is **not** leased (always on).
 
 | Node | Workload | Est. VRAM | Notes |
 |---|---|---|---|
 | A (perception) | CUDA context + YOLO11s FP16 + SigLIP2-base FP16 | ~1.5 GB planning estimate; **~0.8–1.0 GB measured** (P2-D6, RTX 3050, both models loaded + batch-of-8 inference: 38 MB YOLO11s, 804 MB total with SigLIP2 added, 966 MB peak during inference) | Always on. Full numbers + method: `ml/evaluation/results/p2-d6-perception-benchmark.md`. Not yet measured: decode/tracking overhead under sustained multi-camera load |
 | A | + SAM 2.1-tiny (grounding, on demand) | +0.5 GB | Same process as perception |
-| B (GenAI) | Qwen2.5-VL-3B Q4 via Ollama (≤ 4 images at ≤ 448 px) | ~3.2–3.6 GB | Leased; tight — cap pixels |
-| B | Qwen2.5-VL-3B 4-bit (hf_local) + 2 LoRA adapters | ~2.8–3.4 GB | Leased; ≤ 16 frames at ≤ 360 p |
-| B | Qwen2.5-3B text Q4 via Ollama | ~2.2 GB | Leased |
+| B (GenAI) | Qwen2.5-VL-3B Q4 via Ollama (≤ 4 images) | ~3.2 GB (3,196–3,220 MiB) measured, **but only ~53 % of the model fits on the GPU** (rest on CPU; 18–31 % beside perception). 1 / 2 / 4 images ≈ 3 / 5 / 11 s warm, 8–14 s cold; `num_ctx` ≥ 6144 needed for 4 images | Leased; the image *count* drives latency (≈ 1,050 tokens per image at any pixel size). `ml/evaluation/results/p3-d3-llm-benchmark.md` |
+| B | Qwen2.5-VL-3B 4-bit (hf_local) + 2 LoRA adapters | ~2.8–3.4 GB planning estimate, not yet measured (P5-D5) | Leased; ≤ 16 frames at ≤ 360 p |
+| B | Qwen2.5-3B text Q4 via Ollama | ~2.4 GB (2,402 MiB) measured, 100 % on GPU alone (75 % beside perception); structured reply ≈ 0.25 s warm, 6–7 s cold | Leased |
 
 **Demo topologies**
 - **Two-laptop (recommended for full local demo):** Laptop A = infra + api + frontend + ingestion + perception + indexer + correlation; Laptop B = Ollama + reasoning + events + retrieval. Services reach the other laptop over LAN via env config.
@@ -866,7 +887,7 @@ Results are written to `ml/evaluation/results/<date>/<harness>.json` plus a Mark
 - `vms_perception_fps{camera}`, `vms_perception_latency_seconds`, `vms_gpu_memory_bytes{node}`
 - `vms_kafka_consumer_lag{group,topic}`
 - `vms_events_candidates_total{rule}`, `vms_events_verified_ratio{rule}`
-- `vms_search_stage_seconds{stage}`, `vms_llm_request_seconds{provider,task}`, `vms_llm_tokens_total{provider,task}`
+- `vms_search_stage_seconds{stage}`, `vms_llm_request_seconds{provider,task,status}`, `vms_llm_tokens_total{provider,task,kind}` (one observation per model call, so validation retries and fallbacks each count), `vms_llm_retries_total{task}`, `vms_llm_fallbacks_total{task}`, `vms_llm_cache_total{task,result}`, `vms_llm_lease_wait_seconds{outcome}`
 - `vms_reasoning_job_seconds{stage}`, `vms_reasoning_queue_depth`
 - Logs: structlog JSON with `request_id`, `segment_id`, `event_id`, `group_id`, `job_id`.
 
@@ -885,7 +906,7 @@ Contracts are **frozen on day 1 of the phase that needs them** (a 1-hour joint s
 | `event.v1` | D (events) | J (correlation, alerts, indexer) | P3 day 1 | `fixtures/event_v1_*.json` |
 | `correlation.v1` | J (correlation) | D (reasoning orchestrator, P5) | P3 day 1 | `fixtures/correlation_v1.json` |
 | `LLMGateway` interface + `models.yaml` | D | J (JIT, evidence, daily narrative) | P3 day 1 | stub `FakeGateway` in `vms_common.llm.testing` |
-| Phase label schema (annotation export) | D | J (caption/VQA builder) | P3 day 1 | `ml/annotation/phase_export_example.json` |
+| Phase label schema (annotation export) | D | J (caption/VQA builder) | P3 day 1 | `ml/annotation/phase_export_example.json`; model `PhaseLabelClip` (`phase_labels.v1`) in `tools/annotation_kit`. **Frozen by P3-D5:** adding an optional field is fine, anything else needs `phase_labels.v2` |
 | `queryplan.v1`, `candidate.v1`, search response | D (text search) | J (JIT, image UI, eval harness) | P4 day 1 | `fixtures/search_*.json` |
 | Grounding + image-search response | J | D (search UI) | P4 day 1 | `fixtures/grounding_v1.json` |
 | `phasetimeline.v1` | D (orchestrator) | J (evidence) | P5 day 1 | `fixtures/phasetimeline_v1.json` |

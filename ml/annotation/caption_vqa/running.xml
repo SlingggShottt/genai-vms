@@ -1,0 +1,64 @@
+<View>
+  <Header value="Running: $phase phase, view $view" />
+  <Video name="video" value="$video" framerate="25" />
+  <Header value="Caption" />
+  <Header value="Describe only what is visible in this view during this phase, in one or two sentences. Say what people and objects do, not who they are or what they intend. If the draft is right, keep it; if not, rewrite it." />
+  <TextArea name="caption" toName="video" rows="3" editable="true" required="true" maxSubmissions="1" placeholder="What happens in this view during this phase?" />
+  <Header value="Is a person running, rather than walking?" />
+  <Choices name="running.person_running" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Which way is the person running?" />
+  <Choices name="running.direction" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Toward the camera" />
+    <Choice value="Away from the camera" />
+    <Choice value="Left to right" />
+    <Choice value="Right to left" />
+    <Choice value="Changing direction" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="How many people are running?" />
+  <Choices name="running.person_count" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="1" />
+    <Choice value="2" />
+    <Choice value="3 or more" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is anyone chasing, or being chased by, someone else?" />
+  <Choices name="running.chasing" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is the person carrying anything?" />
+  <Choices name="running.carrying_item" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Do other people react to the person running?" />
+  <Choices name="running.others_react" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Does the person stumble or fall?" />
+  <Choices name="running.falls" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Does the person leave the camera's view?" />
+  <Choices name="running.leaves_view" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+    <Choice value="Cannot tell" />
+  </Choices>
+  <Header value="Is this clip usable? Choose No if this phase cannot be seen in this view." />
+  <Choices name="usable" toName="video" choice="single" showInline="true" required="true">
+    <Choice value="Yes" />
+    <Choice value="No" />
+  </Choices>
+</View>

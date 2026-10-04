@@ -96,6 +96,7 @@ Notes from running this end to end (4 GB RTX 3050 laptop, Ubuntu, Docker 29):
 Enable GenAI features (events verification, search reasoning, incident reports, assistant):
 
 ```bash
+# Run Ollama with OLLAMA_MAX_LOADED_MODELS=1: one model in VRAM at a time, like the gateway's GPU lease
 ollama pull qwen2.5vl:3b && ollama pull qwen2.5:3b
 make up PROFILE=infra,core,perception,genai
 # or use free cloud models for reasoning:

@@ -165,7 +165,6 @@ that failed would follow a "201 Created". Found by driving the P3-J5 editors in 
 wait for the whole call, so only a test that watches the ASGI send order can see it
 (`tests/unit/test_session_commits_before_response.py`, which also fails if an endpoint goes round `SessionDep`).
 
-
 ## Tests
 
 ```bash
