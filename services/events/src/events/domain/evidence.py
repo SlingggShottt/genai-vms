@@ -10,10 +10,10 @@ with the candidate in `events.candidates.details["evidence"]`.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import TypeVar
+from collections.abc import Mapping, Sequence
+from typing import Any, TypeVar
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError
 from vms_common.contracts.twin import Frame
 
 T = TypeVar("T")
@@ -78,3 +78,15 @@ def add_evidence(
         return list(kept)
     grown = [*kept, new]
     return spread(grown, limit // 2) if len(grown) > limit else grown
+
+
+def evidence_of(details: Mapping[str, Any]) -> list[EvidenceFrame]:
+    """The evidence in a candidate's `details`, oldest first. A candidate from before evidence was
+    recorded has none; an entry that does not parse is not evidence and is left out."""
+    kept: list[EvidenceFrame] = []
+    for item in details.get("evidence") or []:
+        try:
+            kept.append(EvidenceFrame.model_validate(item))
+        except ValidationError:
+            continue
+    return sorted(kept, key=lambda frame: frame.ts)

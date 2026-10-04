@@ -3,7 +3,7 @@
 One directory per gateway task (the names in `config/models.yaml`), one file per version:
 
 ```text
-prompts/event_verify/1.0.md      # arrives with P3-D4
+prompts/event_verify/1.0.md      # the events service's VLM gate (P3-D4)
 prompts/query_decompose/1.0.md
 ```
 

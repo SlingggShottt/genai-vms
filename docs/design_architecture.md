@@ -441,6 +441,14 @@ Candidates are debounced per `(camera, rule, track)`; an open candidate extends 
 - `yes` & confidence ≥ 0.6 → verified; `no` → rejected (stored); `unsure` → verified with `confidence` flag for low-severity rules, rejected for others (configurable).
 - Rules may set `verify: false`.
 
+**As implemented (P3-D4, `services/events`)** — details the sketch above leaves open:
+- The gate is a loop beside the twin consumer. It judges a candidate once it has **closed**, or once it has been a candidate for 90 s and is still going (so a long loiter does not wait for the person to leave); the event describes the candidate as it was then and is not re-sent if the candidate goes on (`event.v1` is immutable to its consumers). Candidates that ended more than 6 h ago are never judged.
+- The input is built from **evidence the engine records on the candidate** (`details["evidence"]`: a thinned sample of at most 16 hit frames, each with its keyframe URI and the boxes of the tracks the hit is about), not from re-reading twins: finding a segment's twin would mean knowing perception's key layout. Up to 4 frames are shown, spanning the candidate, first and latest included; the boxes are red, ≈ 3 px thick at the model's 448 px edge. The prompt states the rule's one-sentence claim (`Rule.description`), the camera, the zone name and when each frame is from, with that text inside `<data>` tags; prompt `event_verify/1.0`, task `event_verify`.
+- Decision: `yes` at confidence ≥ 0.6 → verified; `no` → rejected; `unsure`, or a `yes` below 0.6, → verified *flagged* (confidence travels in `event.v1`) when the rule's severity is `low` (`VMS_EVENTS_VERIFY_UNSURE_ACCEPTED_UP_TO`), rejected above that. An invalid reply gets one retry (`validation_retries: 1` for the task) and then counts as `unsure`.
+- **Degradation:** with no model to ask (provider down, GPU lease timeout) or no readable keyframe, a candidate of severity `medium` or above waits and is retried with back-off (5 s doubling to 300 s) for up to 10 min, then is published with `verification.status = "skipped"`; a `low` one is published `skipped` at once. The backlog names low and high; `medium` is held because medium events also raise alerts (`VMS_ALERTS_MIN_SEVERITY`), and an unchecked loiter should not page anyone. `verify: false` rules are published `skipped` without asking.
+- **Storage and delivery:** `events.events` has one row per decided candidate — its `id` *is* the candidate's, so a retry cannot decide twice — with status `verified | skipped | rejected`, the frames shown, and a `verification` record (verdict, confidence, caption, reason, model, latency, prompt version, attempts). A rejected row is kept with its reason and never published. The queue is "no `events.events` row yet" (`FOR UPDATE SKIP LOCKED`; claiming hides a candidate for a lease, a failure sets a back-off); `published_at` is an outbox marker, written after the Kafka send, so a crash re-sends rather than loses.
+- Not part of this story: `GET /events` in the api (Track J) and the precision/recall of the rules with and without the gate (§13, needs labelled clips).
+
 ### 7.5 Multi-camera correlation (owner: J)
 
 Topology edge semantics:
@@ -886,7 +894,7 @@ Results are written to `ml/evaluation/results/<date>/<harness>.json` plus a Mark
 - `vms_ingest_segments_total{camera}`, `vms_stream_reconnects_total`
 - `vms_perception_fps{camera}`, `vms_perception_latency_seconds`, `vms_gpu_memory_bytes{node}`
 - `vms_kafka_consumer_lag{group,topic}`
-- `vms_events_candidates_total{rule}`, `vms_events_verified_ratio{rule}`
+- `vms_events_candidates_total{rule}`, `vms_events_verifications_total{rule,outcome}` (outcome `verified|rejected|skipped|held`; `vms_events_verified_ratio{rule}` is `verified / (verified + rejected)` of it, computed where it is graphed), `vms_events_verification_seconds`, `vms_events_verification_errors_total{rule}`, `vms_events_published_total{status}`
 - `vms_search_stage_seconds{stage}`, `vms_llm_request_seconds{provider,task,status}`, `vms_llm_tokens_total{provider,task,kind}` (one observation per model call, so validation retries and fallbacks each count), `vms_llm_retries_total{task}`, `vms_llm_fallbacks_total{task}`, `vms_llm_cache_total{task,result}`, `vms_llm_lease_wait_seconds{outcome}`
 - `vms_reasoning_job_seconds{stage}`, `vms_reasoning_queue_depth`
 - Logs: structlog JSON with `request_id`, `segment_id`, `event_id`, `group_id`, `job_id`.

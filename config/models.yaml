@@ -31,6 +31,7 @@ tasks:
     max_images: 4
     max_image_edge: 448
     cache_ttl_s: 86400
+    validation_retries: 1   # design §7.4: an invalid reply gets one retry, then counts as "unsure"
   jit_vqa:
     modality: vision
     max_tokens: 300

@@ -12,6 +12,7 @@ from events.domain.evidence import (
     MAX_KEPT,
     EvidenceFrame,
     add_evidence,
+    evidence_of,
     frame_evidence,
     spread,
 )
@@ -29,7 +30,20 @@ def evidence(n: int) -> EvidenceFrame:
     )
 
 
+class TestTheLimitsAsWritten:
+    """What is stored per candidate (and checkpointed to Redis every segment) is bounded by these;
+    pinned as numbers, not just as the constants the other tests import."""
+
+    def test_the_numbers(self) -> None:
+        assert (MAX_KEPT, MAX_BOXES) == (16, 8)
+
+
 class TestSpread:
+    def test_the_picks_are_rounded_not_floored(self) -> None:
+        assert spread(list(range(12)), 4) == [0, 4, 7, 11]  # 11/3 = 3.67 -> 4, 7.33 -> 7
+        assert spread(list(range(10)), 4) == [0, 3, 6, 9]
+        assert spread(list(range(13)), 5) == [0, 3, 6, 9, 12]
+
     def test_all_of_them_when_there_are_no_more_than_asked_for(self) -> None:
         assert spread([1, 2, 3], 3) == [1, 2, 3]
         assert spread([1, 2, 3], 9) == [1, 2, 3]
@@ -124,6 +138,22 @@ class TestFrameEvidence:
         assert len(result.boxes) == MAX_BOXES
         assert result.boxes[0].track_id == f"t{MAX_BOXES + 3}"
         assert {b.track_id for b in result.boxes} == {f"t{n}" for n in range(4, MAX_BOXES + 4)}
+
+
+class TestReadingEvidenceBack:
+    def test_comes_back_oldest_first_whatever_order_it_was_stored_in(self) -> None:
+        stored = [evidence(n).model_dump(mode="json") for n in (3, 1, 2, 0)]
+        assert [f.ts for f in evidence_of({"evidence": stored})] == [
+            evidence(n).ts for n in range(4)
+        ]
+
+    @pytest.mark.parametrize("details", [{}, {"evidence": None}, {"evidence": []}, {"frames": 7}])
+    def test_a_candidate_with_none_has_none(self, details: dict) -> None:
+        assert evidence_of(details) == []
+
+    def test_an_entry_that_does_not_parse_is_left_out_and_the_rest_are_kept(self) -> None:
+        stored = [{"nonsense": True}, evidence(1).model_dump(mode="json"), "not even a dict", None]
+        assert evidence_of({"evidence": stored}) == [evidence(1)]
 
 
 class TestThroughTheEngine:

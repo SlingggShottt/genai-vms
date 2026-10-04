@@ -327,7 +327,8 @@ services:
   # Rule engine over twinready.v1 -> events.candidates (P3-D1). Needs migration
   # 0004 (`make migrate`). Zone names arrive in the twin from perception; this
   # service looks the zones up again (type, schedule) from the same source —
-  # there is no api service in Compose yet, so the YAML fallback is used.
+  # there is no api service in Compose yet, so the YAML fallback is used. Also runs the VLM
+  # verification gate (P3-D4): needs migration 0008 and the LLM gateway (see the env below).
   events:
     profiles: [core]
     container_name: vms-events
@@ -353,6 +354,16 @@ services:
       VMS_REDIS_URL: redis://redis:6379/0
       VMS_EVENTS_RULES_PATH: /app/config/rules.yaml
       VMS_EVENTS_ZONES_YAML_FALLBACK: /app/config/zones.yaml
+      # The VLM gate (P3-D4) calls the LLM gateway. Ollama runs on the host (or laptop B: set
+      # VMS_LLM_OLLAMA_URL in .env), and must listen on more than loopback to be reachable from here
+      # (OLLAMA_HOST=0.0.0.0).
+      VMS_LLM_PROFILE: ${VMS_LLM_PROFILE:-local}
+      VMS_LLM_MODELS_PATH: /app/config/models.yaml
+      VMS_LLM_OLLAMA_URL: ${VMS_LLM_OLLAMA_URL:-http://host.docker.internal:11434}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ../../config:/app/config:ro
     restart: unless-stopped
