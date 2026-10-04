@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: events
+  labels:
+    app.kubernetes.io/name: events
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: events
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: events
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9104"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: events
+          image: genai-vms-events:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: vms-env }
+            - secretRef: { name: vms-secrets }
+          env:
+            - { name: VMS_EVENTS_RULES_PATH, value: "/app/config/rules.yaml" }
+            - { name: VMS_EVENTS_ZONES_YAML_FALLBACK, value: "/app/config/zones.yaml" }
+          ports:
+            - { name: metrics, containerPort: 9104 }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi }
+          volumeMounts:
+            - { name: config, mountPath: /app/config, readOnly: true }
+      volumes:
+        - name: config
+          configMap:
+            name: vms-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: events
+  labels:
+    app.kubernetes.io/name: events
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  selector:
+    app.kubernetes.io/name: events
+  ports:
+    - { name: metrics, port: 9104, targetPort: 9104 }

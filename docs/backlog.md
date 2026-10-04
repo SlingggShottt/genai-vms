@@ -623,7 +623,7 @@
 - [ ] 30 golden query → plan tests (with `FakeGateway` recordings) covering attributes, time, zones, implicit actions.
 
 ### P4-D2 · Coarse hybrid retrieval — 8 pts · Must · E11 · FR-SRC-03, FR-SRC-10
-> **Status 2026-10-04 — partly built:** SigLIP 2 text encoder on CPU, `frames` + `tracks` search with plan filters, RRF, 10 s windows, per-stage timings. `knowledge` (dense + BM25) is searched and fused with Postgres full-text on captions. **Not done:** the p95 ≤ 1 s measurement (a warm `fast` search takes ~1.5 s here).
+> **Status 2026-10-04 — partly built:** SigLIP 2 text encoder on CPU, `frames` + `tracks` search with plan filters, RRF, 10 s windows, per-stage timings. `knowledge` (dense + BM25) is searched and fused with Postgres full-text on captions. `mode=fast` measured at p95 0.25 s (30 fresh queries, `ml/evaluation/results/p7-latency.md`). The `mode=fast` p95 ≤ 1 s criterion is met.
 - [ ] SigLIP 2 text encoder on CPU; visual queries against `frames` and `tracks` with payload filters from the plan.
 - [ ] Dense + sparse search on `knowledge` (event captions) for text queries.
 - [ ] Reciprocal rank fusion; grouping hits into segment-window candidates (merge within 10 s per camera); top-K = 30.
@@ -818,6 +818,7 @@
 ## Divyansh — 23 pts
 
 ### P7-D1 · Kubernetes infra layer — 5 pts · Must · E17 · NFR-POR-01
+> **Status 2026-10-04 — manifests written, not deployed:** `deploy/k8s/` (kustomize base for infra, apps, migration and topic Jobs, ingress; minikube overlay) renders and passes `kubeconform -strict` for Kubernetes 1.31 (38 resources). No cluster was available, so nothing has been applied; `make k8s-up` / `k8s-down` / `k8s-render` exist. Plain StatefulSets instead of Strimzi/CloudNativePG/Helm, one namespace instead of three (see `deploy/k8s/README.md`). **Not done:** the minikube setup script with `--gpus all`, any run on a cluster.
 - [ ] minikube setup script (docker driver, addons, `--gpus all` attempt).
 - [ ] Strimzi Kafka (KRaft) + topics as `KafkaTopic` resources; CloudNativePG cluster; Qdrant Helm; Redis; object storage; MediaMTX (NodePort RTSP).
 - [ ] Namespaces, PVCs, resource requests sized for a 16 GB laptop; `SERVICES.md` published.
@@ -832,6 +833,7 @@
 - [ ] Grafana dashboards: Pipeline health (lag, fps, segments), GenAI (latency/tokens per provider, queue depth), API (RPS, p95, errors).
 
 ### P7-D4 · Latency & throughput evaluation — 5 pts · Must · E18 · EV-04
+> **Status 2026-10-04 — partly built:** `ml/evaluation/latency/measure.py` measures the running stack through its HTTP interfaces and the database; results in `ml/evaluation/results/p7-latency.md` (fast search p50 0.22 s / p95 0.25 s, reason search p50 15.6 s, cold object masks 1.3 s, assistant turn p50 2.1 s, daily report ~11 s; pipeline lag and reasoning-job figures are from a contended-GPU period and say so). **Not done:** the 2/4/6-camera sweep (one real camera exists), consumer-lag and GPU-utilisation columns, cloud-profile runs.
 - [ ] `ml/evaluation/latency` harness drives 2/4/6 cameras for 30 min per profile (local/hybrid/cloud).
 - [ ] Measures NFR-PERF-01…05 p50/p95 from metrics + logs; results JSON + Markdown summary.
 

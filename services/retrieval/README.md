@@ -52,10 +52,26 @@ The index outlives recordings: keyframes and segments are removed by the retenti
 their vectors stay. `VMS_RETRIEVAL_ARCHIVE_SINCE` (ISO time) puts a floor under every search, and
 a result whose keyframe no longer exists is dropped and counted in `notes`.
 
-## Not built (backlog)
+## Also here
 
-JIT refinement with the VLM (`P4-J3`, `missing[]` is returned but nothing answers it yet), the
-`knowledge` collection (dense + BM25 over event captions — Postgres full-text stands in),
-object-level grounding masks (`P4-J2`), crop-from-frame image queries (`P4-J1` takes uploads only),
-the evaluation harness (`P4-J6`), and the p95 ≤ 1 s measurement for `fast` mode (a warm search
-here takes ~1.5 s, dominated by the CPU text encoder on first use of a phrase).
+- **Knowledge.** The indexer writes each verified event's caption and each incident-report section to
+  the `knowledge` collection (dense bge-small + BM25 sparse, `vms_common.qdrant.knowledge`); a text
+  search fuses those hits with the visual lists, and `GET /incidents/{id}/similar` searches them.
+- **Grounding.** `POST /search/grounding {search_id, result_id}` returns SAM 2.1-tiny masks of the
+  objects a result matched, run-length encoded and cached in `vms-masks` (CPU: ~1.3 s cold, ~10 ms
+  cached).
+- **JIT picture checks** (`jit: true`, reason mode): the rerank's yes/no questions about what the
+  records cannot tell go to `jit_vqa` on the result's keyframe; answers are cached per
+  `(segment, question)` in `retrieval.jit_cache` and trigger a rescoring pass.
+- **Metrics** at `/metrics` (`vms_search_stage_seconds{stage}`, `vms_search_requests_total`,
+  `vms_assistant_turns_total`).
+
+Measured on the build machine (`ml/evaluation/results/p7-latency.md`): fast search p50 0.22 s, p95
+0.25 s; reason search p50 15.6 s.
+
+## Not built
+
+`candidate.v1` hand-over to a separate JIT worker (JIT runs in-process), crop-from-frame image
+queries (`P4-J1` takes uploads only), the retrieval evaluation harness against labelled queries
+(`P4-J6`: needs human-labelled ground truth), object masks on the GPU in perception (they run on CPU
+here), and tests of the assistant against recorded `FakeGateway` conversations.

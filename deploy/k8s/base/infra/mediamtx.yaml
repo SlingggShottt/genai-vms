@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mediamtx
+  labels:
+    app.kubernetes.io/name: mediamtx
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: infra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mediamtx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mediamtx
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: infra
+    spec:
+      containers:
+        - name: mediamtx
+          image: bluenviron/mediamtx:latest-ffmpeg
+          ports:
+            - { name: rtsp, containerPort: 8554 }
+            - { name: hls, containerPort: 8888 }
+            - { name: webrtc, containerPort: 8889 }
+            - { name: api, containerPort: 9997 }
+          readinessProbe:
+            tcpSocket: { port: 9997 }
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { memory: 512Mi }
+          volumeMounts:
+            - { name: config, mountPath: /mediamtx.yml, subPath: mediamtx.yml, readOnly: true }
+            - { name: recordings, mountPath: /recordings }
+      volumes:
+        - name: config
+          configMap:
+            name: mediamtx-config
+        - name: recordings
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mediamtx
+  labels:
+    app.kubernetes.io/name: mediamtx
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: infra
+spec:
+  selector:
+    app.kubernetes.io/name: mediamtx
+  ports:
+    - { name: rtsp, port: 8554, targetPort: 8554 }
+    - { name: hls, port: 8888, targetPort: 8888 }
+    - { name: webrtc, port: 8889, targetPort: 8889 }
+    - { name: api, port: 9997, targetPort: 9997 }

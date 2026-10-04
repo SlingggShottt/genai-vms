@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion
+  labels:
+    app.kubernetes.io/name: ingestion
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ingestion
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ingestion
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9101"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: ingestion
+          image: genai-vms-ingestion:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: vms-env }
+            - secretRef: { name: vms-secrets }
+          env:
+            - { name: VMS_INGESTION_CAMERAS_YAML_FALLBACK, value: "/app/config/cameras.yaml" }
+          ports:
+            - { name: metrics, containerPort: 9101 }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi }
+          volumeMounts:
+            - { name: config, mountPath: /app/config, readOnly: true }
+      volumes:
+        - name: config
+          configMap:
+            name: vms-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion
+  labels:
+    app.kubernetes.io/name: ingestion
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  selector:
+    app.kubernetes.io/name: ingestion
+  ports:
+    - { name: metrics, port: 9101, targetPort: 9101 }

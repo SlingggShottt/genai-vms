@@ -69,3 +69,6 @@ Thumbs.db
 htmlcov/
 coverage.xml
 .demo/
+
+# Kubernetes overlay secrets (never committed)
+deploy/k8s/overlays/*/secrets.env
