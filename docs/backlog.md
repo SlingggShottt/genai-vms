@@ -743,6 +743,13 @@
 ### P5-J1 · PhaVR dataset builder — 3 pts · Must · E12
 - [ ] `phavr_labels.jsonl` → instruction JSONL for captioning and VQA tasks per phase × view (≤ 8 frames).
 - [ ] Same video-level split as TG (shared manifest); packaged as a Kaggle dataset.
+      > **Status 2026-10-06 — builder written, never run on real labels** (`ml/training/phavr/`, README there): reads
+      > `phavr_label.v1` plus the phase labels (for video locations); 2–4 frames per phase × view (the service's cap), the
+      > `phase_vr` 1.0 prompt and the VQA bank rendered as `services/reasoning` does (a test runs the service's real
+      > `read_view` and requires the same prompt), canonical answers, skip-and-list for anything unusable; shares the TG
+      > builder's extend-only `splits.json` so both adapters have the same train/val/test videos. 10 tests on synthetic
+      > videos, run in CI. **Differs from the story text:** ≤ 4 frames, not ≤ 8 (the service shows at most 4). Not packaged
+      > or uploaded: there are no labels yet.
 
 ### P5-J2 · PhaVR adapter fine-tuning — 8 pts · Must · E12
 - [ ] Unsloth QLoRA notebook (same base/hyperparameters), mixed caption + VQA batches.

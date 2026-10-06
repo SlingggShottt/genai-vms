@@ -122,19 +122,33 @@ def test_adding_videos_never_moves_an_assigned_one() -> None:
     assert len(more) == 16
 
 
+def test_a_video_missing_from_this_run_keeps_its_split_in_the_shared_file() -> None:
+    first = bd.assign_splits([f"v{i}" for i in range(10)], {}, (0.7, 0.15, 0.15), seed=1)
+    later = bd.assign_splits(["v0", "v1", "new"], first, (0.7, 0.15, 0.15), seed=1)
+    assert {v: later[v] for v in first} == first  # nobody dropped, nobody moved
+    assert "new" in later and len(later) == 11
+
+
 # ---- frames and labels --------------------------------------------------------------------------
 
 
 def test_frame_times_are_whole_seconds_inside_the_clip_spread_first_to_last() -> None:
-    assert bd.frame_times(26.0, 5) == [
+    assert bd.frame_times(26.0, 5, fps=1.0) == [
         0.0,
         6.0,
         12.0,
         19.0,
         25.0,
     ]  # a video of 26 s has no frame at 26
-    assert bd.frame_times(26.5, 3) == [0.0, 13.0, 26.0]  # but one of 26.5 s does
-    assert bd.frame_times(2.0, 5) == [0.0, 1.0]  # a short clip gives what it has
+    assert bd.frame_times(26.0, 5) == [
+        0.0,
+        6.5,
+        13.0,
+        19.0,
+        25.5,
+    ]  # perception normally keeps 2 a second
+    assert bd.frame_times(26.5, 3, fps=1.0) == [0.0, 13.0, 26.0]  # but one of 26.5 s does
+    assert bd.frame_times(2.0, 5, fps=1.0) == [0.0, 1.0]  # a short clip gives what it has
 
 
 def test_labels_follow_the_spans_and_never_go_backwards() -> None:
@@ -267,6 +281,7 @@ def test_build_makes_consistent_samples_and_never_splits_a_source_video(world) -
 
 def test_the_manifest_hashes_match_the_files_and_the_build_is_reproducible(world) -> None:
     a = run_build(world, world["tmp"] / "a")
+    assert a["config"]["frame_fps"] == 2.0
     b = run_build(world, world["tmp"] / "b")
     for name, digest in a["files"].items():
         assert bd.sha256_file(world["tmp"] / "a" / name) == digest

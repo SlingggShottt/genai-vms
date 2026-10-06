@@ -31,34 +31,47 @@ sample, because the real detector's timing is rarely exact.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import random
-import shutil
 import sys
 from collections import Counter
 from pathlib import Path
 
-from annotation_kit.schema import PhaseLabelClip
-from pydantic import ValidationError
-from reasoning.domain.context import CLAIMS
-from reasoning.domain.sampling import pick_evenly
-from vms_common.llm import render_prompt
-from vms_common.llm.prompts import PROMPTS_DIR
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # for `dataset_common`
+
+from annotation_kit.schema import PhaseLabelClip  # noqa: E402
+from dataset_common import (  # noqa: E402
+    MAX_HEIGHT,
+    SPLITS,
+    LabelError,
+    assign_splits,
+    clear_outputs,
+    extract_frames,
+    frames_digest,
+    read_splits,
+    resolve_video,
+    sha256_file,
+    sha256_text,
+    target_counts,
+    write_kaggle_metadata,
+    write_split_files,
+    write_splits,
+)
+from pydantic import ValidationError  # noqa: E402
+from reasoning.domain.context import CLAIMS  # noqa: E402
+from reasoning.domain.sampling import pick_evenly  # noqa: E402
+from vms_common.llm import render_prompt  # noqa: E402
+from vms_common.llm.prompts import PROMPTS_DIR  # noqa: E402
+
+__all__ = ["MAX_HEIGHT", "SPLITS", "assign_splits", "target_counts"]  # re-exported for the tests
 
 PROMPT_NAME = "phase_tg"
 PROMPT_VERSION = "1.0"
-SPLITS = ("train", "val", "test")
-MAX_HEIGHT = 360
-KEYFRAME_FPS = (
-    1.0  # footage frames exist once a second (ingestion's keyframe_fps), so pick among those
-)
+# Footage frames are perception's sampled frames: 2 a second normally, 1 when it falls behind
+# (`default_sample_fps` / `degraded_sample_fps`). The service picks among whatever exists.
+FRAME_FPS = 2.0
 MIN_FRAMES = 3  # below this the service skips the model and uses the detector's timing
-
-
-class LabelError(Exception):
-    """The labels file is unusable; the message lists every problem found."""
 
 
 def load_clips(path: Path) -> list[PhaseLabelClip]:
@@ -81,43 +94,6 @@ def load_clips(path: Path) -> list[PhaseLabelClip]:
     return clips
 
 
-# ---- splits -------------------------------------------------------------------------------------
-
-
-def target_counts(n: int, fractions: tuple[float, float, float]) -> dict[str, int]:
-    """How many of `n` source videos go to each split. Val and test get at least one once there are
-    three videos; below that everything trains (a split of one video says nothing)."""
-    if n < 3:
-        return {"train": n, "val": 0, "test": 0}
-    val = max(1, round(fractions[1] * n))
-    test = max(1, round(fractions[2] * n))
-    return {"train": n - val - test, "val": val, "test": test}
-
-
-def assign_splits(
-    videos: list[str],
-    existing: dict[str, str],
-    fractions: tuple[float, float, float],
-    seed: int,
-) -> dict[str, str]:
-    """`existing` assignments are kept; new videos fill what each split still lacks. Deterministic:
-    new videos are taken in the order of a seeded hash, not the order they appear in the file."""
-    assignment = {v: s for v, s in existing.items() if v in set(videos)}
-    new = sorted((v for v in videos if v not in assignment), key=lambda v: _h(f"{seed}|{v}"))
-    want = target_counts(len(videos), fractions)
-    have = Counter(assignment.values())
-    for v in new:
-        # the split furthest below its target; ties go train, val, test
-        split = max(SPLITS, key=lambda s: (want[s] - have[s], -SPLITS.index(s)))
-        assignment[v] = split
-        have[split] += 1
-    return assignment
-
-
-def _h(text: str) -> str:
-    return hashlib.sha256(text.encode()).hexdigest()
-
-
 # ---- one sample ---------------------------------------------------------------------------------
 
 
@@ -125,9 +101,9 @@ def clip_duration(clip: PhaseLabelClip) -> float:
     return max(span.end_s for span in clip.phases)
 
 
-def frame_times(duration_s: float, n: int) -> list[float]:
-    """Where to look: the frames a camera has (one a second), spread evenly as the service does."""
-    available = [k / KEYFRAME_FPS for k in range(math.ceil(duration_s * KEYFRAME_FPS))]
+def frame_times(duration_s: float, n: int, fps: float = FRAME_FPS) -> list[float]:
+    """Where to look: the frames a camera has (`fps` a second), spread as the service does."""
+    available = [k / fps for k in range(math.ceil(duration_s * fps))]
     return pick_evenly(available, n)
 
 
@@ -225,62 +201,7 @@ def sample_record(
     }
 
 
-# ---- frames -------------------------------------------------------------------------------------
-
-
-def resolve_video(uri: str, videos_root: Path) -> Path:
-    """`s3://bucket/key` -> `<videos_root>/key`; `file://` and plain paths are used as given."""
-    if uri.startswith("s3://"):
-        return videos_root / uri.split("/", 3)[3]
-    if uri.startswith("file://"):
-        return Path(uri[len("file://") :])
-    path = Path(uri)
-    return path if path.is_absolute() else videos_root / path
-
-
-def extract_frames(video: Path, times: list[float], out_dir: Path) -> list[Path]:
-    """The frame at (or just after) each time, shrunk to at most `MAX_HEIGHT` high, as JPEGs. A
-    video that ends early gives its last frame for the times it cannot reach."""
-    import av
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    targets = sorted(range(len(times)), key=lambda i: times[i])
-    picked: dict[int, object] = {}
-    with av.open(str(video)) as container:
-        stream = container.streams.video[0]
-        want = iter(targets)
-        current = next(want, None)
-        last = None
-        for frame in container.decode(stream):
-            last = frame
-            t = float(frame.time) if frame.time is not None else 0.0
-            while current is not None and t + 1e-3 >= times[current]:
-                picked[current] = frame.to_image()
-                current = next(want, None)
-            if current is None:
-                break
-        while current is not None and last is not None:  # the video ended before this time
-            picked[current] = last.to_image()
-            current = next(want, None)
-    paths = []
-    for i in range(len(times)):
-        if i not in picked:
-            raise ValueError(f"{video}: no frames could be decoded")
-        image = picked[i]
-        if image.height > MAX_HEIGHT:
-            width = max(1, round(image.width * MAX_HEIGHT / image.height))
-            image = image.resize((width, MAX_HEIGHT))
-        path = out_dir / f"{i:02d}.jpg"
-        image.save(path, quality=85)
-        paths.append(path)
-    return paths
-
-
 # ---- the build ----------------------------------------------------------------------------------
-
-
-def sha256_file(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def build(
@@ -293,6 +214,7 @@ def build(
     frames_min: int = 5,
     frames_max: int = 8,
     jitter_s: float = 1.5,
+    frame_fps: float = FRAME_FPS,
     seed: int = 7,
 ) -> dict:
     if not MIN_FRAMES <= frames_min <= frames_max <= 8:
@@ -301,23 +223,15 @@ def build(
         )
     clips = load_clips(labels_path)
     splits_path = splits_path or out / "splits.json"
-    existing = json.loads(splits_path.read_text())["assignments"] if splits_path.exists() else {}
     videos = sorted({c.source_video for c in clips})
-    assignment = assign_splits(videos, existing, fractions, seed)
+    assignment = assign_splits(videos, read_splits(splits_path), fractions, seed)
     if len(videos) < 3:
         print(
             f"WARNING: only {len(videos)} source video(s); everything goes to train",
             file=sys.stderr,
         )
 
-    if out.exists():
-        for name in ("frames", *(f"{s}.jsonl" for s in SPLITS)):
-            target = out / name
-            if target.is_dir():
-                shutil.rmtree(target)
-            else:
-                target.unlink(missing_ok=True)
-    out.mkdir(parents=True, exist_ok=True)
+    clear_outputs(out)
 
     rows: dict[str, list[dict]] = {s: [] for s in SPLITS}
     stats = Counter()
@@ -325,10 +239,10 @@ def build(
     for clip in sorted(clips, key=lambda c: c.clip_id):
         split = assignment[clip.source_video]
         for view in clip.views:
-            seed_for_sample = int(_h(f"{seed}|{clip.clip_id}|{view.camera}")[:16], 16)
+            seed_for_sample = int(sha256_text(f"{seed}|{clip.clip_id}|{view.camera}")[:16], 16)
             rng = random.Random(seed_for_sample)  # noqa: S311 - sampling, not security
             n = rng.randint(frames_min, frames_max)
-            times = frame_times(clip_duration(clip), n)
+            times = frame_times(clip_duration(clip), n, frame_fps)
             if len(times) < MIN_FRAMES:
                 skipped.append(
                     f"{clip.clip_id}|{view.camera}: clip too short for {MIN_FRAMES} frames"
@@ -350,24 +264,9 @@ def build(
     if not stats["samples"]:
         raise LabelError("no sample could be built:\n  " + "\n  ".join(skipped))
 
-    files = {}
-    for split, items in rows.items():
-        path = out / f"{split}.jsonl"
-        path.write_text("".join(json.dumps(r, sort_keys=True) + "\n" for r in items))
-        files[path.name] = sha256_file(path)
-    frame_hashes = sorted(
-        (p.relative_to(out).as_posix(), sha256_file(p)) for p in (out / "frames").rglob("*.jpg")
-    )
+    files = write_split_files(out, rows)
     label_counts = Counter(label for items in rows.values() for r in items for label in r["labels"])
-
-    splits_path.write_text(
-        json.dumps(
-            {"seed": seed, "fractions": list(fractions), "assignments": assignment},
-            indent=1,
-            sort_keys=True,
-        )
-        + "\n"
-    )
+    write_splits(splits_path, assignment, fractions, seed)
     prompt_file = PROMPTS_DIR / PROMPT_NAME / f"{PROMPT_VERSION}.md"
     manifest = {
         "schema": "tg_dataset.v1",
@@ -382,6 +281,7 @@ def build(
             "frames_max": frames_max,
             "max_height": MAX_HEIGHT,
             "jitter_s": jitter_s,
+            "frame_fps": frame_fps,
             "seed": seed,
             "fractions": list(fractions),
         },
@@ -394,23 +294,13 @@ def build(
             "frames_outside_every_span": stats["frames_outside_every_span"],
             "labels": dict(sorted(label_counts.items())),
         },
-        "splits": {s: sorted(v for v, a in assignment.items() if a == s) for s in SPLITS},
+        "splits": {s: sorted(v for v in videos if assignment[v] == s) for s in SPLITS},
         "files": files,
-        "frames_sha256": _h(json.dumps(frame_hashes)),
+        "frames_sha256": frames_digest(out),
         "skipped": skipped,
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
-    (out / "dataset-metadata.json").write_text(
-        json.dumps(
-            {
-                "title": "GenAI-VMS TG phase grounding",
-                "id": "YOUR_KAGGLE_USERNAME/genai-vms-tg-phase",
-                "licenses": [{"name": "other"}],
-            },
-            indent=1,
-        )
-        + "\n"
-    )
+    write_kaggle_metadata(out, "GenAI-VMS TG phase grounding", "genai-vms-tg-phase")
     return manifest
 
 
@@ -438,6 +328,12 @@ def main() -> None:
         default=1.5,
         help="seconds the flagged span may differ from `action`",
     )
+    ap.add_argument(
+        "--frame-fps",
+        type=float,
+        default=FRAME_FPS,
+        help="frames a second the footage has (perception: 2, or 1 when behind)",
+    )
     ap.add_argument("--seed", type=int, default=7)
     args = ap.parse_args()
     try:
@@ -449,6 +345,7 @@ def main() -> None:
             frames_min=args.frames_min,
             frames_max=args.frames_max,
             jitter_s=args.jitter,
+            frame_fps=args.frame_fps,
             seed=args.seed,
         )
     except LabelError as exc:

@@ -19,7 +19,8 @@ prompt hash, split assignment, counts, a hash of every file), `splits.json` and
 ## What a sample is
 
 For one camera view of one clip: 5–8 frames (a seeded count per sample, the range the service can
-show), picked from the clip's one-frame-a-second timeline with the service's own `pick_evenly`; the
+show), picked from the frames a camera has (2 a second as perception samples by default; `--frame-fps 1`
+for a degraded run) with the service's own `pick_evenly`; the
 user turn is the `phase_tg` 1.0 prompt rendered the way `services/reasoning/steps/phases.py`
 renders it; the assistant turn is `{"phases": ["baseline", "baseline", "action", ...]}`, one stage
 per frame, the shape the service parses (`FrameLabels`). So a trained adapter is a drop-in
@@ -41,7 +42,8 @@ If the service moves to spans, change `sample_record` and the prompt together.
   (`frames_outside_every_span`); a large number means the annotation leaves gaps.
 - **Splits are by source video** (70/15/15, at least one video each in val and test from three
   videos up) and recorded in `splits.json`, which is only ever extended: add annotations and rebuild
-  and no earlier video moves between splits. Point the PhaVR builder (P5-J1) at the same file.
+  and no earlier video moves between splits, and a video missing from this run keeps its split.
+  Point the PhaVR builder (P5-J1) at the same file.
 - **Clips with fewer than 3 frames** and videos that cannot be found are skipped and listed in the
   manifest (`skipped`), not fatal; if nothing can be built, it fails and says why.
 
