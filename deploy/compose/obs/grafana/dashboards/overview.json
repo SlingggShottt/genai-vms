@@ -1,0 +1,506 @@
+{
+ "uid": "genai-vms-overview",
+ "title": "GenAI-VMS overview",
+ "tags": [
+  "genai-vms"
+ ],
+ "timezone": "browser",
+ "schemaVersion": 39,
+ "version": 1,
+ "refresh": "30s",
+ "time": {
+  "from": "now-3h",
+  "to": "now"
+ },
+ "panels": [
+  {
+   "id": 1,
+   "type": "stat",
+   "title": "Services up",
+   "description": "1 = scraped; a service not running in that mode shows 0",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 5
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "up",
+     "legendFormat": "{{service}} ({{job}})",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "type": "timeseries",
+   "title": "Segment \u2192 searchable, p95",
+   "description": "Seconds from a segment's end to its twin being indexed: the pipeline's end-to-end lag",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 5,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(vms_indexer_lag_seconds_bucket[5m])))",
+     "legendFormat": "p95",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(vms_indexer_lag_seconds_bucket[5m])))",
+     "legendFormat": "p50",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "type": "timeseries",
+   "title": "Segments indexed per minute",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 5,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum(rate(vms_indexer_segments_total[5m]))*60",
+     "legendFormat": "indexed",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "type": "timeseries",
+   "title": "Perception latency, p95",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 5,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(vms_perception_latency_seconds_bucket[5m])))",
+     "legendFormat": "p95",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "type": "timeseries",
+   "title": "Rule candidates per minute",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 13,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (rule) (rate(vms_events_candidates_total[5m]))*60",
+     "legendFormat": "{{rule}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "type": "timeseries",
+   "title": "VLM gate outcomes per minute",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 13,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (outcome) (rate(vms_events_verifications_total[5m]))*60",
+     "legendFormat": "{{outcome}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "type": "timeseries",
+   "title": "VLM gate time, p95",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 13,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(vms_events_verification_seconds_bucket[5m])))",
+     "legendFormat": "p95",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "type": "timeseries",
+   "title": "Model request time, p95 by task",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 21,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le, task) (rate(vms_llm_request_seconds_bucket[5m])))",
+     "legendFormat": "{{task}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "type": "timeseries",
+   "title": "Model lease wait, p95",
+   "description": "Time spent waiting for the GPU",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 21,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(vms_llm_lease_wait_seconds_bucket[5m])))",
+     "legendFormat": "p95",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "type": "timeseries",
+   "title": "Search time by stage, p95",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 29,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le, stage) (rate(vms_search_stage_seconds_bucket[5m])))",
+     "legendFormat": "{{stage}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 11,
+   "type": "timeseries",
+   "title": "Searches and assistant turns per minute",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 29,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (kind, mode) (rate(vms_search_requests_total[5m]))*60",
+     "legendFormat": "search {{kind}} {{mode}}",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (outcome) (rate(vms_assistant_turns_total[5m]))*60",
+     "legendFormat": "assistant {{outcome}}",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 12,
+   "type": "timeseries",
+   "title": "Reasoning queue",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 37,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "vms_reasoning_queue_depth_jobs",
+     "legendFormat": "waiting",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 13,
+   "type": "timeseries",
+   "title": "Reasoning stage time, p95",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 37,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "histogram_quantile(0.95, sum by (le, stage) (rate(vms_reasoning_job_seconds_bucket[5m])))",
+     "legendFormat": "{{stage}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 14,
+   "type": "timeseries",
+   "title": "Reasoning jobs and daily reports",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 37,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (outcome) (increase(vms_reasoning_jobs_total[1h]))",
+     "legendFormat": "jobs {{outcome}} (1 h)",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (narrative) (increase(vms_reasoning_daily_reports_total[24h]))",
+     "legendFormat": "daily reports {{narrative}} (24 h)",
+     "refId": "B"
+    }
+   ]
+  }
+ ]
+}

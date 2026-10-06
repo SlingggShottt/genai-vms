@@ -4,7 +4,7 @@
 
 GenAI-VMS turns live multi-camera CCTV into a searchable, explainable record. Every clip becomes a structured digital twin. Events are detected, verified by a vision-language model and linked across cameras. Operators search footage in plain language or with an image. A reasoning pipeline explains incidents phase by phase and writes incident reports, daily security reports and cited answers to questions.
 
-> **Status:** Implementation starting (Phase 1 of 7). Built as the CCVR COE internship project at RV College of Engineering, Bengaluru.
+> **Status (4 Oct 2026):** the pipeline from camera to cited answer runs end to end on one 4 GB laptop: ingestion, perception, verified events, correlation and alerts, reasoning-based text and image search with object masks, phase-aware event analysis and incident reports, the assistant, daily reports, cases and a timeline, with Compose, Kubernetes manifests, Prometheus/Grafana and a latency evaluation. **What is not done**, honestly: the fine-tuned phase adapters are not trained (analysis uses the zero-shot base model), only one real camera has been exercised, the Kubernetes manifests have never been applied to a cluster, and there is no human-labelled retrieval or phase benchmark yet. Per-story detail is in [`docs/backlog.md`](docs/backlog.md). Built as the CCVR COE internship project at RV College of Engineering, Bengaluru.
 
 ---
 
@@ -81,10 +81,12 @@ cp config/cameras.example.yaml config/cameras.yaml
 cp config/camera_sim.example.yaml config/camera_sim.yaml  # point `file:` at your video (see the notes below)
 
 make up PROFILE=infra,core,perception,tools   # ingestion, indexer, events (rule engine), perception (GPU), camera simulator
-uv run --package vms-api uvicorn api.main:app --port 8000  # the API runs on the host for now (not a compose service yet)
-
-cd frontend && npm run dev              # dashboard on http://localhost:5173
+make up PROFILE=infra,core,genai        # + api, frontend (nginx on :5173), retrieval, reasoning (see the GenAI note below)
 ```
+
+Prefer a fast edit loop? `make demo` runs Ollama, retrieval, reasoning, the API and the Vite dev server on the host
+instead (`make demo-stop` to stop them); the runbook, with what to show and the known limits, is
+[`deploy/demo/README.md`](deploy/demo/README.md).
 
 Notes from running this end to end (4 GB RTX 3050 laptop, Ubuntu, Docker 29):
 
@@ -98,10 +100,15 @@ Enable GenAI features (events verification, search reasoning, incident reports, 
 ```bash
 # Run Ollama with OLLAMA_MAX_LOADED_MODELS=1: one model in VRAM at a time, like the gateway's GPU lease
 ollama pull qwen2.5vl:3b && ollama pull qwen2.5:3b
-make up PROFILE=infra,core,perception,genai
+# (Ollama listens on the host: OLLAMA_HOST=0.0.0.0, so the containers can reach it)
+make up PROFILE=infra,core,genai
 # or use free cloud models for reasoning:
-VMS_LLM_PROFILE=hybrid make up PROFILE=infra,core,perception,genai
+VMS_LLM_PROFILE=hybrid make up PROFILE=infra,core,genai
 ```
+
+On a 4 GB card perception and the language models cannot share the GPU: run them in turn (perception while
+footage is being recorded, the models when searching, asking and analysing). Ollama silently falls back to
+the CPU if perception holds the VRAM when a model loads — see the runbook.
 
 | URL | What |
 |---|---|
@@ -114,10 +121,14 @@ VMS_LLM_PROFILE=hybrid make up PROFILE=infra,core,perception,genai
 ### Run on Kubernetes (minikube)
 
 ```bash
-make k8s-up          # minikube start (GPU if available), operators, infra, apps, ingress
-make k8s-status
+minikube start --driver=docker --cpus=6 --memory=10g && minikube addons enable ingress
+cp deploy/k8s/overlays/minikube/secrets.env.example deploy/k8s/overlays/minikube/secrets.env   # edit
+make k8s-up          # builds the images into minikube, applies the kustomize overlay
 make k8s-down
 ```
+
+The manifests (`deploy/k8s`) render and pass `kubeconform -strict`, but **have not been applied to a cluster**; see
+[`deploy/k8s/README.md`](deploy/k8s/README.md) for what is and is not verified.
 
 If GPU passthrough into minikube isn't available on your machine, GPU services run on the host and are exposed into the cluster; see `deploy/k8s/README.md`.
 
@@ -164,19 +175,23 @@ The system adapts these ideas from short benchmark clips to continuous, multi-ca
 
 ## Evaluation
 
-Retrieval accuracy (Recall@K, mAP, temporal IoU with ablations), phase reasoning (mIoU, captioning metrics, VQA accuracy), response quality (faithfulness, citation precision, report rubric), latency (ingest-to-index, event-to-alert, search, report generation) and usability (SUS, task time). Harnesses live in `ml/evaluation/`; results are published per phase.
+Retrieval accuracy (Recall@K, mAP, temporal IoU with ablations), phase reasoning (mIoU, captioning metrics, VQA accuracy), response quality (faithfulness, citation precision, report rubric), latency (ingest-to-index, event-to-alert, search, report generation) and usability (SUS, task time). Harnesses live in `ml/evaluation/`; results are published per phase in [`ml/evaluation/results/`](ml/evaluation/results/):
+perception on 4 GB, local-model latency and VRAM, **end-to-end latency of the running stack**
+([`p7-latency.md`](ml/evaluation/results/p7-latency.md): fast search p95 0.25 s, reason search p50 15.6 s) and
+**restarting workers mid-stream** ([`p7-resilience.md`](ml/evaluation/results/p7-resilience.md)). Retrieval accuracy and
+phase-reasoning metrics need human-labelled data and are not yet measured.
 
 ## Roadmap
 
 | Phase | Milestone |
 |---|---|
-| 1 | Live multi-camera ingestion, login, camera wall |
-| 2 | Perception, digital twin, playback with overlays |
-| 3 | Verified events, multi-camera correlation, alerts |
-| 4 | Text and image search with reasoning and grounding |
-| 5 | Fine-tuned phase-aware reasoning |
-| 6 | Incident reports, assistant, daily reports, investigation timeline |
-| 7 | Kubernetes, cloud deployment, full evaluation |
+| 1 | Live multi-camera ingestion, login, camera wall — **done** |
+| 2 | Perception, digital twin, playback with overlays — **done** |
+| 3 | Verified events, multi-camera correlation, alerts — **done** |
+| 4 | Text and image search with reasoning and grounding — **built** (benchmark pending) |
+| 5 | Fine-tuned phase-aware reasoning — **pipeline built on the zero-shot base**; adapters not trained (needs annotated data) |
+| 6 | Incident reports, assistant, daily reports, investigation timeline — **built** (PDF is the browser's print; no synced multi-camera playback) |
+| 7 | Kubernetes, cloud deployment, full evaluation — **manifests, observability and latency done**; cluster run, cloud deployment, quality evaluation pending |
 
 ## Team
 

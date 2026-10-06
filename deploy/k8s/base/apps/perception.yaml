@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: perception
+  labels:
+    app.kubernetes.io/name: perception
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: perception
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: perception
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9102"
+        prometheus.io/path: /metrics
+    spec:
+      nodeSelector:
+        vms.io/gpu-role: perception
+      containers:
+        - name: perception
+          image: genai-vms-perception:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: vms-env }
+            - secretRef: { name: vms-secrets }
+          ports:
+            - { name: metrics, containerPort: 9102 }
+          resources:
+            requests: { cpu: 1, memory: 2Gi }
+            limits: { nvidia.com/gpu: 1, memory: 4Gi }
+          volumeMounts:
+            - { name: config, mountPath: /app/config, readOnly: true }
+      volumes:
+        - name: config
+          configMap:
+            name: vms-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: perception
+  labels:
+    app.kubernetes.io/name: perception
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  selector:
+    app.kubernetes.io/name: perception
+  ports:
+    - { name: metrics, port: 9102, targetPort: 9102 }

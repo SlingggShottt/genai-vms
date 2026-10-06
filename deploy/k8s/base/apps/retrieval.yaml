@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: retrieval
+  labels:
+    app.kubernetes.io/name: retrieval
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: retrieval
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: retrieval
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8010"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: retrieval
+          image: genai-vms-retrieval:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: vms-env }
+            - secretRef: { name: vms-secrets }
+          env:
+            - { name: HF_HOME, value: "/hf" }
+            - { name: VMS_KNOWLEDGE_CACHE_DIR, value: "/hf/fastembed" }
+          ports:
+            - { name: http, containerPort: 8010 }
+          readinessProbe:
+            httpGet: { path: /ready, port: 8010 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /health, port: 8010 }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { memory: 3Gi }
+          volumeMounts:
+            - { name: config, mountPath: /app/config, readOnly: true }
+            - { name: hf, mountPath: /hf }
+      volumes:
+        - name: config
+          configMap:
+            name: vms-config
+        - name: hf
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: retrieval
+  labels:
+    app.kubernetes.io/name: retrieval
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  selector:
+    app.kubernetes.io/name: retrieval
+  ports:
+    - { name: http, port: 8010, targetPort: 8010 }

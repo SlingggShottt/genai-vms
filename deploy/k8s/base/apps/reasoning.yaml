@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reasoning
+  labels:
+    app.kubernetes.io/name: reasoning
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: reasoning
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: reasoning
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9106"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: reasoning
+          image: genai-vms-reasoning:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: vms-env }
+            - secretRef: { name: vms-secrets }
+          env:
+            - { name: VMS_REASONING_VQA_BANK_PATH, value: "/app/config/vqa_bank.yaml" }
+          ports:
+            - { name: metrics, containerPort: 9106 }
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi }
+          volumeMounts:
+            - { name: config, mountPath: /app/config, readOnly: true }
+      volumes:
+        - name: config
+          configMap:
+            name: vms-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reasoning
+  labels:
+    app.kubernetes.io/name: reasoning
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  selector:
+    app.kubernetes.io/name: reasoning
+  ports:
+    - { name: metrics, port: 9106, targetPort: 9106 }

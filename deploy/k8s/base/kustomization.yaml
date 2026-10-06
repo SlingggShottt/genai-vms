@@ -1,0 +1,51 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vms
+
+# `config/` lives at the repository root, outside this directory, so build with
+#   kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/k8s/overlays/minikube
+# (the Makefile's `k8s-render` does).
+resources:
+  - namespace.yaml
+  - infra/postgres.yaml
+  - infra/redis.yaml
+  - infra/qdrant.yaml
+  - infra/minio.yaml
+  - infra/kafka.yaml
+  - infra/mediamtx.yaml
+  - jobs/topics.yaml
+  - jobs/migrate.yaml
+  - apps/api.yaml
+  - apps/frontend.yaml
+  - apps/retrieval.yaml
+  - apps/reasoning.yaml
+  - apps/indexer.yaml
+  - apps/events.yaml
+  - apps/correlation.yaml
+  - apps/ingestion.yaml
+  - apps/perception.yaml
+  - ingress.yaml
+
+configMapGenerator:
+  # Non-secret settings every service reads (names match the Compose files).
+  - name: vms-env
+    literals:
+      - VMS_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - VMS_STORAGE_ENDPOINT_URL=http://minio:9000
+      - VMS_REDIS_URL=redis://redis:6379/0
+      - VMS_QDRANT_URL=http://qdrant:6333
+      - VMS_LLM_PROFILE=local
+      - VMS_LLM_MODELS_PATH=/app/config/models.yaml
+      - VMS_LLM_OLLAMA_URL=http://host.minikube.internal:11434
+  # The same YAML files Compose mounts: model registry, rules, correlation, VQA bank, cameras.
+  - name: vms-config
+    files:
+      - ../../../config/models.yaml
+      - ../../../config/rules.yaml
+      - ../../../config/correlation.yaml
+      - ../../../config/vqa_bank.yaml
+      - ../../../config/cameras.yaml
+      - ../../../config/zones.yaml
+  - name: mediamtx-config
+    files:
+      - mediamtx.yml=../../compose/mediamtx.yml

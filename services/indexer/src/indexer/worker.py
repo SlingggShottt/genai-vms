@@ -4,6 +4,8 @@ object storage, and indexes them into Postgres (P2-J1) and Qdrant (P2-J2).
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from aiokafka.structs import ConsumerRecord
 from qdrant_client import AsyncQdrantClient
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -17,6 +19,7 @@ from vms_db.session import session_scope
 
 from indexer.adapters.qdrant_repository import index_embeddings
 from indexer.adapters.repository import index_twin
+from indexer.metrics import index_lag_seconds, segments_total
 
 log = get_logger(__name__)
 
@@ -55,6 +58,8 @@ class IndexerConsumer(BaseConsumer[TwinReadyV1]):
             embeddings = load_embeddings_npz(embeddings_bytes)
             await index_embeddings(self._qdrant, twin, embeddings)
 
+            segments_total.labels(camera=message.camera_id).inc()
+            index_lag_seconds.observe(max(0.0, (datetime.now(UTC) - twin.end_ts).total_seconds()))
             log.info("segment_indexed", segment_id=message.segment_id, tracks=len(twin.tracks))
         finally:
             clear_context()

@@ -33,6 +33,7 @@ class IntrusionRestrictedParams(RuleParams):
 @rule("intrusion.restricted")
 class IntrusionRestricted(ZoneRule):
     event_type = "intrusion"
+    description = "A person or vehicle is inside a restricted area."
     default_severity: Severity = "high"
     Params = IntrusionRestrictedParams
 

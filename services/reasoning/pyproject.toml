@@ -3,10 +3,19 @@ name = "vms-reasoning"
 version = "0.1.0"
 description = "Reasoning job queue; TG phase segmentation; PhaVR evidence bundle; incident synthesis; daily reports."
 requires-python = ">=3.11"
-dependencies = ["vms-common"]
+dependencies = [
+    "pillow>=10.4",
+    "tzdata>=2024.1",
+    "vms-common[llm]",
+    "vms-db",
+]
+
+[project.scripts]
+reasoning = "reasoning.main:main"
 
 [tool.uv.sources]
 vms-common = { workspace = true }
+vms-db = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

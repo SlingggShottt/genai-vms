@@ -42,7 +42,8 @@ def migrated_postgres_dsn() -> Iterator[str]:
 async def session_factory(migrated_postgres_dsn: str) -> AsyncIterator[async_sessionmaker]:
     engine = create_engine(DatabaseSettings(dsn=migrated_postgres_dsn))
     factory = create_session_factory(engine)
-    async with factory() as session:  # every test starts from an empty candidates table
+    async with factory() as session:  # every test starts from empty candidates and events tables
+        await session.execute(text("DELETE FROM events.events"))
         await session.execute(text("DELETE FROM events.candidates"))
         await session.commit()
     try:

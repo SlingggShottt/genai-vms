@@ -1,6 +1,18 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { History, LayoutGrid, ListChecks, Settings, LogOut } from 'lucide-react';
+import {
+  BarChart3,
+  Briefcase,
+  FileText,
+  GanttChart,
+  History,
+  LayoutGrid,
+  ListChecks,
+  MessageSquare,
+  Search,
+  Settings,
+  LogOut,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AlertTray } from '@/features/alerts/components/AlertTray';
 import { LiveAlertsProvider } from '@/features/alerts/LiveAlerts';
@@ -16,8 +28,14 @@ import { cn } from '@/lib/utils';
 const NAV_ITEMS = [
   { to: '/', label: 'Live wall', icon: LayoutGrid, end: true },
   { to: '/playback', label: 'Playback', icon: History, end: false },
+  { to: '/search', label: 'Search', icon: Search, end: false },
   // Alerts and events are for operators and admins (the api answers a viewer with 403).
   { to: '/events', label: 'Events', icon: ListChecks, end: false, needsAlerts: true },
+  { to: '/incidents', label: 'Incidents', icon: FileText, end: false },
+  { to: '/assistant', label: 'Assistant', icon: MessageSquare, end: false },
+  { to: '/timeline', label: 'Timeline', icon: GanttChart, end: false },
+  { to: '/reports', label: 'Reports', icon: BarChart3, end: false },
+  { to: '/cases', label: 'Cases', icon: Briefcase, end: false, needsAlerts: true },
 ];
 
 function NavRail() {

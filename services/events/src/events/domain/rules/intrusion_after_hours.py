@@ -33,6 +33,7 @@ class IntrusionAfterHoursParams(RuleParams):
 @rule("intrusion.after_hours")
 class IntrusionAfterHours(ZoneRule):
     event_type = "intrusion"
+    description = "A person is present in the area."
     default_severity: Severity = "high"
     Params = IntrusionAfterHoursParams
 

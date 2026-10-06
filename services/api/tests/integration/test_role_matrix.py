@@ -61,6 +61,40 @@ ROUTER_TABLE: list[tuple[str, str, frozenset[str] | None]] = [
     ("POST", "/api/v1/alerts/{alert_id}/resolve", frozenset({"admin", "operator"})),
     ("GET", "/api/v1/correlations", None),
     ("GET", "/api/v1/correlations/{group_id}", None),
+    # Reasoning, reports, cases and the timeline (P5/P6): database-only endpoints. The ones that
+    # proxy to the retrieval service (search, assistant, similar incidents) cannot be asked to
+    # succeed here without it; their authentication is checked in `AUTH_REQUIRED` below.
+    ("GET", "/api/v1/incidents", None),
+    ("GET", "/api/v1/reasoning/jobs", None),
+    ("GET", "/api/v1/reports/daily", None),
+    ("POST", "/api/v1/reports/daily", frozenset({"admin", "operator"})),
+    ("GET", "/api/v1/cases", frozenset({"admin", "operator"})),
+    ("POST", "/api/v1/cases", frozenset({"admin", "operator"})),
+    ("GET", "/api/v1/timeline", None),
+]
+
+# Endpoints that need a login (401 without one) and, where noted, an operator (403 for a viewer).
+# They are not in ROUTER_TABLE because a successful call needs another service (retrieval) or a
+# resource only the pipeline creates.
+AUTH_REQUIRED: list[tuple[str, str, bool]] = [
+    ("POST", "/api/v1/search", False),
+    ("POST", "/api/v1/search/image", False),
+    ("POST", "/api/v1/search/grounding", False),
+    ("GET", "/api/v1/assistant/starters", False),
+    ("GET", "/api/v1/assistant/sessions", False),
+    ("POST", "/api/v1/assistant/sessions", False),
+    ("GET", "/api/v1/incidents/{uuid}", False),
+    ("GET", "/api/v1/incidents/{uuid}/similar", False),
+    ("PATCH", "/api/v1/incidents/{uuid}", True),
+    ("POST", "/api/v1/events/{uuid}/analyze", True),
+    ("GET", "/api/v1/events/{uuid}/reasoning", False),
+    ("GET", "/api/v1/events/{uuid}/alert", False),
+    ("GET", "/api/v1/reasoning/jobs/{uuid}", False),
+    ("GET", "/api/v1/reports/daily/{uuid}", False),
+    ("GET", "/api/v1/cases/{uuid}", True),
+    ("PATCH", "/api/v1/cases/{uuid}", True),
+    ("DELETE", "/api/v1/cases/{uuid}", True),
+    ("POST", "/api/v1/cases/{uuid}/items", True),
 ]
 
 
@@ -262,6 +296,11 @@ def _body_for(
             "zone_type": "restricted",
             "polygon": [[0.1, 0.1], [0.5, 0.2], [0.3, 0.6]],
         }
+    if method == "POST" and path == "/api/v1/reports/daily":
+        today = datetime.now(UTC).date().isoformat()
+        return {"date_from": today, "date_to": today}
+    if method == "POST" and path == "/api/v1/cases":
+        return {"title": "Matrix case"}
     if method == "PATCH" and "/users/" in path:
         return {"full_name": "Renamed"}
     if method == "PATCH" and "/cameras/" in path:
@@ -273,6 +312,8 @@ def _body_for(
 
 def _params_for(path: str) -> dict[str, str] | None:
     if "/recordings/" in path or "/twin/" in path:
+        return {"start": _WINDOW_START.isoformat(), "end": _WINDOW_END.isoformat()}
+    if path == "/api/v1/timeline":
         return {"start": _WINDOW_START.isoformat(), "end": _WINDOW_END.isoformat()}
     return None
 
@@ -340,3 +381,23 @@ def test_router_table_rejects_unauthenticated(
     )
     status_code = _call(client, method, resolved_path, None)
     assert status_code == 401
+
+
+@pytest.mark.parametrize("method,path,operator_only", AUTH_REQUIRED)
+def test_auth_required_endpoints_reject_no_login_and_viewers_where_operator_only(
+    client: TestClient,
+    admin_access_token: str,
+    role_tokens: dict[str, str],
+    auth_headers: Callable[[str], dict[str, str]],
+    method: str,
+    path: str,
+    operator_only: bool,
+) -> None:
+    resolved = path.format(uuid=uuid.uuid4())
+    body = {} if method in ("POST", "PATCH") else None
+    assert client.request(method, resolved, json=body).status_code == 401, resolved
+    if operator_only:
+        viewer = client.request(
+            method, resolved, json=body, headers=auth_headers(role_tokens["viewer"])
+        )
+        assert viewer.status_code == 403, f"{method} {resolved} as viewer: {viewer.status_code}"

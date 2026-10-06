@@ -31,6 +31,30 @@ from pathlib import Path
 SEGMENT_LIST_POLL_SECONDS = 0.5
 
 
+class StreamStalledError(RuntimeError):
+    """The segmenter is running but no segment has completed for too long."""
+
+
+async def watch_for_stall(
+    progress: dict[str, float],
+    timeout_s: float,
+    *,
+    poll_s: float = 5.0,
+    clock=None,
+    sleep=asyncio.sleep,
+) -> None:
+    """Raise `StreamStalledError` once `progress["at"]` (a monotonic time the caller refreshes at
+    each completed segment) is older than `timeout_s`. Runs until then or until cancelled."""
+    import time
+
+    now = clock or time.monotonic
+    while True:
+        await sleep(poll_s)
+        idle = now() - progress["at"]
+        if idle > timeout_s:
+            raise StreamStalledError(f"no segment completed for {idle:.0f} s")
+
+
 @dataclass(frozen=True)
 class CompletedSegment:
     """One finished local `.ts` file, with the wall-clock window Python observed."""
@@ -48,11 +72,14 @@ def build_ffmpeg_segment_command(
     camera_id: str,
     segment_list_path: Path,
     segment_seconds: int,
+    io_timeout_seconds: float = 15.0,
 ) -> list[str]:
     """ffmpeg argv: stream-copy segmenter (FR-ING-02: no re-encode where possible).
 
     Segments can only be cut on keyframes when stream-copying — see module
-    docstring for what that means for actual segment length.
+    docstring for what that means for actual segment length. `io_timeout_seconds` bounds a stalled
+    read; `ingestion.worker` adds a second guard (no segment for too long) for stalls the socket
+    timeout does not see.
     """
     return [
         "ffmpeg",
@@ -61,6 +88,11 @@ def build_ffmpeg_segment_command(
         "warning",
         "-rtsp_transport",
         "tcp",
+        # Socket I/O timeout (microseconds). Without it a publisher that dies without closing the
+        # connection leaves ffmpeg blocked on a read forever: it never exits, so nothing reconnects
+        # and recording stops without a log line (found by restarting the camera simulator).
+        "-timeout",
+        str(int(io_timeout_seconds * 1_000_000)),
         "-i",
         rtsp_url,
         "-c",

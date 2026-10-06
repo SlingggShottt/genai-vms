@@ -22,7 +22,7 @@ from alembic.config import Config
 from api.adapters.alerts import create_if_absent
 from api.domain.alerts import AlertDraft
 from api.main import create_app
-from api.settings import AdminSeedSettings, AlertSettings, ApiSettings
+from api.settings import AdminSeedSettings, AlertSettings, ApiSettings, RateLimitSettings
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from redis.asyncio import Redis
@@ -173,6 +173,9 @@ def api_settings(
         # No Kafka in the shared fixtures: tests drive the consumers' `handle` directly, and
         # test_alert_consumers_kafka.py turns them on against a real broker.
         alerts=AlertSettings(_env_file=None, consumers_enabled=False),
+        # Tests log in and call endpoints far faster than a person could; the limiter has its own
+        # unit tests (tests/unit/test_ratelimit.py).
+        ratelimit=RateLimitSettings(_env_file=None, enabled=False),
     )
 
 

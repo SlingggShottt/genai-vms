@@ -5,6 +5,7 @@ autogenerate can discover them through `Base.metadata`
 
 from __future__ import annotations
 
+from vms_db.models.cases import Case, CaseItem
 from vms_db.models.core import (
     Alert,
     AlertStatus,
@@ -19,8 +20,10 @@ from vms_db.models.core import (
     ZoneType,
 )
 from vms_db.models.correlation import CorrelationGroup, CorrelationLinkRow
-from vms_db.models.events import Candidate
+from vms_db.models.events import Candidate, Event
 from vms_db.models.media import Segment
+from vms_db.models.reasoning import DailyReport, Incident, ReasoningJob
+from vms_db.models.retrieval import ChatMessage, ChatSession, JitCache, SearchLog
 from vms_db.models.vision import MinuteCount, Track, TrackSegment
 
 __all__ = [
@@ -28,12 +31,22 @@ __all__ = [
     "AlertStatus",
     "AuditLog",
     "Camera",
+    "Case",
+    "CaseItem",
+    "ChatMessage",
+    "ChatSession",
     "Candidate",
     "CorrelationGroup",
     "CorrelationLinkRow",
+    "DailyReport",
     "EdgeType",
+    "Event",
+    "Incident",
+    "JitCache",
     "MinuteCount",
+    "ReasoningJob",
     "RefreshToken",
+    "SearchLog",
     "Segment",
     "TopologyEdge",
     "Track",

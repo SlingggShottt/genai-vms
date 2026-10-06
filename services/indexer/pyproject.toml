@@ -3,7 +3,7 @@ name = "vms-indexer"
 version = "0.1.0"
 description = "Idempotent writes of segments, tracks, event captions and incident sections into PostgreSQL + Qdrant."
 requires-python = ">=3.11"
-dependencies = ["vms-common", "vms-db", "qdrant-client>=1.11,<1.12"]
+dependencies = ["vms-common[knowledge]", "vms-db", "qdrant-client>=1.11,<1.12"]
 
 [project.scripts]
 indexer = "indexer.main:main"

@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: correlation
+  labels:
+    app.kubernetes.io/name: correlation
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: correlation
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: correlation
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9105"
+        prometheus.io/path: /metrics
+    spec:
+      containers:
+        - name: correlation
+          image: genai-vms-correlation:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: vms-env }
+            - secretRef: { name: vms-secrets }
+          env:
+            - { name: VMS_CORRELATION_CONFIG_PATH, value: "/app/config/correlation.yaml" }
+            - { name: VMS_CORRELATION_TOPOLOGY_YAML_FALLBACK, value: "/app/config/topology.yaml" }
+          ports:
+            - { name: metrics, containerPort: 9105 }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { memory: 512Mi }
+          volumeMounts:
+            - { name: config, mountPath: /app/config, readOnly: true }
+      volumes:
+        - name: config
+          configMap:
+            name: vms-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: correlation
+  labels:
+    app.kubernetes.io/name: correlation
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  selector:
+    app.kubernetes.io/name: correlation
+  ports:
+    - { name: metrics, port: 9105, targetPort: 9105 }

@@ -40,6 +40,7 @@ class CrowdingParams(RuleParams):
 @rule("crowding")
 class Crowding(ZoneRule):
     event_type = "crowding"
+    description = "Many people are gathered in the same area."
     default_severity: Severity = "medium"
     Params = CrowdingParams
 

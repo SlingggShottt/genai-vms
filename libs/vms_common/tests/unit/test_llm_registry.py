@@ -68,12 +68,13 @@ def test_shipped_models_yaml_loads_for_every_profile(profile: str) -> None:
     } <= set(registry.task_names())  # fmt: skip
 
 
-def test_shipped_local_profile_runs_everything_on_ollama_or_hf_local() -> None:
+def test_shipped_local_profile_runs_everything_on_ollama_until_the_adapters_exist() -> None:
     registry = ModelRegistry.from_file(MODELS_YAML, profile="local")
     providers = {
         registry.task(t).primary.provider for t in registry.task_names() if t != JUDGE_TASK
     }
-    assert providers == {"ollama", "hf_local"}
+    # phase_tg / phase_vr move to hf_local once the LoRA adapters are trained (P5-D2/P5-J2)
+    assert providers == {"ollama"}
 
 
 def test_shipped_hybrid_and_cloud_follow_the_design_split() -> None:
@@ -83,10 +84,10 @@ def test_shipped_hybrid_and_cloud_follow_the_design_split() -> None:
     assert hybrid.task("event_verify").primary.provider == "ollama"
     assert hybrid.task("rerank").primary.provider == "gemini"
     assert hybrid.task("daily_narrative").primary.provider == "groq"
-    # cloud: vision moves too; the fine-tuned adapters can only run locally
+    # cloud: vision moves too; the phase tasks stay on the local zero-shot base
     assert cloud.task("event_verify").primary.provider == "gemini"
     assert cloud.task("jit_vqa").primary.provider == "gemini"
-    assert cloud.task("phase_tg").primary.provider == "hf_local"
+    assert cloud.task("phase_tg").primary.provider == "ollama"
 
 
 def test_shipped_local_tasks_get_a_context_window_big_enough_for_their_images() -> None:

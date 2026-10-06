@@ -20,14 +20,20 @@ from vms_db.session import create_engine, create_session_factory, session_scope
 
 from api.adapters.users import seed_admin_user
 from api.api.alerts import router as alerts_router
+from api.api.assistant import router as assistant_router
 from api.api.auth import router as auth_router
 from api.api.cameras import router as cameras_router
+from api.api.cases import router as cases_router
 from api.api.correlations import router as correlations_router
 from api.api.errors import register_exception_handlers
 from api.api.health import router as health_router
+from api.api.incidents import router as incidents_router
 from api.api.internal import router as internal_router
-from api.api.middleware import RequestIDMiddleware
+from api.api.middleware import RequestIDMiddleware, SecurityHeadersMiddleware
 from api.api.recordings import router as recordings_router
+from api.api.reports import router as reports_router
+from api.api.search import router as search_router
+from api.api.timeline import router as timeline_router
 from api.api.topology import router as topology_router
 from api.api.tracks import router as tracks_router
 from api.api.twin import router as twin_router
@@ -131,6 +137,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
             access_key=settings.storage.access_key,
             secret_key=settings.storage.secret_key,
             region=settings.storage.region,
+            public_endpoint_url=settings.storage.public_endpoint_url,
         )
 
         async with session_scope(session_factory) as session:
@@ -173,6 +180,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.add_middleware(RequestIDMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
 
     register_exception_handlers(app)
     app.include_router(health_router)
@@ -188,6 +196,12 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app.include_router(twin_router, prefix="/api/v1")
     app.include_router(tracks_router, prefix="/api/v1")
     app.include_router(internal_router, prefix="/api/v1")
+    app.include_router(incidents_router, prefix="/api/v1")
+    app.include_router(search_router, prefix="/api/v1")
+    app.include_router(assistant_router, prefix="/api/v1")
+    app.include_router(reports_router, prefix="/api/v1")
+    app.include_router(cases_router, prefix="/api/v1")
+    app.include_router(timeline_router, prefix="/api/v1")
 
     return app
 

@@ -49,6 +49,11 @@ class StorageSettings(VMSBaseSettings):
     access_key: str = Field(default="")
     secret_key: str = Field(default="")
     region: str = Field(default="us-east-1")
+    # Where a *browser* reaches the object store. A presigned URL is signed for one host, so when
+    # the service talks to MinIO as `http://minio:9000` inside Docker but the user's browser
+    # reaches it as `http://localhost:9000`, URLs must be presigned for the latter. Empty = same
+    # as `endpoint_url`.
+    public_endpoint_url: str = Field(default="")
     # NFR-SEC-02: presigned URLs must expire within 15 minutes. The upper
     # bound is enforced here so a bad env value fails fast at startup.
     presign_expiry_seconds: int = Field(default=900, gt=0, le=900)
@@ -60,6 +65,15 @@ class RedisSettings(VMSBaseSettings):
     model_config = SettingsConfigDict(env_prefix="VMS_REDIS_", env_file=".env", extra="ignore")
 
     url: str = Field(default="redis://localhost:6379/0")
+
+
+class KnowledgeSettings(VMSBaseSettings):
+    """Text embedders for the `knowledge` collection — `VMS_KNOWLEDGE_*`."""
+
+    model_config = SettingsConfigDict(env_prefix="VMS_KNOWLEDGE_", env_file=".env", extra="ignore")
+
+    # Where FastEmbed keeps the ONNX models. Empty = ~/.cache/vms-fastembed (not a temp dir).
+    cache_dir: str = Field(default="")
 
 
 class QdrantSettings(VMSBaseSettings):

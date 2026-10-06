@@ -1,12 +1,19 @@
-# retrieval service image — placeholder.
+# retrieval image — text/image search, the assistant. SigLIP 2 runs on CPU here, so no GPU is
+# needed; the image is large because the workspace pins the same torch build as perception
+# (cu124 wheels). The Hugging Face cache is a volume (see Compose), so the model downloads once.
 #
-# Completed when this service's backlog story lands (see docs/backlog.md
-# and docs/design_architecture.md §4). Build pattern: uv-based Python 3.11
-# image, non-root user, multi-stage (builder installs deps, runtime copies
-# the synced venv + src/). See docs/techstack.md §9 for base image policy.
+# Build context is the REPO ROOT (see deploy/compose/docker-compose.yml).
 
-FROM python:3.11-slim AS base
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir uv
+
 WORKDIR /app
+COPY . /app
 
-# TODO: install uv, copy pyproject.toml + uv.lock, `uv sync --frozen --no-dev`,
-# copy src/, set non-root USER, set CMD/ENTRYPOINT.
+# The torch wheel is ~2.5 GB: uv's default 30 s per request is too short on a slow link.
+ENV UV_HTTP_TIMEOUT=900 UV_HTTP_RETRIES=8
+RUN uv sync --package vms-retrieval --no-dev
+
+EXPOSE 8010
+ENTRYPOINT ["uv", "run", "--package", "vms-retrieval", "retrieval"]

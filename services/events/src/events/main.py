@@ -1,5 +1,6 @@
-"""Entrypoint for the events service: one Kafka consumer turning
-`twinready.v1` into rule-engine candidates in `events.candidates` (P3-D1).
+"""Entrypoint for the events service: a Kafka consumer turning `twinready.v1` into rule-engine
+candidates in `events.candidates` (P3-D1), and beside it the VLM verification gate turning
+candidates into `events.events` and `event.v1` (P3-D4).
 """
 
 from __future__ import annotations
@@ -10,16 +11,24 @@ from zoneinfo import ZoneInfo
 
 from pydantic import ValidationError
 from vms_common.contracts.twinready import TwinReadyV1
+from vms_common.kafka.producer import KafkaProducerClient
+from vms_common.llm import LLMGateway
 from vms_common.logging import configure_logging, get_logger
+from vms_common.metrics import serve as serve_metrics
 from vms_common.redis import get_redis_client
 from vms_common.storage.s3 import S3Client
 from vms_db.session import create_engine, create_session_factory
 
+from events.adapters.event_store import PostgresEventStore
+from events.adapters.keyframes import S3KeyframeSource
+from events.adapters.publisher import KafkaEventPublisher
 from events.adapters.rules_loader import load_rules_config
 from events.adapters.state_store import RedisStateStore
 from events.adapters.zones_source import resolve_zones
 from events.domain.rules import registered_rules
+from events.domain.verification import GatePolicy
 from events.settings import EventsSettings
+from events.verifier import Verifier, VerifierOptions
 from events.worker import EventsConsumer
 
 log = get_logger(__name__)
@@ -32,6 +41,7 @@ ZONES_REFRESH_STARTUP_GRACE_S = 0.1  # let the first refresh populate the cache 
 
 async def _amain() -> None:
     configure_logging()
+    serve_metrics(9104)  # Prometheus scrape port, design §15
     settings = EventsSettings()
 
     try:
@@ -89,11 +99,44 @@ async def _amain() -> None:
         site_tz=ZoneInfo(settings.site_timezone),
     )
 
+    gateway = LLMGateway.from_settings(settings.llm, redis=redis_client)
+    log.info("llm_gateway_ready", profile=gateway.profile)
+    verifier_task: asyncio.Task | None = None
     try:
-        async with consumer:
+        async with (
+            KafkaProducerClient(bootstrap_servers=settings.kafka.bootstrap_servers) as producer,
+            consumer,
+        ):
+            verifier = Verifier(
+                gateway=gateway,
+                store=PostgresEventStore(session_factory),
+                publisher=KafkaEventPublisher(producer, topic=settings.events_topic),
+                keyframes=S3KeyframeSource(s3),
+                rules=rules_config,
+                policy=GatePolicy(
+                    min_confidence=settings.verify_min_confidence,
+                    unsure_accepted_up_to=settings.verify_unsure_accepted_up_to,
+                    hold_from=settings.verify_hold_from,
+                    hold_max_age_s=settings.verify_hold_max_age_seconds,
+                ),
+                options=VerifierOptions(
+                    batch_size=settings.verify_batch_size,
+                    poll_s=settings.verify_poll_seconds,
+                    lease_s=settings.verify_lease_seconds,
+                    open_after_s=settings.verify_open_after_seconds,
+                    max_age_s=settings.verify_max_age_seconds,
+                    retry_base_s=settings.verify_retry_base_seconds,
+                    retry_cap_s=settings.verify_retry_cap_seconds,
+                ),
+            )
+            verifier_task = asyncio.create_task(verifier.run(), name="verifier")
             await consumer.run()
     finally:
+        if verifier_task is not None:
+            verifier_task.cancel()
+            await asyncio.gather(verifier_task, return_exceptions=True)
         refresh_task.cancel()
+        await gateway.aclose()
         await engine.dispose()
         await redis_client.aclose()
 

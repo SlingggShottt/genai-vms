@@ -1,0 +1,35 @@
+# Prometheus scrape config for the `obs` profile (design §15). Two groups of targets because the
+# same service runs either in a container (`make up PROFILE=infra,core,genai`) or on the host
+# (`deploy/demo/start.sh`, perception always): whichever is not running just shows as DOWN.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: containers
+    static_configs:
+      - targets: ["api:8000"]
+        labels: { service: api }
+      - targets: ["retrieval:8010"]
+        labels: { service: retrieval }
+      - targets: ["reasoning:9106"]
+        labels: { service: reasoning }
+      - targets: ["events:9104"]
+        labels: { service: events }
+      - targets: ["indexer:9103"]
+        labels: { service: indexer }
+      - targets: ["correlation:9105"]
+        labels: { service: correlation }
+      - targets: ["ingestion:9101"]
+        labels: { service: ingestion }
+
+  - job_name: host
+    static_configs:
+      - targets: ["host.docker.internal:8000"]
+        labels: { service: api }
+      - targets: ["host.docker.internal:8010"]
+        labels: { service: retrieval }
+      - targets: ["host.docker.internal:9106"]
+        labels: { service: reasoning }
+      - targets: ["host.docker.internal:9102"]
+        labels: { service: perception }

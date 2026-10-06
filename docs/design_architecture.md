@@ -441,6 +441,14 @@ Candidates are debounced per `(camera, rule, track)`; an open candidate extends 
 - `yes` & confidence ≥ 0.6 → verified; `no` → rejected (stored); `unsure` → verified with `confidence` flag for low-severity rules, rejected for others (configurable).
 - Rules may set `verify: false`.
 
+**As implemented (P3-D4, `services/events`)** — details the sketch above leaves open:
+- The gate is a loop beside the twin consumer. It judges a candidate once it has **closed**, or once it has been a candidate for 90 s and is still going (so a long loiter does not wait for the person to leave); the event describes the candidate as it was then and is not re-sent if the candidate goes on (`event.v1` is immutable to its consumers). Candidates that ended more than 6 h ago are never judged.
+- The input is built from **evidence the engine records on the candidate** (`details["evidence"]`: a thinned sample of at most 16 hit frames, each with its keyframe URI and the boxes of the tracks the hit is about), not from re-reading twins: finding a segment's twin would mean knowing perception's key layout. Up to 4 frames are shown, spanning the candidate, first and latest included; the boxes are red, ≈ 3 px thick at the model's 448 px edge. The prompt states the rule's one-sentence claim (`Rule.description`), the camera, the zone name and when each frame is from, with that text inside `<data>` tags; prompt `event_verify/1.0`, task `event_verify`.
+- Decision: `yes` at confidence ≥ 0.6 → verified; `no` → rejected; `unsure`, or a `yes` below 0.6, → verified *flagged* (confidence travels in `event.v1`) when the rule's severity is `low` (`VMS_EVENTS_VERIFY_UNSURE_ACCEPTED_UP_TO`), rejected above that. An invalid reply gets one retry (`validation_retries: 1` for the task) and then counts as `unsure`.
+- **Degradation:** with no model to ask (provider down, GPU lease timeout) or no readable keyframe, a candidate of severity `medium` or above waits and is retried with back-off (5 s doubling to 300 s) for up to 10 min, then is published with `verification.status = "skipped"`; a `low` one is published `skipped` at once. The backlog names low and high; `medium` is held because medium events also raise alerts (`VMS_ALERTS_MIN_SEVERITY`), and an unchecked loiter should not page anyone. `verify: false` rules are published `skipped` without asking.
+- **Storage and delivery:** `events.events` has one row per decided candidate — its `id` *is* the candidate's, so a retry cannot decide twice — with status `verified | skipped | rejected`, the frames shown, and a `verification` record (verdict, confidence, caption, reason, model, latency, prompt version, attempts). A rejected row is kept with its reason and never published. The queue is "no `events.events` row yet" (`FOR UPDATE SKIP LOCKED`; claiming hides a candidate for a lease, a failure sets a back-off); `published_at` is an outbox marker, written after the Kafka send, so a crash re-sends rather than loses.
+- Not part of this story: `GET /events` in the api (Track J) and the precision/recall of the rules with and without the gate (§13, needs labelled clips).
+
 ### 7.5 Multi-camera correlation (owner: J)
 
 Topology edge semantics:
@@ -609,6 +617,8 @@ Adapted from MP-PVIR's report schema.
 ```
 **Validation:** Pydantic model → every `evidence` id must exist in the bundle → retry with the error message (≤ 2) → else `status=failed` with raw output stored.
 
+**As built (P5-D4, P6-D1, `services/reasoning`).** The api never runs a model: `POST /events/{id}/analyze` inserts a `reasoning.jobs` row for the correlation group holding the event (one live job per group), the worker claims it with `FOR UPDATE SKIP LOCKED`, and `GET /events/{id}/reasoning`, `/reasoning/jobs`, `/incidents` read the rows back. Closed groups at or above `VMS_REASONING_AUTO_MIN_SEVERITY` (high) are queued automatically, at most `auto_max_per_hour` times. Until the TG/PhaVR adapters exist (P5-D2/P5-J2) `phase_tg` and `phase_vr` run the zero-shot base model; a labelling that gives no boundary information falls back to the detector's own timing (`fallback_used` in `evidence.v1.provenance`). A report claim that still cites no valid evidence after two retries is dropped, never given a borrowed citation. Tables: migration 0009 (`reasoning.jobs`, `reasoning.incidents`, `retrieval.search_logs`).
+
 ## 9. API surface (`services/api`, owner J unless noted)
 
 Base path `/api/v1`. JSON errors use the envelope in `style_guide.md §A.5`.
@@ -710,9 +720,21 @@ Relative times ("this morning") are resolved by the LLM using the provided curre
 
 **`candidate.v1`** (D → J): `{candidate_id, camera_id, segment_ids, window, keyframe_uris, twin_excerpt, fused_score, matched_track_ids, missing: [sub_question]}`
 
+**As built (P4-D1…D4, `services/retrieval`)** — see the service README for detail.
+- `fast` plans from vocabulary alone (no model, so it stays interactive); `reason` adds `query_decompose` and then rereads the top 10 windows with `rerank`. Categories are mapped onto the detector's vocabulary and relative times come from the query text, whatever the model returned.
+- Colours and zones *boost* a track rather than filter it (the colour naming is rough); camera, time and category are hard filters.
+- Verified events join the fusion through Postgres full-text over their VLM caption — a stand-in for the `knowledge` collection, which is not written yet.
+- `VMS_RETRIEVAL_ARCHIVE_SINCE` floors every search at the oldest footage that still exists, and results whose keyframe has been removed by retention are dropped and counted in `notes`.
+- Local text tasks run on `qwen2.5:3b` and vision tasks on `qwen2.5vl:3b` (both `num_ctx` 8192). On the same evidence the text model answered an assistant question correctly where the VL model contradicted it, so the split of the original design stands; the price is an Ollama reload when activity moves between the two (once per analysis job).
+
+- `knowledge` is live: the indexer embeds each verified event's caption and each incident-report section (dense `BAAI/bge-small-en-v1.5` + BM25 via FastEmbed, ONNX on CPU) and search fuses them with the visual lists; `GET /incidents/{id}/similar` searches the incident sections.
+- JIT refinement (`jit: true`, opt-in): the rerank is asked for *yes/no questions* about what the records cannot tell; only real questions (ending in `?`) reach `jit_vqa`, whose answer is cached per `(segment, question)` and returned to a rescoring pass.
+
 ### 10.2 Image search & grounding (owner J)
 - **Image query:** upload or `{frame_uri, bbox}` → crop → SigLIP2 vision (CPU in retrieval) → `tracks` collection with optional filters → group by track → results sorted by score then time.
 - **Grounding:** `POST perception:8030/internal/grounding {keyframe_uri, bbox}` → SAM 2.1-tiny box prompt → RLE mask cached in `vms-masks` → UI draws the mask. Lazy: only when a result card becomes visible.
+
+**As built (grounding).** `POST /search/grounding {search_id, result_id}` — retrieval remembers what each recent result looked at, so the browser never holds an `s3://` uri — finds the matched tracks' boxes in the keyframe's twin and asks SAM 2.1-tiny for their masks (CPU, ~1.2 s per keyframe, one image encoding for all boxes). Masks are run-length encoded (row-major, alternating background/object runs), downscaled to ≤ 640 px wide, cached in `vms-masks`, and drawn on a canvas over the card once it is on screen.
 
 ### 10.3 RAG assistant (owner D)
 - **Agent loop:** gateway `chat` with tools, max 5 tool rounds per user turn, then must answer.
@@ -721,12 +743,16 @@ Relative times ("this morning") are resolved by the LLM using the provided curre
 - **Memory:** last 12 messages verbatim + rolling summary stored on the session; tool results truncated to 1.5 k tokens each.
 - **Streaming:** SSE events `token`, `tool_call`, `tool_result` (summary only), `citation`, `done`, `error`.
 
+**As built (P6-D2…D4, `services/retrieval/src/retrieval/assistant`).** One turn: a keyword router picks the first tool for clear questions (counts, incidents, events, footage, daily report), otherwise `AgentStep` JSON from the `assistant` task chooses up to four calls (the local Ollama tags have no native tool calling, so the design's `tools=` path is not used); every tool returns text with 8-character evidence tags (`[E:…]`, `[I:…]`, `[S:…]`) because a small model cannot copy uuids, and the tags are resolved to real ids on the server. The streamed answer opens with a sentence taken from the tool's own header line (a 3B model contradicted its evidence when left to phrase the finding), the model continues after it, and the stream ends with the citations that resolve plus the tags that were invented. When the model cites nothing the UI shows the records as "consulted". Memory: last 12 messages plus a rolling summary in `retrieval.chat_sessions` / `chat_messages`.
+
 ### 10.4 Daily security reports (owner J)
 1. Aggregate SQL → `DailyFacts` JSON (counts by type/camera/hour, incidents, alert ack/resolve times p50/p90, top correlation groups).
 2. Charts rendered server-side (matplotlib → PNG).
 3. LLM narrative with instruction to use only figures in `DailyFacts`; a post-check verifies every number in the narrative appears in the facts (else regenerate once, else template-only narrative).
 4. Jinja2 HTML → WeasyPrint PDF → `vms-reports`; row in `reasoning.daily_reports`; indexed into `knowledge`.
 5. Scheduling: Kubernetes `CronJob` (k8s) / `supercronic` container (Compose) calling `python -m reasoning.reports.daily --date yesterday`; on-demand via API.
+
+**As built (P6-J1/J5).** Facts come from fixed SQL over a range of site-time days (`reasoning.reports.facts`); the narrative is asked of `daily_narrative` with the figures as plain lines, and every number in it must appear in the figures (a clock time passes only as a whole hour that is a busiest-hour bucket) — one retry, then a template text. The api inserts a `queued` `reasoning.daily_reports` row; the reasoning worker claims it, and also queues yesterday's report itself once the site clock passes `VMS_REASONING_DAILY_REPORT_HOUR` (06:00), which replaces the supercronic container. Charts are drawn in the UI and the PDF is the browser's print.
 
 ## 11. LLM gateway, model registry & GPU (owner D)
 
@@ -875,6 +901,12 @@ Results are written to `ml/evaluation/results/<date>/<harness>.json` plus a Mark
 - Backpressure: adaptive sampling in perception; reasoning jobs queue in PG with `SELECT … FOR UPDATE SKIP LOCKED`.
 - Health: `/health` (liveness) and `/ready` (dependencies) on every service; Kubernetes probes use them.
 
+**As built (P7-D5, P7-J5, partly).**
+- *Dead letters:* `python -m vms_common.kafka.dlq_replay --list | --topic T [--dry-run] [--limit N]` re-publishes `vms.dlq.v1` messages to the topic in their `x-origin-topic` header, with its own consumer group so a second run replays only what is new; consumers are idempotent, so a message that was handled in the meantime is harmless.
+- *Restarts mid-stream:* `ml/evaluation/resilience/chaos.py` restarts the consumers (`indexer`, `events`, `correlation`) in turn while footage flows and then checks four invariants — no gap in the segment sequence, every segment has its twin, Qdrant holds exactly the frame and track points the twins describe, no event in two live groups (results in `ml/evaluation/results/p7-resilience.md`). The recorder (`ingestion`) is not a target: while it is down nothing is recorded, which is a gap in the footage, not a lost message.
+- *Rate limits:* `api/api/ratelimit.py`, a fixed one-minute window per client and endpoint group in Redis (login 10, search 30, assistant 20, analyses/reports 6; `VMS_API_RATELIMIT_*`), 429 with `Retry-After`; fails open if Redis is unreachable.
+- *Headers:* the api sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Cache-Control: no-store`; the frontend's nginx sets the first three. **No Content-Security-Policy yet** — it has to be written against the deployment's real MediaMTX / MinIO origins. The role × endpoint matrix now covers the database-only endpoints added in Phases 4–7, and a second check covers the login/operator requirement of the ones that proxy to other services.
+
 **Security**
 - JWT (HS256 dev, RS256 option), short-lived access token, rotating refresh tokens stored hashed.
 - RBAC dependency `require_role(...)`; role × endpoint test matrix in CI.
@@ -886,9 +918,11 @@ Results are written to `ml/evaluation/results/<date>/<harness>.json` plus a Mark
 - `vms_ingest_segments_total{camera}`, `vms_stream_reconnects_total`
 - `vms_perception_fps{camera}`, `vms_perception_latency_seconds`, `vms_gpu_memory_bytes{node}`
 - `vms_kafka_consumer_lag{group,topic}`
-- `vms_events_candidates_total{rule}`, `vms_events_verified_ratio{rule}`
+- `vms_events_candidates_total{rule}`, `vms_events_verifications_total{rule,outcome}` (outcome `verified|rejected|skipped|held`; `vms_events_verified_ratio{rule}` is `verified / (verified + rejected)` of it, computed where it is graphed), `vms_events_verification_seconds`, `vms_events_verification_errors_total{rule}`, `vms_events_published_total{status}`
 - `vms_search_stage_seconds{stage}`, `vms_llm_request_seconds{provider,task,status}`, `vms_llm_tokens_total{provider,task,kind}` (one observation per model call, so validation retries and fallbacks each count), `vms_llm_retries_total{task}`, `vms_llm_fallbacks_total{task}`, `vms_llm_cache_total{task,result}`, `vms_llm_lease_wait_seconds{outcome}`
 - `vms_reasoning_job_seconds{stage}`, `vms_reasoning_queue_depth`
+- Also exported: `vms_indexer_lag_seconds` (segment end → searchable), `vms_indexer_segments_total{camera}`, `vms_indexer_knowledge_docs_total{doc_type}`, `vms_perception_latency_seconds`, `vms_perception_segments_total{camera}`, `vms_search_requests_total{kind,mode}`, `vms_assistant_turns_total{outcome}`, `vms_reasoning_jobs_total{outcome}`, `vms_reasoning_daily_reports_total{narrative}`.
+- Scrape ports: workers expose `/metrics` on 9101 (ingestion), 9102 (perception), 9103 (indexer), 9104 (events), 9105 (correlation), 9106 (reasoning); api (8000) and retrieval (8010) serve it on their HTTP port. `make up PROFILE=infra,core,genai,obs` adds Prometheus (:9090) and Grafana (:3000, admin / `GRAFANA_ADMIN_PASSWORD`, dashboard "GenAI-VMS overview" provisioned from `deploy/compose/obs/`).
 - Logs: structlog JSON with `request_id`, `segment_id`, `event_id`, `group_id`, `job_id`.
 
 ## 16. Interface contracts between tracks

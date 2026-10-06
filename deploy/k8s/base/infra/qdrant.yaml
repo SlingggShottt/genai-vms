@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qdrant
+  labels:
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: infra
+spec:
+  serviceName: qdrant
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: qdrant
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: qdrant
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: infra
+    spec:
+      containers:
+        - name: qdrant
+          image: qdrant/qdrant:v1.11.5
+          ports:
+            - { name: main, containerPort: 6333 }
+            - { name: grpc, containerPort: 6334 }
+          readinessProbe:
+            tcpSocket: { port: 6333 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 6333 }
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 1Gi }
+          volumeMounts:
+            - { name: data, mountPath: /qdrant/storage }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  labels:
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: infra
+spec:
+  selector:
+    app.kubernetes.io/name: qdrant
+  ports:
+    - { name: main, port: 6333, targetPort: 6333 }
+    - { name: grpc, port: 6334, targetPort: 6334 }

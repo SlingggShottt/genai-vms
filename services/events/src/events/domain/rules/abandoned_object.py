@@ -62,6 +62,7 @@ def _center(obj: FrameObject) -> tuple[float, float]:
 @rule("abandoned_object")
 class AbandonedObject(CameraRule):
     event_type = "abandoned_object"
+    description = "A bag or suitcase has been left on its own, with no person near it."
     default_severity: Severity = "high"
     Params = AbandonedObjectParams
 

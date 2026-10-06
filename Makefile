@@ -10,7 +10,7 @@ COMPOSE := docker compose --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
 PROFILE ?=
 SVC ?=
 
-.PHONY: help setup up down test test-int lint topics qdrant-collections sim migrate migration
+.PHONY: help setup up down test test-int lint topics qdrant-collections sim migrate migration k8s-render k8s-up k8s-down demo demo-stop
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -63,3 +63,30 @@ lint: ## ruff check + ruff format --check (+ eslint once frontend exists)
 	uv run ruff check .
 	uv run ruff format --check .
 	@if [ -f frontend/package.json ]; then cd frontend && npm run lint; fi
+
+# --- Kubernetes (minikube) and the host-side demo ---------------------------------------------
+K8S_OVERLAY ?= deploy/k8s/overlays/minikube
+KUBECTL ?= kubectl
+
+k8s-render: ## Render the minikube manifests to stdout (needs overlays/minikube/secrets.env)
+	@test -f $(K8S_OVERLAY)/secrets.env || { echo "copy $(K8S_OVERLAY)/secrets.env.example to secrets.env first"; exit 1; }
+	$(KUBECTL) kustomize --load-restrictor=LoadRestrictionsNone $(K8S_OVERLAY)
+
+k8s-up: ## Build the images into minikube and apply the manifests
+	eval $$(minikube docker-env) && \
+	  for s in api retrieval reasoning indexer events correlation ingestion perception; do \
+	    docker build -t genai-vms-$$s:latest -f services/$$s/Dockerfile . || exit 1; done && \
+	  docker build -t genai-vms-frontend:latest frontend
+	$(MAKE) -s k8s-render | $(KUBECTL) apply -f -
+
+k8s-down: ## Remove the minikube deployment (volumes included)
+	$(MAKE) -s k8s-render | $(KUBECTL) delete --ignore-not-found -f -
+
+demo: ## Start Ollama, retrieval, reasoning, api and the UI on the host (see deploy/demo/README.md)
+	deploy/demo/start.sh
+
+demo-stop: ## Stop what `make demo` started
+	deploy/demo/stop.sh
+
+demo-refresh: ## Re-record the demo footage on MEVA clips and run the rules + VLM gate (~45 min; DRY_RUN=1 to check first)
+	deploy/demo/refresh.sh

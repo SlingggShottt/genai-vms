@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: genai-vms
+    folder: GenAI-VMS
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

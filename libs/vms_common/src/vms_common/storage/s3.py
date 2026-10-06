@@ -28,15 +28,22 @@ class S3Client:
         access_key: str,
         secret_key: str,
         region: str = "us-east-1",
+        public_endpoint_url: str = "",
     ) -> None:
-        self._client = boto3.client(
-            "s3",
-            endpoint_url=endpoint_url,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            region_name=region,
-            config=BotoConfig(signature_version="s3v4"),
-        )
+        def make(endpoint: str):
+            return boto3.client(
+                "s3",
+                endpoint_url=endpoint,
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name=region,
+                config=BotoConfig(signature_version="s3v4"),
+            )
+
+        self._client = make(endpoint_url)
+        # Presigning is a local computation, so a second client for the browser-facing host
+        # costs nothing; it is only built when that host differs.
+        self._signer = make(public_endpoint_url) if public_endpoint_url else self._client
 
     async def put_bytes(self, uri: str, data: bytes, *, content_type: str | None = None) -> None:
         """Upload raw bytes to `uri`."""
@@ -51,6 +58,17 @@ class S3Client:
         loc = parse_uri(uri)
         response = await asyncio.to_thread(self._client.get_object, Bucket=loc.bucket, Key=loc.key)
         return await asyncio.to_thread(response["Body"].read)
+
+    async def exists(self, uri: str) -> bool:
+        """Whether the object is there (a HEAD request); false once retention has removed it."""
+        loc = parse_uri(uri)
+        try:
+            await asyncio.to_thread(self._client.head_object, Bucket=loc.bucket, Key=loc.key)
+        except ClientError as exc:
+            if exc.response.get("Error", {}).get("Code", "") in {"404", "NoSuchKey", "NotFound"}:
+                return False
+            raise
+        return True
 
     async def upload_file(self, uri: str, local_path: str) -> None:
         """Upload a local file to `uri`. Use for segments/large blobs."""
@@ -69,7 +87,7 @@ class S3Client:
         loc = parse_uri(uri)
         expires_in = min(expires_in, DEFAULT_PRESIGN_EXPIRY_SECONDS)
         return await asyncio.to_thread(
-            self._client.generate_presigned_url,
+            self._signer.generate_presigned_url,
             "get_object",
             Params={"Bucket": loc.bucket, "Key": loc.key},
             ExpiresIn=expires_in,
