@@ -107,7 +107,12 @@ profiles:
     event_verify:       {provider: gemini, model: "gemini-2.5-flash"}
     jit_vqa:            {provider: gemini, model: "gemini-2.5-flash"}
 
-# The evaluation judge must be a different family from the generator (EV-03), so it is a
-# fixed cloud model in every profile. Callable through the gateway as task "eval_judge".
+# The evaluation judge must be a different family from the generators (EV-03): Qwen locally,
+# Gemini in the cloud. It is one fixed model in every profile, callable through the gateway as
+# task "eval_judge". Today it is a LOCAL Llama (`ollama pull llama3.2:3b`), because there are no
+# cloud keys on the build machine and sending evaluation text to a third party is a decision for
+# the owner, not a default; it is a 3B judge, so the 20 % human-verification sheet is what keeps
+# its scores honest. With a Groq key, the original choice is
+#   judge: {provider: groq, model: "openai/gpt-oss-120b"}   (a different family again, and larger)
 evaluation:
-  judge:                {provider: groq, model: "openai/gpt-oss-120b"}
+  judge:                {provider: ollama, model: "llama3.2:3b", num_ctx: 8192}
