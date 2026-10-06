@@ -38,6 +38,7 @@ jobs:
       reasoning: ${{ steps.filter.outputs.reasoning }}
       camera_sim: ${{ steps.filter.outputs.camera_sim }}
       annotation_kit: ${{ steps.filter.outputs.annotation_kit }}
+      ml_tooling: ${{ steps.filter.outputs.ml_tooling }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
@@ -79,6 +80,11 @@ jobs:
               - 'ml/annotation/**'
               - 'config/vqa_bank.yaml'
               - 'config/rules.yaml'
+            ml_tooling:
+              - 'ml/evaluation/**'
+              - 'ml/training/**'
+              - 'services/reasoning/**'  # the dataset builder's tests check its prompt against the service's
+              - 'tools/annotation_kit/**'
             frontend:
               - 'frontend/**'
 
@@ -306,6 +312,26 @@ jobs:
       - run: uv run ruff format --check tools/annotation_kit ml/annotation
       - run: uv run pytest tools/annotation_kit -m "not integration"
 
+  lint-test-ml-tooling:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.ml_tooling == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      # The evaluation harnesses and the training-data builders live outside the workspace members,
+      # so their lint and unit tests (synthetic videos, no network, no model) run here.
+      - run: uv run ruff check ml/evaluation ml/training
+      - run: uv run ruff format --check ml/evaluation ml/training
+      - run: uv run pytest ml/evaluation/retrieval/tests ml/training -m "not integration"
+
   # --- Frontend --------------------------------------------------------------
 
   frontend:
@@ -428,6 +454,7 @@ jobs:
       - lint-test-reasoning
       - lint-test-camera-sim
       - lint-test-annotation-kit
+      - lint-test-ml-tooling
       - frontend
       - docker-build-api
       - docker-build-ingestion

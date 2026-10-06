@@ -702,6 +702,14 @@
 - [ ] `phase_labels.jsonl` → instruction JSONL: ≤ 16 timestamped frames (≤ 360 p) + prompt → phase JSON target.
 - [ ] Multi-view samples include all views with camera tags; split 70/15/15 **by source video**; manifest + hash committed.
 - [ ] Frames + JSONL packaged as a Kaggle dataset.
+      > **Status 2026-10-06 — builder written, never run on real labels** (`ml/training/tg/`, README there): `phase_labels.v1`
+      > validated with the annotation kit's schema; one sample per clip × camera, frames ≤ 360 p, the `phase_tg` 1.0 prompt
+      > rendered like `services/reasoning` does (a test runs the service's `locate_phases` and requires the same prompt),
+      > split by source video 70/15/15 in a shared, extend-only `splits.json`, `manifest.json` with prompt and file hashes,
+      > `dataset-metadata.json` for Kaggle. 16 unit tests on synthetic videos (five deliberate bugs caught), run in CI.
+      > **Differs from the story text on purpose:** 5–8 frames per sample, not ≤ 16 (the service shows at most 8), and the
+      > answer is one stage per frame (what `FrameLabels` parses), not spans; all views of a clip in one sample is not built.
+      > Nothing has been uploaded to Kaggle: there are no phase annotations yet.
 
 ### P5-D2 · TG adapter fine-tuning — 8 pts · Must · E12
 - [ ] Unsloth QLoRA notebook on Qwen2.5-VL-3B with hyperparameters from design §8.3; runs within one Kaggle session (checkpointing to resume).
