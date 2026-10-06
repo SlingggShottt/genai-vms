@@ -1,9 +1,10 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from zoneinfo import ZoneInfo
 
 from retrieval.domain.fusion import Hit, group_windows
 from retrieval.domain.plan import (
     finalize_plan,
+    find_date,
     heuristic_plan,
     plan_categories,
     plan_colors,
@@ -90,6 +91,112 @@ def test_router_picks_the_lookup_a_clear_question_means():
         {"date": "yesterday"},
     )
     assert route("hello there", cams) is None
+
+
+TODAY = date(2026, 10, 4)
+
+
+def test_a_date_written_the_way_people_write_it_is_found():
+    for text in (
+        "what happened on 2026-10-04?",
+        "what happened on 4 October?",
+        "what happened on October 4th",
+        "what happened on the 4th of October",
+        "what happened on 4 oct",
+    ):
+        assert find_date(text, TODAY) == date(2026, 10, 4), text
+    assert find_date("on 21st of november 2025", TODAY) == date(2025, 11, 21)
+    assert find_date("on 1 sept", TODAY) == date(2026, 9, 1)
+
+
+def test_a_day_without_a_year_is_the_latest_such_day_not_in_the_future():
+    assert find_date("on 20 November", TODAY) == date(2025, 11, 20)  # not yet this year
+    assert find_date("on 4 October", TODAY) == date(2026, 10, 4)  # today counts
+    assert find_date("on 5 October", TODAY) == date(2025, 10, 5)  # tomorrow does not
+
+
+def test_things_that_are_not_dates_are_not_dates():
+    for text in (
+        "someone may enter the yard",
+        "31 February",
+        "2026-13-40",
+        "how many people at 4 pm",
+        "camera 4 and camera 10",
+    ):
+        assert find_date(text, TODAY) is None, text
+
+
+def test_a_named_day_is_the_whole_of_that_day_on_the_sites_clock():
+    # Asia/Kolkata is UTC+5:30: 4 October there is 18:30 UTC on the 3rd to 18:30 UTC on the 4th
+    start, end = resolve_time("what happened on cam01 on 4 October", NOW, TZ)
+    assert (start, end) == (
+        datetime(2026, 10, 3, 18, 30, tzinfo=UTC),
+        datetime(2026, 10, 4, 18, 30, tzinfo=UTC),
+    )
+    assert resolve_time("2026-10-04", NOW, TZ) == (start, end)
+    # a named day wins over a loose phrase in the same question
+    assert resolve_time("yesterday, I mean 1 October", NOW, TZ)[0] == datetime(
+        2026, 9, 30, 18, 30, tzinfo=UTC
+    )
+
+
+def test_plural_object_words_are_recognised():
+    from retrieval.domain.plan import categories_in
+
+    assert categories_in("how many trucks and bags") == ["backpack", "handbag", "truck"]
+    assert categories_in("two buses and some lorries") == ["bus", "truck"]
+    assert categories_in("three cars, a bicycle and two bikes") == ["car", "bicycle"]
+    assert categories_in("nobody here but gases") == []  # "gases" -> "gas", "gase": no category
+
+
+def test_how_many_events_is_a_list_not_a_person_count():
+    from retrieval.assistant.router import route
+
+    cams = ["cam01", "bus-g340"]
+    got = route("How many intrusion events were verified on cam01 on 4 October?", cams, TODAY)
+    assert got == (
+        "list_events",
+        {"when": "2026-10-04", "limit": 10, "type": "intrusion", "camera": "cam01"},
+    )
+    # "bus-g340" is a camera, not a question about buses
+    assert route("How many alerts were there on bus-g340?", cams, TODAY)[0] == "list_events"
+    assert route("How many buses were on bus-g340?", cams, TODAY)[1]["category"] == "bus"
+    assert route("How many incidents on cam01 yesterday?", cams, TODAY)[0] == "list_incidents"
+    # an object in the question keeps it a count of things seen
+    assert route("How many people were on cam01 on 4 October?", cams, TODAY) == (
+        "count_objects",
+        {"category": "person", "when": "2026-10-04", "group_by": "none", "camera": "cam01"},
+    )
+    assert (
+        route("How many people entered during the intrusion on cam01?", cams, TODAY)[0]
+        == "count_objects"
+    )
+
+
+def test_the_router_carries_the_day_and_the_camera_into_every_lookup_that_takes_them():
+    from retrieval.assistant.router import route
+
+    cams = ["cam01", "bus-g340"]
+    assert route("What happened on bus-g340 on October 4?", cams, TODAY) == (
+        "list_events",
+        {"when": "2026-10-04", "limit": 10, "camera": "bus-g340"},
+    )
+    assert route("Were there any serious incidents on bus-g340?", cams, TODAY) == (
+        "list_incidents",
+        {"when": "last 24 hours", "limit": 5, "camera": "bus-g340"},
+    )
+    assert route("Give me the timeline of events on cam01 on 2026-10-04.", cams, TODAY) == (
+        "get_timeline",
+        {"when": "2026-10-04", "cameras": ["cam01"]},
+    )
+    assert route("Show the daily report for 2026-10-02.", cams, TODAY) == (
+        "get_daily_report",
+        {"date": "2026-10-02"},
+    )
+    assert route("Show the daily report for yesterday.", cams, TODAY) == (
+        "get_daily_report",
+        {"date": "yesterday"},
+    )
 
 
 def test_lead_sentence_is_the_tools_own_header_without_tags():

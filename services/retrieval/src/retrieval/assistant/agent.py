@@ -101,7 +101,9 @@ class Assistant:
 
         try:
             now = datetime.now(UTC).astimezone(self._tz).strftime("%A %d %B %Y, %H:%M")
-            routed = route(user_text, self._cameras)
+            routed = route(
+                user_text, self._cameras, today=datetime.now(UTC).astimezone(self._tz).date()
+            )
             lead: str | None = None
             for _round in range(MAX_CALLS + 1):
                 if routed is not None:

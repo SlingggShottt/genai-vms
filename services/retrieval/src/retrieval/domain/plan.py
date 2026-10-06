@@ -9,7 +9,7 @@ emit, and a time expression in the text beats a time the model computed.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from vms_common.contracts.search import (
@@ -73,8 +73,20 @@ def _words(text: str) -> list[str]:
     return _WORD.findall(text.lower())
 
 
+def _forms(word: str) -> set[str]:
+    """The word and what it would be in the singular ("buses" -> "bus", "lorries" -> "lorry")."""
+    out = {word}
+    if word.endswith("ies") and len(word) > 4:
+        out.add(word[:-3] + "y")
+    if word.endswith("es") and len(word) > 3:
+        out.add(word[:-2])
+    if word.endswith("s") and len(word) > 2:
+        out.add(word[:-1])
+    return out
+
+
 def categories_in(text: str) -> list[str]:
-    words = set(_words(text))
+    words = {f for w in _words(text) for f in _forms(w)}
     return [cat for cat, syn in CATEGORY_WORDS.items() if words.intersection(syn)]
 
 
@@ -104,11 +116,60 @@ _UNIT = {
 }  # fmt: skip
 
 
+_MONTHS = {
+    "january": 1, "jan": 1, "february": 2, "feb": 2, "march": 3, "mar": 3, "april": 4, "apr": 4,
+    "may": 5, "june": 6, "jun": 6, "july": 7, "jul": 7, "august": 8, "aug": 8, "september": 9,
+    "sept": 9, "sep": 9, "october": 10, "oct": 10, "november": 11, "nov": 11, "december": 12,
+    "dec": 12,
+}  # fmt: skip
+_MONTH = "|".join(sorted(_MONTHS, key=len, reverse=True))
+_ISO_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+_DAY_MONTH = re.compile(
+    rf"\b(\d{{1,2}})(?:st|nd|rd|th)?\s+(?:of\s+)?({_MONTH})\b(?:,?\s+(\d{{4}}))?"
+)
+_MONTH_DAY = re.compile(rf"\b({_MONTH})\s+(\d{{1,2}})(?:st|nd|rd|th)?\b(?:,?\s+(\d{{4}}))?")
+
+
+def find_date(text: str, today: date) -> date | None:
+    """A calendar date written in `text` (2026-10-04, 4 October, October 4th, the 4th of October),
+    or None. Without a year it is the most recent such date that is not after `today`."""
+    low = text.lower()
+    m = _ISO_DATE.search(low)
+    if m:
+        year, month, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        explicit_year = True
+    else:
+        m = _DAY_MONTH.search(low)
+        if m:
+            day, month, year_s = int(m.group(1)), _MONTHS[m.group(2)], m.group(3)
+        else:
+            m = _MONTH_DAY.search(low)
+            if not m:
+                return None
+            month, day, year_s = _MONTHS[m.group(1)], int(m.group(2)), m.group(3)
+        year, explicit_year = (int(year_s), True) if year_s else (today.year, False)
+    try:
+        found = date(year, month, day)
+    except ValueError:
+        return None
+    if not explicit_year and found > today:
+        try:
+            found = date(year - 1, month, day)
+        except ValueError:
+            return None
+    return found
+
+
 def resolve_time(query: str, now: datetime, tz: ZoneInfo) -> tuple[datetime, datetime] | None:
     """The window a time expression in `query` means, in UTC, or None if there is none."""
     low = query.lower()
     local = now.astimezone(tz)
     midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    day = find_date(low, local.date())
+    if day is not None:  # a named day: the whole of it, on the site's clock
+        start = datetime(day.year, day.month, day.day, tzinfo=tz)
+        return start.astimezone(now.tzinfo), (start + timedelta(days=1)).astimezone(now.tzinfo)
 
     m = _AGO.search(low)
     if m:
