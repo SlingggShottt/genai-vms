@@ -115,4 +115,4 @@ profiles:
 # its scores honest. With a Groq key, the original choice is
 #   judge: {provider: groq, model: "openai/gpt-oss-120b"}   (a different family again, and larger)
 evaluation:
-  judge:                {provider: ollama, model: "llama3.2:3b", num_ctx: 8192}
+  judge:                {provider: ollama, model: "llama3.2:3b", num_ctx: 8192, max_tokens: 300}

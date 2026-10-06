@@ -39,7 +39,7 @@ class AnswerJudgement(BaseModel):
     faithfulness: int = Field(ge=1, le=5)
     relevance: int = Field(ge=1, le=5)
     citations: list[CitationJudgement] = Field(default_factory=list)
-    problem: str = ""
+    problem: str = Field(default="", max_length=200)
 
 
 class ReportJudgement(BaseModel):
@@ -47,7 +47,7 @@ class ReportJudgement(BaseModel):
     completeness: int = Field(ge=1, le=5)
     causality: int = Field(ge=1, le=5)
     actionability: int = Field(ge=1, le=5)
-    problem: str = ""
+    problem: str = Field(default="", max_length=200)
 
 
 # ---- assistant answers --------------------------------------------------------------------------
@@ -138,6 +138,67 @@ async def judge_answer(gateway, transcript: dict, expect: str) -> AnswerJudgemen
     judgement = result.parsed
     assert isinstance(judgement, AnswerJudgement)  # noqa: S101 - validated by the gateway
     return judgement
+
+
+# The first worked example in the judge prompt. A 3B judge copies its wording into the answers it
+# scores (measured: see the results file), so the problems that start like it are counted.
+EXAMPLE_PROBLEM_PREFIX = "claims 4 october but the lookup covered"
+EVENT_TYPES = ("abandoned object", "crowding", "intrusion", "loitering")
+_SENTENCE = re.compile(r"(?<=[.!?])\s+|\n+")
+
+
+def citation_consistency(transcript: dict) -> list[dict]:
+    """For each event tag the answer writes that resolves to a record, does the sentence it sits in
+    agree with that record on event type and camera, with no model involved? 'contradicted' when the
+    sentence names another camera than the record's (and not the record's), or another event type
+    and not the record's; 'consistent' when it names the record's type and no other camera;
+    'unclear' otherwise. Judged against the whole sentence, so two tags in one sentence are not
+    told apart. Only event records (`[E:...]`, labelled "<type> on <camera>") are checked."""
+    records = {
+        f"{c['kind']}:{c['tag']}": c
+        for c in transcript.get("citations", [])
+        if c.get("kind") == "E" and " on " in str(c.get("label", ""))
+    }
+    cameras = {c.get("camera") for c in transcript.get("citations", []) if c.get("camera")}
+    if transcript.get("camera"):
+        cameras.add(transcript["camera"])
+    out = []
+    for sentence in _SENTENCE.split(transcript.get("answer") or ""):
+        text = sentence.lower().replace("_", " ")
+        for kind, ident in _TAG.findall(sentence):
+            record = records.get(f"{kind}:{ident}")
+            if not record:
+                continue
+            kind_word, _, camera = str(record["label"]).partition(" on ")
+            kind_word = kind_word.lower().replace("_", " ")
+            other_cameras = [c for c in cameras if c != camera and c.lower() in text]
+            other_type = any(t != kind_word and t in text for t in EVENT_TYPES)
+            has_type = kind_word in text
+            if (other_cameras and camera.lower() not in text) or (other_type and not has_type):
+                verdict = "contradicted"
+            elif has_type and not other_cameras:
+                verdict = "consistent"
+            else:
+                verdict = "unclear"
+            out.append({"tag": f"{kind}:{ident}", "verdict": verdict})
+    return out
+
+
+CAP_WHEN_FLAWED = 3
+
+
+def with_adjusted(verdict: AnswerJudgement) -> dict:
+    """The verdict as a dict plus `faithfulness_adj` / `relevance_adj`: the scores capped at 3 when
+    the judge itself wrote down a problem. Measured on this system, a 3B judge names the defect
+    correctly ("claims 4 October but the lookup covered the last 24 hours") and then still scores 5,
+    so the raw score alone flatters. Both are reported."""
+    out = verdict.model_dump()
+    flawed = bool(verdict.problem.strip())
+    out["faithfulness_adj"] = (
+        min(verdict.faithfulness, CAP_WHEN_FLAWED) if flawed else verdict.faithfulness
+    )
+    out["relevance_adj"] = min(verdict.relevance, CAP_WHEN_FLAWED) if flawed else verdict.relevance
+    return out
 
 
 # ---- incident reports ---------------------------------------------------------------------------

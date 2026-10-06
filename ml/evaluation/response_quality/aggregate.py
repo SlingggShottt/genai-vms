@@ -18,6 +18,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # for `stats`
 
 from stats import mean_ci  # noqa: E402
 
+EXAMPLE_PROBLEM_PREFIX = "claims 4 october but the lookup covered"  # judge.py has the same string
+
 RUBRIC = ("accuracy", "completeness", "causality", "actionability")
 
 
@@ -70,6 +72,14 @@ def summarise_answers(rows: list[dict]) -> dict:
             "questions": len(known),
             "rate": round(sum(known) / len(known), 3) if known else None,
         }
+    checks = [c for r in answered for c in r["transcript"].get("citation_check", [])]
+    consistency = {
+        "checked": len(checks),
+        **{
+            v: sum(c["verdict"] == v for c in checks)
+            for v in ("consistent", "contradicted", "unclear")
+        },
+    }
     written = sum(len(r["transcript"].get("tags_written", [])) for r in answered)
     unknown = sum(len(r["transcript"].get("unknown_tags", [])) for r in answered)
     seconds = [r["transcript"]["seconds"] for r in answered if r["transcript"]["seconds"]]
@@ -81,12 +91,32 @@ def summarise_answers(rows: list[dict]) -> dict:
         "judge_failures": len(answered) - len(judged),
         "faithfulness": mean_ci(scores(judged, "faithfulness")),
         "relevance": mean_ci(scores(judged, "relevance")),
+        "faithfulness_adj": mean_ci(
+            [
+                float(r["judgement"].get("faithfulness_adj", r["judgement"]["faithfulness"]))
+                for r in judged
+            ]
+        ),
+        "relevance_adj": mean_ci(
+            [
+                float(r["judgement"].get("relevance_adj", r["judgement"]["relevance"]))
+                for r in judged
+            ]
+        ),
+        "judge_named_a_problem": sum(
+            bool(r["judgement"].get("problem", "").strip()) for r in judged
+        ),
         "faithfulness_4_or_5": round(
             sum(s >= 4 for s in scores(judged, "faithfulness")) / len(judged), 3
         )
         if judged
         else None,
         "citation_precision": citation_precision(judged),
+        "citation_consistency": consistency,
+        "problems_that_copy_the_prompt_example": sum(
+            r["judgement"].get("problem", "").lower().startswith(EXAMPLE_PROBLEM_PREFIX)
+            for r in judged
+        ),
         "answers_that_cite": round(
             sum(
                 1

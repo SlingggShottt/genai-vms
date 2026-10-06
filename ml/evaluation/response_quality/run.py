@@ -46,6 +46,23 @@ def dump(path: Path, rows: list[dict]) -> None:
     path.write_text("".join(json.dumps(r, default=str) + "\n" for r in rows))
 
 
+def append(path: Path, row: dict) -> None:
+    """One finished row on disk at once: an interrupted judge run loses only the row it was on."""
+    with path.open("a") as f:
+        f.write(json.dumps(row, default=str) + "\n")
+
+
+def reusable(rows: list[dict], key: str, nothing_to_judge) -> dict[str, dict]:
+    """The rows of an interrupted judge run worth keeping under `--resume`, by `key`: those with a
+    verdict, or with nothing to judge. A row where the judge itself failed is judged again."""
+    return {r[key]: r for r in rows if r.get("judgement") or nothing_to_judge(r)}
+
+
+def _answer_unjudgeable(row: dict) -> bool:
+    t = row["transcript"]
+    return not (t["answer"] and not t["error"])
+
+
 def load(path: Path) -> list[dict]:
     return (
         [json.loads(x) for x in path.read_text().splitlines() if x.strip()] if path.exists() else []
@@ -130,26 +147,43 @@ async def cmd_judge(args: argparse.Namespace) -> None:
     await redis.flushdb()  # a cached verdict would hide a judge that has changed
     gateway = LLMGateway.from_settings(LLMSettings(), redis=redis)
     try:
+        out_a, out_r = run / "answers.jsonl", run / "reports.jsonl"
+        kept = reusable(load(out_a), "qid", _answer_unjudgeable) if args.resume else {}
+        dump(out_a, list(kept.values()))
         answers = []
         for i, t in enumerate(transcripts, 1):
+            if t["qid"] in kept:
+                answers.append(kept[t["qid"]])
+                continue
             t["tags_written"] = judge.tags_written(t["answer"])
             t["scope"] = judge.scope_check(t)
             verdict = None
             if t["answer"] and not t["error"]:
                 v = await judge.judge_answer(gateway, t, t["expect"])
-                verdict = v.model_dump() if v else None
-            answers.append({"qid": t["qid"], "category": t["category"], "expect": t["expect"],
-                            "transcript": t, "judgement": verdict})  # fmt: skip
+                verdict = judge.with_adjusted(v) if v else None
+            row = {"qid": t["qid"], "category": t["category"], "expect": t["expect"],
+                   "transcript": t, "judgement": verdict}  # fmt: skip
+            answers.append(row)
+            append(out_a, row)
             scores = verdict and (verdict["faithfulness"], verdict["relevance"])
             print(f"  answer {i}/{len(transcripts)} {t['qid']} {scores}", flush=True)
-        dump(run / "answers.jsonl", answers)
+        dump(out_a, answers)  # in question order
 
         incidents = await db_rows(
             "select id::text as incident_id, title, status, report, evidence "
             "from reasoning.incidents where status <> 'generating' order by created_at"
         )
+        kept_r = (
+            reusable(load(out_r), "incident_id", lambda r: not r["check"]["valid"])
+            if args.resume
+            else {}
+        )
+        dump(out_r, list(kept_r.values()))
         reports = []
         for i, inc in enumerate(incidents, 1):
+            if inc["incident_id"] in kept_r:
+                reports.append(kept_r[inc["incident_id"]])
+                continue
             texts = judge.evidence_texts(inc["evidence"])
             check = judge.check_report(inc["report"], texts)
             verdict = None
@@ -157,14 +191,16 @@ async def cmd_judge(args: argparse.Namespace) -> None:
                 report = IncidentReportV1.model_validate(inc["report"])
                 v = await judge.judge_report(gateway, report, texts)
                 verdict = v.model_dump() if v else None
-            reports.append({"incident_id": inc["incident_id"], "title": inc["title"],
-                            "summary": (inc["report"] or {}).get("summary", ""),
-                            "check": check, "judgement": verdict})  # fmt: skip
+            row = {"incident_id": inc["incident_id"], "title": inc["title"],
+                   "summary": (inc["report"] or {}).get("summary", ""),
+                   "check": check, "judgement": verdict}  # fmt: skip
+            reports.append(row)
+            append(out_r, row)
             print(
                 f"  report {i}/{len(incidents)} {inc['incident_id'][:8]} valid={check['valid']}",
                 flush=True,
             )
-        dump(run / "reports.jsonl", reports)
+        dump(out_r, reports)
     finally:
         await gateway.aclose()
         await redis.flushdb()
@@ -182,6 +218,11 @@ def cell(d: dict | None) -> str:
 
 def run_summary(run: Path) -> dict:
     answers, reports = load(run / "answers.jsonl"), load(run / "reports.jsonl")
+    for row in answers:  # the checks that need no model are recomputed, so a better check
+        t = row["transcript"]  # applies to a run judged earlier without judging it again
+        t["scope"] = judge.scope_check(t)
+        t["citation_check"] = judge.citation_consistency(t)
+        t["tags_written"] = judge.tags_written(t["answer"])
     return {
         "answers": aggregate.summarise_answers(answers),
         "reports": aggregate.summarise_reports(reports),
@@ -195,6 +236,16 @@ def _row(label: str, fn, runs: dict[str, dict], names: list[str], part: str) -> 
 def _precision(s: dict) -> str:
     c = s["citation_precision"]
     return f"{c['strict']} / {c['lenient']} (n={c['checked']})"
+
+
+def _consistency(s: dict) -> str:
+    c = s["citation_consistency"]
+    if not c["checked"]:
+        return "–"
+    return (
+        f"{c['consistent']} of {c['checked']} consistent, {c['contradicted']} contradicted, "
+        f"{c['unclear']} unclear"
+    )
 
 
 def _rate(key: str):
@@ -221,6 +272,50 @@ INTRO = (
 )
 
 
+def reading_notes(runs: dict[str, dict]) -> list[str]:
+    """What to believe in the table, computed from it. The scope and citation checks need no model
+    and are the evidence of change; the judge's scores are a weak signal, and this says so with the
+    figures that show it."""
+    names = list(runs)
+    first, last = runs[names[0]]["answers"], runs[names[-1]]["answers"]
+    notes = [
+        "",
+        "### How to read this",
+        "",
+        "The rows that need no model (first lookup, camera, day, tags that match no record, event "
+        "citations that agree with their sentence) are what changed between runs. The judge's "
+        "scores are not evidence of change or of quality:",
+        "",
+    ]
+    if last["judge_named_a_problem"] == last["judged"]:
+        notes.append(
+            f"- it wrote a problem for **every** answer it judged ({last['judged']} of "
+            f"{last['judged']}), including answers whose lookup matched the question, and "
+            f"{last['problems_that_copy_the_prompt_example']} of them repeat the wording of the "
+            "prompt's own worked example. So the *capped* rows only say that every answer was "
+            "capped; they are a floor, not a measure."
+        )
+    f0, f1 = first["faithfulness"], last["faithfulness"]
+    if f0.get("mean") is not None and f1.get("mean") is not None:
+        overlap = f0["ci95"][0] <= f1["ci95"][1] and f1["ci95"][0] <= f0["ci95"][1]
+        notes.append(
+            f"- its raw faithfulness went from {f0['mean']} to {f1['mean']}"
+            + (" (the intervals overlap), whatever the objective rows did." if overlap else ".")
+        )
+    if not last["citation_precision"]["checked"]:
+        notes.append(
+            "- it returned no per-citation judgements, so citation precision *by the judge* is "
+            "not measured; the model-free agreement check above is what exists (event type and "
+            "camera against the cited record, whole-sentence, event records only)."
+        )
+    notes += [
+        f"- every figure here is about this set of {last['questions']} questions on this machine's "
+        "data, not about the system in general; `human_verification.csv` is how far to trust "
+        "the judge.",
+    ]
+    return notes
+
+
 def markdown(runs: dict[str, dict], when: str, filled: dict | None) -> str:
     names = list(runs)
     head = " | ".join(names)
@@ -237,13 +332,24 @@ def markdown(runs: dict[str, dict], when: str, filled: dict | None) -> str:
     answer_rows = [
         ("questions asked / answered", lambda s: f"{s['questions']} / {s['answered']}"),
         ("judged (judge failures)", lambda s: f"{s['judged']} ({s['judge_failures']})"),
-        ("faithfulness 1–5", lambda s: cell(s["faithfulness"])),
-        ("faithfulness 4 or 5", lambda s: str(s["faithfulness_4_or_5"])),
-        ("relevance 1–5", lambda s: cell(s["relevance"])),
+        ("judge named a problem", lambda s: str(s["judge_named_a_problem"])),
+        (
+            "of those, worded like the prompt's own example",
+            lambda s: str(s["problems_that_copy_the_prompt_example"]),
+        ),
+        ("faithfulness 1–5, raw", lambda s: cell(s["faithfulness"])),
+        (
+            "faithfulness 1–5, capped at 3 when a problem was named",
+            lambda s: cell(s["faithfulness_adj"]),
+        ),
+        ("faithfulness 4 or 5, raw", lambda s: str(s["faithfulness_4_or_5"])),
+        ("relevance 1–5, raw", lambda s: cell(s["relevance"])),
+        ("relevance 1–5, capped at 3 when a problem was named", lambda s: cell(s["relevance_adj"])),
         ("first lookup was the right tool", _rate("routed")),
         ("a lookup used the camera asked about", _rate("camera_scoped")),
         ("a lookup used the day asked about", _rate("day_scoped")),
-        ("citation precision, strict / lenient", _precision),
+        ("citation precision by the judge, strict / lenient", _precision),
+        ("event citations that agree with their sentence (no model)", _consistency),
         ("answers that cite a record", lambda s: str(s["answers_that_cite"])),
         (
             "tags written that match no record",
@@ -253,6 +359,7 @@ def markdown(runs: dict[str, dict], when: str, filled: dict | None) -> str:
     ]
     lines += [_row(label, fn, runs, names, "answers") for label, fn in answer_rows]
     last = runs[names[-1]]["answers"]
+    lines += reading_notes(runs)
     lines += [
         "",
         f"### By category ({names[-1]})",
@@ -335,6 +442,11 @@ def main() -> None:
     j = sub.add_parser("judge")
     j.add_argument("--run", required=True)
     j.add_argument("--redis-url", default="redis://localhost:6379/9", help="scratch db")
+    j.add_argument(
+        "--resume",
+        action="store_true",
+        help="keep the rows an interrupted run already judged (same judge, same transcripts)",
+    )
     s = sub.add_parser("summary")
     s.add_argument("--run", required=True)
     s.add_argument(

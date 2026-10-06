@@ -375,6 +375,35 @@ def test_every_answerable_question_knows_its_tool_and_those_with_a_day_know_it()
     assert all(q.camera in CAMS for q in qs if q.camera and q.expect == "answer")
 
 
+def test_a_problem_the_judge_names_caps_its_own_scores_at_three() -> None:
+    flawed = judge.AnswerJudgement(faithfulness=5, relevance=4, problem="claims 4 October only")
+    got = judge.with_adjusted(flawed)
+    assert (got["faithfulness"], got["relevance"]) == (5, 4)  # the raw scores are kept
+    assert (got["faithfulness_adj"], got["relevance_adj"]) == (3, 3)
+    clean = judge.with_adjusted(judge.AnswerJudgement(faithfulness=5, relevance=2, problem="  "))
+    assert (clean["faithfulness_adj"], clean["relevance_adj"]) == (
+        5,
+        2,
+    )  # a low score is not raised
+    low = judge.with_adjusted(judge.AnswerJudgement(faithfulness=1, relevance=1, problem="x"))
+    assert (low["faithfulness_adj"], low["relevance_adj"]) == (1, 1)
+
+
+def test_the_verdict_schema_bounds_how_long_the_judge_can_ramble() -> None:
+    schema = judge.AnswerJudgement.model_json_schema()
+    assert schema["properties"]["problem"]["maxLength"] == 200
+    assert judge.ReportJudgement.model_json_schema()["properties"]["problem"]["maxLength"] == 200
+
+
+def test_the_summary_reports_both_raw_and_capped_scores() -> None:
+    rows = [row("a", "x", 5, 5), row("b", "x", 5, 5)]
+    rows[0]["judgement"].update(problem="wrong day", faithfulness_adj=3, relevance_adj=3)
+    rows[1]["judgement"].update(problem="", faithfulness_adj=5, relevance_adj=5)
+    s = aggregate.summarise_answers(rows)
+    assert s["faithfulness"]["mean"] == 5.0 and s["faithfulness_adj"]["mean"] == 4.0
+    assert s["relevance_adj"]["mean"] == 4.0 and s["judge_named_a_problem"] == 1
+
+
 # ---- incident reports ---------------------------------------------------------------------------
 
 BUNDLE = {
@@ -683,3 +712,180 @@ def test_the_dumped_rows_round_trip(tmp_path: Path) -> None:
     assert run.load(tmp_path / "x.jsonl") == [{"a": 1}, {"b": [2, 3]}]
     assert run.load(tmp_path / "missing.jsonl") == []
     assert json.loads((tmp_path / "x.jsonl").read_text().splitlines()[1]) == {"b": [2, 3]}
+
+
+def _answer_row(qid: str, *, answer: str = "yes", error: str = "", verdict=None) -> dict:
+    return {
+        "qid": qid,
+        "transcript": {"qid": qid, "answer": answer, "error": error},
+        "judgement": verdict,
+    }
+
+
+def test_appended_rows_are_on_disk_one_by_one(tmp_path: Path) -> None:
+    path = tmp_path / "answers.jsonl"
+    run.append(path, {"qid": "q1"})
+    assert run.load(path) == [{"qid": "q1"}]  # readable before the run has finished
+    run.append(path, {"qid": "q2"})
+    assert [r["qid"] for r in run.load(path)] == ["q1", "q2"]
+
+
+def test_resuming_keeps_judged_rows_and_those_with_nothing_to_judge_and_retries_failures() -> None:
+    rows = [
+        _answer_row("q1", verdict={"faithfulness": 4, "relevance": 5}),
+        _answer_row("q2"),  # answered, but the judge failed: judge again
+        _answer_row("q3", answer=""),  # no answer: nothing to judge, so nothing to redo
+        _answer_row("q4", error="HTTP 500"),  # an error: same
+    ]
+    kept = run.reusable(rows, "qid", run._answer_unjudgeable)
+    assert sorted(kept) == ["q1", "q3", "q4"]
+    assert kept["q1"] is rows[0]  # the row as it was, not a copy to be rebuilt
+
+
+def test_resuming_reports_retries_a_failed_judge_but_not_an_invalid_report() -> None:
+    rows = [
+        {"incident_id": "a", "check": {"valid": True}, "judgement": {"accuracy": 3}},
+        {"incident_id": "b", "check": {"valid": True}, "judgement": None},
+        {"incident_id": "c", "check": {"valid": False}, "judgement": None},
+    ]
+    kept = run.reusable(rows, "incident_id", lambda r: not r["check"]["valid"])
+    assert sorted(kept) == ["a", "c"]
+
+
+# ---- citations checked without a model -----------------------------------------------------------
+
+
+def _cited(answer: str, *records: tuple[str, str]) -> dict:
+    """A transcript whose citations are (tag, "<type> on <camera>") event records."""
+    return {
+        "answer": answer,
+        "camera": None,
+        "citations": [
+            {"kind": "E", "tag": tag, "label": label, "camera": label.split(" on ")[1]}
+            for tag, label in records
+        ],
+    }
+
+
+def _verdicts(transcript: dict) -> dict[str, str]:
+    return {c["tag"]: c["verdict"] for c in judge.citation_consistency(transcript)}
+
+
+def test_a_sentence_that_names_the_records_type_and_camera_is_consistent() -> None:
+    t = _cited(
+        "An intrusion on bus-g340 at 21:59 [E:84912e49]. Nothing else.",
+        ("84912e49", "intrusion on bus-g340"),
+    )
+    assert _verdicts(t) == {"E:84912e49": "consistent"}
+    t = _cited("Loitering at 21:57 [E:b10e1385].", ("b10e1385", "loitering on bus-g331"))
+    assert _verdicts(t) == {"E:b10e1385": "consistent"}  # no camera named: nothing disagrees
+
+
+def test_a_tag_on_a_sentence_about_another_event_type_is_contradicted() -> None:
+    t = _cited("A crowding event at 21:57 [E:b10e1385].", ("b10e1385", "loitering on bus-g331"))
+    assert _verdicts(t) == {"E:b10e1385": "contradicted"}
+
+
+def test_a_tag_on_a_sentence_about_another_camera_is_contradicted() -> None:
+    t = _cited(
+        "Loitering on bus-g340 at 21:57 [E:b10e1385].",
+        ("b10e1385", "loitering on bus-g331"),
+        ("84912e49", "intrusion on bus-g340"),  # so bus-g340 is a camera the answer knows
+    )
+    assert _verdicts(t) == {"E:b10e1385": "contradicted"}
+
+
+def test_a_sentence_that_says_neither_type_nor_camera_is_unclear() -> None:
+    t = _cited("Something happened at 21:57 [E:b10e1385].", ("b10e1385", "loitering on bus-g331"))
+    assert _verdicts(t) == {"E:b10e1385": "unclear"}
+
+
+def test_each_tag_is_checked_against_its_own_sentence() -> None:
+    t = _cited(
+        "Loitering on bus-g331 [E:aaaaaaa1].\n- A crowding event on bus-g331 [E:bbbbbbb2].",
+        ("aaaaaaa1", "loitering on bus-g331"),
+        ("bbbbbbb2", "loitering on bus-g331"),  # the second sentence is about crowding
+    )
+    assert _verdicts(t) == {"E:aaaaaaa1": "consistent", "E:bbbbbbb2": "contradicted"}
+
+
+def test_underscored_types_and_tags_without_a_record_are_handled() -> None:
+    t = _cited(
+        "An abandoned object on bus-g331 [E:aaaaaaa1], and something [E:cccccccc].",
+        ("aaaaaaa1", "abandoned_object on bus-g331"),
+    )
+    assert _verdicts(t) == {"E:aaaaaaa1": "consistent"}  # the unknown tag is counted elsewhere
+    non_event = {"answer": "See [I:dddddddd] intrusion.", "citations": [
+        {"kind": "I", "tag": "dddddddd", "label": "intrusion on bus-g340"}]}  # fmt: skip
+    assert judge.citation_consistency(non_event) == []  # only event records are checked
+
+
+def test_citation_consistency_is_summarised_per_run() -> None:
+    row = {
+        "category": "list_events",
+        "expect": "answer",
+        "judgement": None,
+        "transcript": {
+            "qid": "q1", "answer": "x", "error": "", "seconds": 1, "citations": [],
+            "consulted_only": False,
+            "citation_check": [{"tag": "E:a", "verdict": "consistent"},
+                               {"tag": "E:b", "verdict": "contradicted"},
+                               {"tag": "E:c", "verdict": "consistent"}],
+        },
+    }  # fmt: skip
+    s = aggregate.summarise_answers([row])
+    assert s["citation_consistency"] == {
+        "checked": 3, "consistent": 2, "contradicted": 1, "unclear": 0
+    }  # fmt: skip
+    assert "2 of 3 consistent, 1 contradicted, 0 unclear" in run._consistency(s)
+
+
+def test_the_prompt_example_prefix_is_the_one_in_the_prompt_and_is_counted() -> None:
+    prompt = RQ.parents[2] / "libs/vms_common/src/vms_common/llm/prompts/eval_judge/1.0.md"
+    assert judge.EXAMPLE_PROBLEM_PREFIX in prompt.read_text().lower()
+    assert aggregate.EXAMPLE_PROBLEM_PREFIX == judge.EXAMPLE_PROBLEM_PREFIX
+    rows = [
+        {"category": "c", "expect": "answer",
+         "judgement": {"faithfulness": 3, "relevance": 3, "problem": text, "citations": []},
+         "transcript": {"qid": f"q{i}", "answer": "x", "error": "", "seconds": 1,
+                        "citations": [], "consulted_only": False}}
+        for i, text in enumerate(
+            ["Claims 4 October but the lookup covered only 24 hours", "another problem", ""]
+        )
+    ]  # fmt: skip
+    assert aggregate.summarise_answers(rows)["problems_that_copy_the_prompt_example"] == 1
+
+
+def test_a_sentence_naming_the_right_camera_and_another_one_is_not_called_consistent() -> None:
+    t = _cited(
+        "Loitering on bus-g331, unlike bus-g340 [E:b10e1385].",
+        ("b10e1385", "loitering on bus-g331"),
+        ("84912e49", "intrusion on bus-g340"),
+    )
+    assert _verdicts(t) == {"E:b10e1385": "unclear"}
+
+
+def _answers_summary(*, judged: int, named: int, faith: float, precision_checked: int = 0) -> dict:
+    return {
+        "questions": 72,
+        "judged": judged,
+        "judge_named_a_problem": named,
+        "problems_that_copy_the_prompt_example": 2,
+        "faithfulness": {"mean": faith, "ci95": [faith - 0.2, faith + 0.2], "n": judged},
+        "citation_precision": {"checked": precision_checked},
+    }
+
+
+def test_the_reading_notes_say_what_the_numbers_show_and_stay_quiet_when_they_do_not() -> None:
+    runs = {
+        "baseline": {"answers": _answers_summary(judged=71, named=71, faith=4.6)},
+        "after": {"answers": _answers_summary(judged=71, named=71, faith=4.5)},
+    }
+    text = "\n".join(run.reading_notes(runs))
+    assert "**every** answer it judged (71 of 71)" in text and "2 of them repeat" in text
+    assert "from 4.6 to 4.5" in text and "intervals overlap" in text
+    assert "no per-citation judgements" in text and "this set of 72 questions" in text
+    runs["after"]["answers"] = _answers_summary(judged=71, named=10, faith=3.0, precision_checked=5)
+    quiet = "\n".join(run.reading_notes(runs))
+    assert "**every**" not in quiet and "no per-citation" not in quiet
+    assert "intervals overlap" not in quiet  # 4.6 -> 3.0 is a real move
