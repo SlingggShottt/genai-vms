@@ -319,6 +319,10 @@ class ReasoningWorker:
             await self._store.finish(job.id, failed=reason[:500])
         except Exception:
             log.exception("could_not_mark_job_failed")
+        try:  # the report row created before the failure must not stay "generating" for ever
+            await self._store.abandon_incidents(job.id, reason[:500])
+        except Exception:
+            log.exception("could_not_mark_incident_failed")
 
     async def _announce(
         self,
