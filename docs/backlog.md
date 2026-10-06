@@ -859,6 +859,7 @@
 - [ ] Namespaces, PVCs, resource requests sized for a 16 GB laptop; `SERVICES.md` published.
 
 ### P7-D2 · GPU scheduling in Kubernetes — 5 pts · Must · E17
+> **Status 2026-10-07 — manifests written, never applied (no cluster, no GPU node here):** `deploy/k8s/overlays/gpu` (perception and an in-cluster Ollama with a PVC and a model-pull Job both ask for `nvidia.com/gpu: 1` and are placed by `vms.io/gpu-role` = `perception` / `genai` / `shared`; a `shared` single GPU needs the device plugin's time-slicing, which shares the card but not its VRAM) and `overlays/host-gpu` (the fallback: Ollama stays on a host machine and pods reach it as the Service `ollama` with an Endpoints, or `ExternalName`; perception is off there). `make k8s-check` renders all three overlays, passes `kubeconform -strict`, asserts what each is for, and was mutation-checked. Reasoning does not request a GPU: it calls Ollama (it would only with in-process `hf_local` adapters, which do not exist). Perception on a host cannot reach the cluster's Kafka (in-cluster advertised name), so that direction is **not built**. "Tested" fallback is therefore render-tested only.
 - [ ] NVIDIA device plugin; `vms.io/gpu-role` node labels; perception/reasoning request `nvidia.com/gpu`.
 - [ ] Documented, tested fallback: GPU services on host Compose exposed to the cluster via `ExternalName`/Endpoints.
 
@@ -880,26 +881,31 @@
 ## Jatin — 23 pts
 
 ### P7-J1 · Kubernetes app layer — 5 pts · Must · E17 · NFR-POR-01
+> **Status 2026-10-07:** the base and `minikube` overlay (rendered, schema-checked, never applied) plus an HPA on the indexer (`base/apps/indexer-hpa.yaml`, 1–3 on CPU, needs metrics-server). **The daily-report CronJob is deliberately not built:** the reasoning worker already queues yesterday's report itself after `daily_report_hour` and skips a day already scheduled, so a CronJob would duplicate it. `make k8s-up` has never been run.
 - [ ] Kustomize base + `minikube` overlay: Deployments/Services for all app services and frontend, ConfigMaps (models/rules/correlation), Secret generator, probes.
 - [ ] ingress-nginx routes (`/`, `/api`), migrations `Job`, daily report `CronJob`, HPA on indexer.
 - [ ] `make k8s-up` brings the full app up on minikube.
 
 ### P7-J2 · Cloud Docker deployment — 5 pts · Must · E17
+> **Status 2026-10-07 — written and partly verified, not deployed:** `deploy/compose/docker-compose.prod.yml` (GHCR images, Caddy, no host ports but 80/443/8189-udp, `cloud` profile, required secrets), `Caddyfile`, `.env.prod.example`, `update.sh` (pull, migrate, topics, start, `--status`, `--rollback`) and the runbook in `deploy/compose/README.md`. The `cloud` profile now sends `phase_tg` / `phase_vr` to Gemini too (the VM has no Ollama). Verified: config render and required variables, the Caddyfile and nginx in a real browser (no CSP violations; WHEP and HLS redirects fixed after the test found the HLS 302 lost its prefix), `update.sh` against a stub `docker`, the migration command in the api image. **Not verified:** a real VM, certificates, the `media.` site, hls.js playback, WebRTC over NAT. **Perception does not run in the cloud** (GPU image); archive mode is described, not rehearsed.
 - [ ] `docker-compose.prod.yml` with Caddy (TLS), `cloud` LLM profile, CPU perception (≤ 2 cameras) or pre-indexed archive mode.
 - [ ] Deployed on a free/student-credit VM; runbook (provisioning, env, backups, update) in `deploy/compose/README.md`.
 
 ### P7-J3 · Continuous delivery — 3 pts · Must · E17
+> **Status 2026-10-07 — workflows written, never run on GitHub:** `.github/workflows/release.yml` (buildx + QEMU, GHCR, semver + sha tags, amd64+arm64 for the light services, amd64 only for retrieval/reasoning, perception not built; tag or manual dispatch) and `deploy.yml` (manual dispatch, SSH with host-key checking, environment `production`, inputs through the environment); both pass `actionlint`. The push-to-main trigger is left off until a manual run has gone green.
 - [ ] GitHub Actions builds multi-arch images on tags/main and pushes to GHCR with semver + sha tags.
 - [ ] Manual-dispatch deploy workflow to the VM over SSH.
 
 ### P7-J4 · Response-quality evaluation — 5 pts · Must · E18 · EV-03
+> **Status 2026-10-07 — harness built and run:** `ml/evaluation/response_quality` (72 questions, 21 incidents), results in `ml/evaluation/results/response-quality.md`, blind human sheet + rubric form in the run directories. Objective before/after on the assistant (router fixes + the camera list now including switched-off cameras): first lookup right 78 % → 100 %, camera used 28 % → 100 %, day used 0 % → 100 %, written tags matching no record 29 % → 18 %. The **3B judge (llama3.2:3b) is weak**: it names a problem for every answer, repeats its prompt's example in some, returns no per-citation judgements, and scored the two runs alike, so citation precision is checked by a model-free event-type/camera agreement check instead and the human sheet is what decides the judge's worth. **No person has filled the sheets yet.**
 - [ ] `ml/evaluation/response_quality`: judge prompts (faithfulness, relevance, citation precision) using a different model family; 20 % human-verification sheet.
-- [ ] Incident report rubric (1–5 × accuracy, completeness, causality, actionability) forms + aggregation; schema-valid rate.
+- [x] Incident report rubric (1–5 × accuracy, completeness, causality, actionability) forms + aggregation; schema-valid rate.
 - [ ] Runs on ≥ 60 assistant questions and all test-set incidents; results summary.
 
 ### P7-J5 · Usability kit & security hardening — 5 pts · Must · E18, E17 · EV-05, NFR-SEC-*
+> **Status 2026-10-07:** the usability kit is written (`ml/evaluation/usability`: SUS questionnaire, 4 task scripts, consent note, result templates, a tested scorer) — no sessions held. Security headers and a Content-Security-Policy now exist in `deploy/compose/Caddyfile` and were exercised in a real browser against the production build (no violations; see the compose README for what was substituted). Not done: presign-expiry check re-verified, and everything that needs the real domain.
 > **Status 2026-10-04 — hardening partly built:** rate limiting on login / search / assistant / analyses & reports (Redis, 429 + `Retry-After`, fails open), security headers in the api and in the frontend's nginx, the role × endpoint matrix extended to the endpoints added since (166 matrix tests), `gitleaks` was already in pre-commit. **Not done:** the usability kit (SUS questionnaire, task scripts, consent note, results template — for K & P), Caddy and a Content-Security-Policy (needs the deployment's real origins).
-- [ ] SUS questionnaire, 4 task scripts, consent note and results template for K & P.
+- [x] SUS questionnaire, 4 task scripts, consent note and results template for K & P.
 - [ ] Hardening: rate limiting on auth/search/assistant, CORS allow-list, security headers (Caddy), presign expiry check, role × endpoint matrix passing, gitleaks clean.
 
 ---
