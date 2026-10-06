@@ -10,7 +10,7 @@ COMPOSE := docker compose --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
 PROFILE ?=
 SVC ?=
 
-.PHONY: help setup up down test test-int lint topics qdrant-collections sim migrate migration k8s-render k8s-up k8s-down demo demo-stop
+.PHONY: help setup up down test test-int lint topics qdrant-collections sim migrate migration k8s-render k8s-check k8s-up k8s-down demo demo-stop
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -71,6 +71,9 @@ KUBECTL ?= kubectl
 k8s-render: ## Render the minikube manifests to stdout (needs overlays/minikube/secrets.env)
 	@test -f $(K8S_OVERLAY)/secrets.env || { echo "copy $(K8S_OVERLAY)/secrets.env.example to secrets.env first"; exit 1; }
 	$(KUBECTL) kustomize --load-restrictor=LoadRestrictionsNone $(K8S_OVERLAY)
+
+k8s-check: ## Render every overlay (minikube, gpu, host-gpu), schema-check it and assert what it is for
+	deploy/k8s/check.sh
 
 k8s-up: ## Build the images into minikube and apply the manifests
 	eval $$(minikube docker-env) && \

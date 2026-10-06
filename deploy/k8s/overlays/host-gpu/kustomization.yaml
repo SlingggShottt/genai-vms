@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vms
+
+# The fallback when the cluster has no GPU node: the GPU services stay on a host machine and are
+# exposed to the cluster as the Service `ollama` (host-ollama.yaml; edit its address).
+#   - the language models (reasoning, retrieval, events) reach Ollama through that Service;
+#   - perception is scaled to 0 here: run it on the GPU host (README.md, "No GPU node").
+# Build with:  kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/k8s/overlays/host-gpu
+
+resources:
+  - ../../base
+  - host-ollama.yaml
+
+secretGenerator:
+  - name: vms-secrets
+    envs:
+      - secrets.env # copy secrets.env.example; never committed
+    options:
+      disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: vms-env
+    behavior: merge
+    literals:
+      - VMS_LLM_OLLAMA_URL=http://ollama:11434
+
+images:
+  - { name: genai-vms-api, newName: ghcr.io/OWNER/genai-vms-api, newTag: latest }
+  - { name: genai-vms-frontend, newName: ghcr.io/OWNER/genai-vms-frontend, newTag: latest }
+  - { name: genai-vms-retrieval, newName: ghcr.io/OWNER/genai-vms-retrieval, newTag: latest }
+  - { name: genai-vms-reasoning, newName: ghcr.io/OWNER/genai-vms-reasoning, newTag: latest }
+  - { name: genai-vms-indexer, newName: ghcr.io/OWNER/genai-vms-indexer, newTag: latest }
+  - { name: genai-vms-events, newName: ghcr.io/OWNER/genai-vms-events, newTag: latest }
+  - { name: genai-vms-correlation, newName: ghcr.io/OWNER/genai-vms-correlation, newTag: latest }
+  - { name: genai-vms-ingestion, newName: ghcr.io/OWNER/genai-vms-ingestion, newTag: latest }
+
+patches:
+  - target: { kind: Deployment, name: perception }
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 0

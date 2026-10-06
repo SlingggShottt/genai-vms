@@ -1,0 +1,117 @@
+# Ollama inside the cluster, on a GPU node (the `gpu` overlay). One model is resident at a time
+# (design: a 4 GB card), and the models are pulled by the `ollama-pull` Job into the PVC.
+# `ollama/ollama:latest` is not pinned: pick a tag you have tried and put it here.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-models
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: { storage: 20Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  replicas: 1
+  strategy: { type: Recreate } # the GPU (and the PVC) can be held by one pod at a time
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: app
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - { key: vms.io/gpu-role, operator: In, values: [genai, shared] }
+      tolerations:
+        - { key: nvidia.com/gpu, operator: Exists, effect: NoSchedule }
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          env:
+            - { name: OLLAMA_HOST, value: "0.0.0.0:11434" }
+            - { name: OLLAMA_MAX_LOADED_MODELS, value: "1" }
+            - { name: OLLAMA_NUM_PARALLEL, value: "1" }
+          ports:
+            - { name: http, containerPort: 11434 }
+          readinessProbe:
+            httpGet: { path: /api/tags, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/tags, port: http }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 5
+          resources:
+            requests: { cpu: 500m, memory: 4Gi }
+            limits: { nvidia.com/gpu: 1, memory: 8Gi }
+          volumeMounts:
+            - { name: models, mountPath: /root/.ollama }
+      volumes:
+        - name: models
+          persistentVolumeClaim: { claimName: ollama-models }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  selector:
+    app.kubernetes.io/name: ollama
+  ports:
+    - { name: http, port: 11434, targetPort: http }
+---
+# Pulls the models `config/models.yaml` (local profile) names into the PVC. Re-running it is a no-op
+# for models already there. `kubectl -n vms logs job/ollama-pull -f` shows the progress.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-pull
+  labels:
+    app.kubernetes.io/name: ollama-pull
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: job
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama-pull
+        app.kubernetes.io/part-of: genai-vms
+        vms.io/tier: job
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: pull
+          image: ollama/ollama:latest
+          env:
+            - { name: OLLAMA_HOST, value: "http://ollama:11434" }
+          command:
+            - sh
+            - -c
+            - |
+              until ollama list >/dev/null 2>&1; do echo "waiting for ollama"; sleep 5; done
+              for m in qwen2.5vl:3b qwen2.5:3b; do ollama pull "$m"; done

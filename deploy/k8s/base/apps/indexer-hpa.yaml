@@ -1,0 +1,28 @@
+# Scales the indexer on CPU. Needs metrics-server (`minikube addons enable metrics-server`); without
+# it the autoscaler shows <unknown> and leaves the Deployment at its replica count.
+# The indexer is a consumer in one Kafka group on vms.twin.v1 (6 partitions), so more than 6 replicas
+# would sit idle; 3 is the ceiling a single-node cluster can feed. The target is a share of the CPU
+# *request* (100m), so 80 % is 80 millicores: the indexer scales out as soon as it is doing real work.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: indexer
+  labels:
+    app.kubernetes.io/name: indexer
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: indexer
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 80 }
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # a consumer group rebalance is not free: do not flap

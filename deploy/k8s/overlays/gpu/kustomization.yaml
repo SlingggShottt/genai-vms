@@ -1,0 +1,60 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: vms
+
+# A cluster with an NVIDIA GPU node: perception and Ollama run in the cluster and ask for the GPU.
+# Prerequisites (README.md, "GPU nodes"): the NVIDIA device plugin, and the GPU node labelled
+#   kubectl label node <node> vms.io/gpu-role=shared      # one GPU for both (needs time-slicing)
+#   kubectl label node <node> vms.io/gpu-role=perception  # or separate nodes for each
+#   kubectl label node <node> vms.io/gpu-role=genai
+# Build with:  kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/k8s/overlays/gpu
+
+resources:
+  - ../../base
+  - ollama.yaml
+
+secretGenerator:
+  - name: vms-secrets
+    envs:
+      - secrets.env # copy secrets.env.example; never committed
+    options:
+      disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: vms-env
+    behavior: merge
+    literals:
+      - VMS_LLM_OLLAMA_URL=http://ollama:11434
+
+# Images come from a registry the nodes can pull from. release.yml publishes every service except
+# perception (a GPU image: build it and push it to the same registry yourself). Replace OWNER and the tag.
+images:
+  - { name: genai-vms-api, newName: ghcr.io/OWNER/genai-vms-api, newTag: latest }
+  - { name: genai-vms-frontend, newName: ghcr.io/OWNER/genai-vms-frontend, newTag: latest }
+  - { name: genai-vms-retrieval, newName: ghcr.io/OWNER/genai-vms-retrieval, newTag: latest }
+  - { name: genai-vms-reasoning, newName: ghcr.io/OWNER/genai-vms-reasoning, newTag: latest }
+  - { name: genai-vms-indexer, newName: ghcr.io/OWNER/genai-vms-indexer, newTag: latest }
+  - { name: genai-vms-events, newName: ghcr.io/OWNER/genai-vms-events, newTag: latest }
+  - { name: genai-vms-correlation, newName: ghcr.io/OWNER/genai-vms-correlation, newTag: latest }
+  - { name: genai-vms-ingestion, newName: ghcr.io/OWNER/genai-vms-ingestion, newTag: latest }
+  - { name: genai-vms-perception, newName: ghcr.io/OWNER/genai-vms-perception, newTag: latest }
+
+patches:
+  # Perception may run on a node labelled perception (its own GPU) or shared (one GPU for both),
+  # and tolerates the taint cloud providers put on GPU nodes.
+  - target: { kind: Deployment, name: perception }
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/nodeSelector
+      - op: add
+        path: /spec/template/spec/affinity
+        value:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - { key: vms.io/gpu-role, operator: In, values: [perception, shared] }
+      - op: add
+        path: /spec/template/spec/tolerations
+        value:
+          - { key: nvidia.com/gpu, operator: Exists, effect: NoSchedule }
