@@ -330,7 +330,7 @@ jobs:
       # so their lint and unit tests (synthetic videos, no network, no model) run here.
       - run: uv run ruff check ml/evaluation ml/training
       - run: uv run ruff format --check ml/evaluation ml/training
-      - run: uv run pytest ml/evaluation/retrieval/tests ml/training -m "not integration"
+      - run: uv run pytest ml/evaluation ml/training -m "not integration"
 
   # --- Frontend --------------------------------------------------------------
 

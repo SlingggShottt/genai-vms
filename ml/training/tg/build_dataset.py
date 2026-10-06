@@ -204,6 +204,11 @@ def sample_record(
         "frame_times": [round(t, 1) for t in times],
         "labels": labels,
         "flagged_span": list(span),
+        "window_s": clip_duration(clip),
+        "n_views": len(clip.views),
+        "phases": [
+            {"phase": s.phase, "start_s": s.start_s, "end_s": s.end_s} for s in clip.phases
+        ],  # the annotated truth, for the evaluation (P5-D3)
         "messages": [
             {
                 "role": "user",

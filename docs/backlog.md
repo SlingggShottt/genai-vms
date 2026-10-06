@@ -720,6 +720,11 @@
 - [ ] `ml/evaluation/reasoning/phase`: mIoU and boundary MAE on test split.
 - [ ] Baselines: zero-shot base 3B (same prompt) and zero-shot cloud VLM on ≤ 40 clips (free tier).
 - [ ] Error analysis: confusion between adjacent phases, per event type, single vs multi-view.
+      > **Status 2026-10-06 — harness written, no real result** (`ml/evaluation/reasoning/phase/`, README there): mIoU,
+      > boundary error, frame accuracy and usable-answer rate with 95 % bootstrap intervals, by event type and single/multi-view;
+      > methods `rules` (the service's detector-timing fallback) and `model` (any `phase_tg` gateway task, same fallback). 13
+      > unit tests. Run once against the real zero-shot `qwen2.5vl:3b` on synthetic clips as a plumbing check only. **Not done:**
+      > the baselines on real clips (no annotations yet), the cloud-VLM baseline, the confusion matrix between adjacent phases.
 
 ### P5-D4 · Reasoning orchestrator — 5 pts · Must · E12 · FR-RSN-01, FR-RSN-04…06
 > **Status 2026-10-04 — partly built** (`services/reasoning`): `reasoning.jobs` queue with `SKIP LOCKED` and lease recovery, auto-queue from closed `correlation.v1` groups (high+, capped per hour) and `POST /events/{id}/analyze`, ±15 s window, TG → evidence → synthesis, queue position and stage in the job. Phase location uses the **zero-shot base model** (no adapter is trained), falling back to detector timing, recorded in provenance. **Not done:** `job.progress` on the WebSocket (the UI polls), the cloud fallback step.

@@ -254,6 +254,8 @@ def test_build_makes_consistent_samples_and_never_splits_a_source_video(world) -
         assert bd.MIN_FRAMES <= n <= 8 and len(s["labels"]) == n == len(s["frame_times"])
         ranks = [PHASES.index(x) for x in s["labels"]]
         assert ranks == sorted(ranks)
+        assert s["window_s"] == 12.0 and s["n_views"] == 2
+        assert [p["phase"] for p in s["phases"]] == list(PHASES)  # the annotated truth rides along
         user, assistant = s["messages"]
         assert [c["type"] for c in user["content"]].count("image") == n
         assert json.loads(assistant["content"][0]["text"]) == {"phases": s["labels"]}
