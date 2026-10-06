@@ -18,7 +18,8 @@
 # Environment:
 #   VMS_RETRIEVAL_ARCHIVE_SINCE   ISO time; footage older than this is not searched (recordings
 #                                 the retention policy has removed). Unset = search everything.
-#   VMS_OLLAMA_MEMORY_MAX         memory cap for Ollama's scope (default 6G; 0 = no cap)
+#   VMS_OLLAMA_MEMORY_MAX         memory cap for Ollama's scope (default 8G; 0 = no cap). Its runner uses
+#                                 6-7 GB on the CPU: a 6G cap killed it three times in 16 minutes
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -72,7 +73,7 @@ if [ -n "$OLLAMA_BIN" ]; then
   # The runner it spawns is the first thing the kernel should give up under memory pressure, so
   # raise its OOM score (allowed without privileges) and cap the scope.
   OLLAMA_HOST=0.0.0.0:11434 OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_NUM_PARALLEL=1 \
-    MEMORY_MAX="${VMS_OLLAMA_MEMORY_MAX:-6G}" start ollama 11434 \
+    MEMORY_MAX="${VMS_OLLAMA_MEMORY_MAX:-8G}" start ollama 11434 \
     bash -c 'echo 500 >/proc/self/oom_score_adj; exec "$@"' _ "$OLLAMA_BIN" serve
 else
   echo "  ollama not found - the language-model steps will degrade (set OLLAMA_BIN)" >&2
