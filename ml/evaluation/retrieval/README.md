@@ -31,7 +31,7 @@ uv run --package vms-retrieval python ml/evaluation/retrieval/meva_benchmark.py
 Unit tests of the metrics and the timeline alignment (`make test` does not collect `ml/`):
 `uv run --package vms-retrieval pytest ml/evaluation/retrieval/tests`.
 
-## Last run (2026-10-06, local profile, 36 queries, 221 windows, random = 36-minute stream picked blindly)
+## Last run (2026-10-06, local profile, 36 queries, 221 recorded windows)
 
 | | hit@1 | hit@5 | hit@10 | MRR | median per query |
 |---|---|---|---|---|---|
@@ -46,8 +46,9 @@ queries, later on 7, and at the same rank on 17: an edge, not proof, with this f
 What it shows: search separates *what is in the picture* far better than *what is happening*.
 Phone, laptop, document, riding, stand-up, trunk and pick-up-a-person queries land in the top 10
 (posture and device family: 7 of 7); vehicle turning left, starting or stopping, a person entering
-or leaving through a door, hand-shaking, picking up or setting down an object, never do — a
-single-frame image embedding cannot see motion, and nothing in the index describes it. Part of the
+or leaving through a door, hand-shaking, picking up or setting down an object, never do. A
+single-frame image embedding cannot see motion, which is the likely reason (not tested: tracks do
+carry speed and direction, and I did not check whether a query uses them). Part of the
 hit rate may be scene recognition rather than action recognition, because clips of one activity
 often share a location; the benchmark cannot tell the two apart. Returned windows lie on clips, not
 black gaps, 92–94 % of the time. The two security-relevant singletons (theft, abandon-package) are
