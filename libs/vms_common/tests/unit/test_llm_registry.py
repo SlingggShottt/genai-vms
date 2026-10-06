@@ -84,10 +84,20 @@ def test_shipped_hybrid_and_cloud_follow_the_design_split() -> None:
     assert hybrid.task("event_verify").primary.provider == "ollama"
     assert hybrid.task("rerank").primary.provider == "gemini"
     assert hybrid.task("daily_narrative").primary.provider == "groq"
-    # cloud: vision moves too; the phase tasks stay on the local zero-shot base
+    # cloud: vision moves too, the phase tasks included (the VM has no Ollama to run them on)
     assert cloud.task("event_verify").primary.provider == "gemini"
     assert cloud.task("jit_vqa").primary.provider == "gemini"
-    assert cloud.task("phase_tg").primary.provider == "ollama"
+    for task in ("phase_tg", "phase_vr"):
+        assert cloud.task(task).primary.provider == "gemini"
+        assert hybrid.task(task).primary.provider == "ollama"  # a GPU host keeps them local
+    # so nothing the running system asks of the gateway needs a local Ollama (only the offline
+    # evaluation judge does)
+    needs_ollama = [
+        name
+        for name in cloud.task_names()
+        if cloud.task(name).primary.provider == "ollama" and name != JUDGE_TASK
+    ]
+    assert needs_ollama == []
 
 
 def test_shipped_local_tasks_get_a_context_window_big_enough_for_their_images() -> None:

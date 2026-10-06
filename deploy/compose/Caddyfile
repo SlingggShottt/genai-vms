@@ -1,0 +1,68 @@
+# Caddy for docker-compose.prod.yml: automatic HTTPS for {$DOMAIN} and media.{$DOMAIN}.
+# DNS for both names must point at the VM, and 80/443 must be open, before the first start:
+# Caddy obtains the certificates then, and a failed attempt counts against Let's Encrypt's limits.
+#
+# Environment (set by the compose file from .env.prod): DOMAIN, ACME_EMAIL, CSP_HEADER_NAME.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# What the page loads: its own scripts and styles (inline style attributes are used by the
+		# UI), Barlow from Google Fonts, pictures and clips from media.{$DOMAIN} (presigned URLs),
+		# HLS segments and the WHEP exchange from this origin, hls.js's blob: media and worker.
+		{$CSP_HEADER_NAME:Content-Security-Policy} "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://media.{$DOMAIN}; media-src 'self' blob: https://media.{$DOMAIN}; connect-src 'self' wss://{$DOMAIN} https://media.{$DOMAIN}; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		-Server
+	}
+
+	# The api: REST, the WebSocket and the assistant's server-sent events (no buffering).
+	handle /api/* {
+		reverse_proxy api:8000 {
+			flush_interval -1
+		}
+	}
+
+	# MediaMTX: WHEP signalling and HLS on the same origin as the page (the frontend image is built
+	# with VITE_MEDIAMTX_WEBRTC_URL=/webrtc and VITE_MEDIAMTX_HLS_URL=/hls). The prefix is stripped
+	# on the way in, so every redirect MediaMTX issues has to get it back on the way out: a WHEP
+	# answer names the session in Location, and an HLS request is first answered with a 302 to
+	# `<path>/index.m3u8?cookieCheck=1` (seen on the build machine's MediaMTX).
+	handle_path /webrtc/* {
+		reverse_proxy mediamtx:8889 {
+			header_down Location ^/ /webrtc/
+		}
+	}
+	handle_path /hls/* {
+		reverse_proxy mediamtx:8888 {
+			header_down Location ^/ /hls/
+		}
+	}
+
+	# Everything else is the single-page app.
+	handle {
+		reverse_proxy frontend:80
+	}
+}
+
+# MinIO's S3 API, only for the presigned GET URLs the api hands out (the signature covers the
+# Host header, which Caddy passes through unchanged). Reads only; the console is not exposed.
+media.{$DOMAIN} {
+	@not_a_read not method GET HEAD OPTIONS
+	respond @not_a_read 405
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+	reverse_proxy minio:9000
+}

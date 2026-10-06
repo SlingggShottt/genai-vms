@@ -1,0 +1,63 @@
+# Deploys a published image tag to the cloud VM over SSH (P7-J3). Manual only.
+#
+# One-time setup, in the repository's settings:
+#   Environment `production` (add required reviewers there if a second pair of eyes is wanted), with
+#   secrets DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY (a private key that may log in as DEPLOY_USER)
+#   and DEPLOY_KNOWN_HOSTS (the output of `ssh-keyscan -t ed25519 <host>`, checked by hand once).
+#   Host key checking stays ON: a missing or wrong DEPLOY_KNOWN_HOSTS fails the run.
+# On the VM: the runbook in deploy/compose/README.md (provisioning, .env.prod, first start).
+name: Deploy to the VM
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to deploy (e.g. 1.2.3 or sha-abc1234)"
+        required: true
+        type: string
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - name: Refuse a tag that is not a plain image tag
+        env:
+          TAG: ${{ inputs.tag }}   # through the environment, never pasted into the script text
+        run: |
+          case "$TAG" in
+            *[!A-Za-z0-9._-]*|"") echo "tag may only contain letters, digits, . _ -" >&2; exit 1 ;;
+          esac
+
+      - name: Prepare SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Update and restart
+        env:
+          TAG: ${{ inputs.tag }}
+          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$TARGET" "cd /opt/genai-vms && ./deploy/compose/update.sh '$TAG'"
+
+      - name: Check it came up
+        env:
+          TARGET: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$TARGET" "cd /opt/genai-vms && ./deploy/compose/update.sh --status"
