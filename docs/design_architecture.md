@@ -364,6 +364,8 @@ Key columns (selected):
 
 Browsers only get presigned GET URLs (≤ 15 min).
 
+**As built (dev laptop, 98 GB disk).** The lifecycle rules are applied at **1 day** for `vms-segments`, `vms-keyframes`, `vms-crops` and `vms-twins` (the disk reached 100 % at 7 d / 30 d), none on the other buckets. Postgres and Qdrant keep their rows after the video is gone, so footage older than a day is indexed but cannot be played or shown: search drops those results and says so in `notes` (§10), and playback fails. Record the footage a demo needs within the day before it: `deploy/demo/refresh.sh` (`make demo-refresh`) replays real MEVA clips through the pipeline and runs the rules and the verification gate.
+
 ## 7. Perception, digital twin, events & correlation
 
 ### 7.1 Perception flow (owner: D)

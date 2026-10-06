@@ -43,6 +43,7 @@ import numpy as np
 import yaml
 
 HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[2]
 RESULTS = HERE.parent / "results"
 MIN_OVERLAP_S = 2.0
 KS = (1, 3, 5, 10)
@@ -77,54 +78,76 @@ def check_queries(queries: list[dict], clips: list[Clip]) -> None:
         )
 
 
+START_WINDOW_S = 2.5  # a new track appears this soon after a clip begins, or not at all
+
+
+def latest_recording(
+    segments: list[tuple[float, float]], tracks: list[tuple[float, float]], max_gap_s: float = 120.0
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
+    """Only the last contiguous run of segments (a gap over `max_gap_s` starts a new recording),
+    and the tracks that began inside it: the camera may have been recorded more than once."""
+    start = 0
+    for i in range(1, len(segments)):
+        if segments[i][0] - segments[i - 1][1] > max_gap_s:
+            start = i
+    segs = segments[start:]
+    lo, hi = segs[0][0], segs[-1][1]
+    return segs, [tr for tr in tracks if lo <= tr[0] <= hi]
+
+
 def calibrate(
     tracks: list[tuple[float, float]],
     clips: list[Clip],
     first_segment_ts: float,
     *,
+    prior: tuple[float, float] | None = None,
     latest_start_s: float = 90.0,
-    step_s: float = 0.5,
+    step_s: float = 0.25,
 ) -> dict:
     """Wall-clock time (epoch seconds) at which the stream began.
 
-    `tracks` are (first, last) epoch seconds of every recorded track. A candidate start `t0` is
-    scored by how much track presence falls inside clips (+1 per half-second bin) against inside
-    leader or gaps (-1). The stream began before ingestion recorded its first segment, by at most
-    `latest_start_s`, so only those candidates are tried.
+    The stream cuts from one scene to the next at every clip, and nothing can be tracked in the
+    black leader or gaps, so a new track begins within a moment of a clip's start (or later in
+    the clip), never in black. A candidate start `t0` scores +1 for every track that begins within
+    `START_WINDOW_S` of a clip start and -1 for every track that begins anywhere in black or
+    before the stream. Track *ends* are not used: the tracker keeps a track alive for seconds
+    after the scene has cut, which biases any score built on them late (measured: ~5 s).
+
+    The stream began before ingestion recorded its first segment, by at most `latest_start_s`;
+    `prior` = (earliest, latest) epoch seconds narrows that when the simulator's start is known.
     """
     if not tracks or not clips:
         raise ValueError("no tracks or no clips to calibrate on")
-    lo = min(t[0] for t in tracks)
-    hi = max(t[1] for t in tracks)
-    edges = np.arange(lo, hi + step_s, step_s)
-    present = np.zeros(len(edges), dtype=bool)
-    for a, b in tracks:
-        present[int((a - lo) / step_s) : int((b - lo) / step_s) + 1] = True
-    centres = edges + step_s / 2
-    starts = np.array([c.start_s for c in clips])
-    ends = np.array([c.end_s for c in clips])
-    order = np.argsort(starts)
-    starts, ends = starts[order], ends[order]
+    firsts = np.array(sorted(tr[0] for tr in tracks))
+    order = sorted(clips, key=lambda c: c.start_s)
+    starts = np.array([c.start_s for c in order])
+    ends = np.array([c.end_s for c in order])
 
-    candidates = np.arange(first_segment_ts - latest_start_s, first_segment_ts + 2.0, step_s)
+    def inside_and_early(t0: float) -> tuple[np.ndarray, np.ndarray]:
+        s = firsts - t0
+        idx = np.searchsorted(starts, s, side="right") - 1
+        j = np.clip(idx, 0, None)
+        inside = (idx >= 0) & (s < ends[j])
+        early = inside & (s - starts[j] < START_WINDOW_S)
+        return inside, early
+
+    lo, hi = (first_segment_ts - latest_start_s, first_segment_ts + 2.0) if prior is None else prior
+    candidates = np.arange(lo, hi + step_s / 2, step_s)
     scores = np.empty(len(candidates))
     for i, t0 in enumerate(candidates):
-        s = centres - t0
-        idx = np.searchsorted(starts, s, side="right") - 1
-        inside = (idx >= 0) & (s < ends[np.clip(idx, 0, None)])
-        scores[i] = float(np.sum(np.where(present, np.where(inside, 1, -1), 0)))
+        inside, early = inside_and_early(float(t0))
+        scores[i] = float(early.sum() - (~inside).sum())
     best = int(np.argmax(scores))
     far = np.abs(candidates - candidates[best]) > 3.0
     runner_up = float(scores[far].max()) if far.any() else float("nan")
-    s = centres - candidates[best]
-    idx = np.searchsorted(starts, s, side="right") - 1
-    inside = (idx >= 0) & (s < ends[np.clip(idx, 0, None)])
+    inside, _ = inside_and_early(float(candidates[best]))
     return {
         "t0": float(candidates[best]),
         "score": float(scores[best]),
         "runner_up_score": runner_up,
         "late_join_s": float(first_segment_ts - candidates[best]),
-        "presence_inside_clips": float(np.sum(present & inside) / max(1, np.sum(present))),
+        "tracks_starting_in_black": float((~inside).sum() / len(firsts)),
+        "used_prior": prior is not None,
     }
 
 
@@ -172,6 +195,18 @@ def mean(values: list[float]) -> float:
 
 def aggregate(rows: list[dict], keys: list[str]) -> dict:
     return {k: mean([r[k] for r in rows if r.get(k) is not None]) for k in keys}
+
+
+def replay_start(arg: str, first_segment_ts: float) -> float | None:
+    """The simulator's start time as epoch seconds, from an ISO string or a file holding one;
+    None when it is missing or cannot belong to this recording (later than the first segment, or
+    more than two minutes before it)."""
+    text = Path(arg).read_text().strip() if Path(arg).is_file() else arg.strip()
+    try:
+        value = datetime.fromisoformat(text).timestamp()
+    except ValueError:
+        return None
+    return value if 0 <= first_segment_ts - value <= 120 else None
 
 
 def ts(value: str) -> float:
@@ -298,6 +333,15 @@ def table_row(label: str, values: dict, metric: str) -> str:
     return f"| {label} | {cells} |"
 
 
+def alignment_note(cal: dict) -> str:
+    agreed = cal.get("agrees_with_simulator_start")
+    if agreed is None and not cal.get("used_prior"):
+        return "no simulator start time was available to cross-check"
+    if agreed:
+        return "the same offset follows from the simulator's start time"
+    return "the data alone disagreed with the simulator's start time, so that window was used"
+
+
 def markdown(report: dict) -> str:
     cal = report["calibration"]
     lines = [
@@ -312,9 +356,9 @@ def markdown(report: dict) -> str:
         INTRO,
         "",
         f"Timeline alignment: the stream start was found at an offset scoring {cal['score']:.0f} "
-        f"(runner-up {cal['runner_up_score']:.0f}); "
-        f"{cal['presence_inside_clips'] * 100:.0f}% of tracked time lies inside clips; "
-        f"ingestion joined {cal['late_join_s']:.1f} s late.",
+        f"(runner-up {cal['runner_up_score']:.0f}); {cal['tracks_starting_in_black'] * 100:.0f}% "
+        f"of tracks began in black frames (noise); ingestion joined {cal['late_join_s']:.1f} s "
+        f"late; {alignment_note(cal)}.",
         "",
     ]
     for mode, data in report["modes"].items():
@@ -368,6 +412,11 @@ async def main() -> None:
     ap.add_argument("--top-k", type=int, default=10)
     ap.add_argument("--limit", type=int, default=0, help="only the first N queries (a smoke test)")
     ap.add_argument("--out", default=str(RESULTS / "meva-retrieval-benchmark"))
+    ap.add_argument(
+        "--replay-start",
+        default=str(ROOT / ".demo" / "last_replay_start"),
+        help="when the simulator started (ISO time, or a file holding it); narrows the alignment",
+    )
     args = ap.parse_args()
 
     manifest = json.loads((HERE / "meva_ex_manifest.json").read_text())
@@ -381,8 +430,18 @@ async def main() -> None:
     windows_ts, tracks = await fetch_recording(camera)
     if not windows_ts:
         raise SystemExit(f"no recorded segments for camera {camera}: record the stream first")
-    cal = calibrate(tracks, clips, windows_ts[0][0])
-    print(f"calibration: {cal}")
+    windows_ts, tracks = latest_recording(windows_ts, tracks)
+    first = windows_ts[0][0]
+    cal = calibrate(tracks, clips, first)
+    print(f"calibration without a prior: {cal}")
+    prior_start = replay_start(args.replay_start, first)
+    if prior_start is not None:
+        # the stream cannot begin before the simulator was started, and starts within seconds of it
+        with_prior = calibrate(tracks, clips, first, prior=(prior_start - 1.0, prior_start + 8.0))
+        print(f"calibration inside the simulator's start window: {with_prior}")
+        cal["agrees_with_simulator_start"] = abs(with_prior["t0"] - cal["t0"]) <= 1.5
+        if not cal["agrees_with_simulator_start"]:
+            cal = {**with_prior, "disagreed_with": cal["t0"] - with_prior["t0"]}
     if cal["score"] < 1.5 * max(cal["runner_up_score"], 1.0):
         print("WARNING: the timeline alignment is weak; do not trust the numbers")
     t0 = cal["t0"]
