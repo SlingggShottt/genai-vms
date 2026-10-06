@@ -87,14 +87,6 @@ def test_labels_at_follows_the_spans_and_takes_the_nearest_outside_them() -> Non
     assert ev.labels_at(TRUTH, [8.0, 9.5]) == ["action", "action"]
 
 
-def test_the_bootstrap_interval_is_seeded_and_brackets_the_mean() -> None:
-    values = [0.2, 0.4, 0.5, 0.9, 0.7, 0.1, 0.6]
-    lo, hi = ev.bootstrap_ci(values, seed=1)
-    assert (lo, hi) == ev.bootstrap_ci(values, seed=1)
-    assert lo <= sum(values) / len(values) <= hi
-    assert all(x != x for x in ev.bootstrap_ci([0.5]))  # nan for a single value
-
-
 # ---- predictors ---------------------------------------------------------------------------------
 
 

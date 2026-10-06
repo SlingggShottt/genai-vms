@@ -12,7 +12,7 @@ data to fine-tune an adapter for each, and score it against the zero-shot baseli
 | dataset | `phavr_labels.jsonl` → PhaVR samples | `ml/training/phavr/` (P5-J1) | built, tested on synthetic clips |
 | train | Unsloth QLoRA on Kaggle (design §8.3) | P5-D2 / P5-J2 | not written |
 | evaluate | TG: mIoU, boundary error vs the detector timing and the zero-shot model | `ml/evaluation/reasoning/phase/` (P5-D3) | built; no real result yet |
-| evaluate | PhaVR: BLEU-4, METEOR, ROUGE-L, CIDEr, VQA accuracy | P5-J3 | not written |
+| evaluate | PhaVR: BLEU-4, CIDEr-D, ROUGE-L, METEOR variant, VQA accuracy | `ml/evaluation/reasoning/phavr/` (P5-J3) | built; no real result yet |
 | serve | `hf_local` provider, PEFT adapter swap | P5-D5 | not written |
 
 Both builders share `dataset_common.py` (splits by source video in one extend-only `splits.json`,

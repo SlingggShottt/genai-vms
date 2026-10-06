@@ -29,15 +29,18 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import random
 import statistics
+import sys
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Protocol
 
-from reasoning.domain.timeline import FrameLabels, rule_spans, spans_from_labels
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # for `stats`
+
+from reasoning.domain.timeline import FrameLabels, rule_spans, spans_from_labels  # noqa: E402
+from stats import mean_ci  # noqa: E402
 from vms_common.llm import ImageInput, LLMError
 
 EPOCH = datetime(2000, 1, 1, tzinfo=UTC)
@@ -126,15 +129,6 @@ def labels_at(spans: list[Span], times: list[float]) -> list[str]:
         )
         out.append(best[0])
     return out
-
-
-def bootstrap_ci(values: list[float], seed: int = 0, n: int = 2000) -> tuple[float, float]:
-    """95 % interval of the mean; (nan, nan) for fewer than two values."""
-    if len(values) < 2:
-        return float("nan"), float("nan")
-    rng = random.Random(seed)  # noqa: S311 - resampling, not security
-    means = sorted(statistics.fmean(rng.choices(values, k=len(values))) for _ in range(n))
-    return means[int(0.025 * n)], means[int(0.975 * n) - 1]
 
 
 # ---- predictors ---------------------------------------------------------------------------------
@@ -227,14 +221,6 @@ class Scores:
             self.errors += bool(p.error)
 
     def summary(self) -> dict:
-        def mean_ci(values: list[float]) -> dict:
-            lo, hi = bootstrap_ci(values)
-            return {
-                "n": len(values),
-                "mean": round(statistics.fmean(values), 3) if values else None,
-                "ci95": [round(lo, 3), round(hi, 3)],
-            }
-
         return {
             "miou": mean_ci(self.miou),
             "boundary_mae_s": mean_ci(self.boundary),

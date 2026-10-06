@@ -81,9 +81,9 @@ def load_labels(path: Path) -> list[PhavrLabel]:
     return labels
 
 
-def load_views(path: Path) -> dict[tuple[str, str], str]:
-    """(clip_id, camera) -> video uri, from the phase labels."""
-    out: dict[tuple[str, str], str] = {}
+def load_views(path: Path) -> dict[tuple[str, str], tuple[str, bool]]:
+    """(clip_id, camera) -> (video uri, is the primary view), from the phase labels."""
+    out: dict[tuple[str, str], tuple[str, bool]] = {}
     for n, line in enumerate(path.read_text().splitlines(), 1):
         if not line.strip():
             continue
@@ -92,7 +92,7 @@ def load_views(path: Path) -> dict[tuple[str, str], str]:
         except ValueError as exc:
             raise LabelError(f"{path}: line {n}: {exc}") from exc
         for view in clip.views:
-            out[(clip.clip_id, view.camera)] = view.video_uri
+            out[(clip.clip_id, view.camera)] = (view.video_uri, view.camera == clip.primary_view)
     return out
 
 
@@ -145,6 +145,8 @@ def sample_record(
     times: list[float],
     asked: list[tuple[VQAQuestion, str]],
     images: list[str],
+    *,
+    primary_view: bool = False,
 ) -> dict:
     questions = [q for q, _ in asked]
     answer = {
@@ -157,6 +159,7 @@ def sample_record(
         "source_video": label.source_video,
         "split": split,
         "camera": label.view,
+        "primary_view": primary_view,
         "event_type": label.event_type,
         "phase": label.phase,
         "start_s": label.start_s,
@@ -216,10 +219,11 @@ def build(
         if not label.caption.strip():
             skipped.append(f"{key}: empty caption")
             continue
-        uri = views.get((label.clip_id, label.view))
-        if uri is None:
+        found = views.get((label.clip_id, label.view))
+        if found is None:
             skipped.append(f"{key}: no such view in the phase labels")
             continue
+        uri, is_primary = found
         video = resolve_video(uri, videos_root)
         if not video.is_file():
             skipped.append(f"{key}: video not found at {video}")
@@ -236,7 +240,9 @@ def build(
         paths = extract_frames(video, times, frame_dir)
         images = [str(p.relative_to(out)) for p in paths]
         split = assignment[label.source_video]
-        rows[split].append(sample_record(label, split, times, asked, images))
+        rows[split].append(
+            sample_record(label, split, times, asked, images, primary_view=is_primary)
+        )
         stats["samples"] += 1
         stats["frames"] += len(times)
         stats["questions"] += len(asked)

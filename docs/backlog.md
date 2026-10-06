@@ -758,6 +758,13 @@
 ### P5-J3 · PhaVR evaluation — 3 pts · Must · E18 · EV-02
 - [ ] BLEU-4, METEOR, ROUGE-L, CIDEr for captions; exact/normalized-match accuracy for VQA, per view type.
 - [ ] Baselines: zero-shot base 3B and cloud VLM subset; results table + qualitative examples.
+      > **Status 2026-10-06 — harness written, no real result** (`ml/evaluation/reasoning/phavr/`, README there): BLEU-4,
+      > CIDEr-D, ROUGE-L, a METEOR variant (`meteor_exact`: identical words only, **not** the published METEOR, which needs
+      > downloads) and VQA accuracy with 95 % intervals, by stage and primary/other view; methods `template` (no model) and
+      > `model` (any `phase_vr` gateway task, cleaned with the service's own `clean_answers`). 18 tests. A plumbing run against
+      > the real zero-shot model found that the service dropped most VQA answers (the model copies the prompt's `[id]`
+      > brackets); fixed in `services/reasoning` with tests. **Not done:** results on real labels, the cloud baseline,
+      > qualitative examples.
 
 ### P5-J4 · Evidence builder — 5 pts · Must · E12 · FR-RSN-03, FR-RSN-04
 > **Status 2026-10-04 — built inside `services/reasoning` by Track D** at the user's request: per phase × camera frames, caption + VQA-bank questions, stable ids, frames copied to `vms-evidence`, `evidence.v1`. Uses the zero-shot base model, not PhaVR.

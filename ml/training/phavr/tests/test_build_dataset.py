@@ -214,6 +214,9 @@ def test_build_makes_samples_per_label_with_the_right_frames_and_no_split_leaks(
     for s in samples:
         by_video.setdefault(s["source_video"], set()).add(s["split"])
         assert 2 <= len(s["images"]) <= 4 and len(s["images"]) == len(s["frame_times"])
+        assert s["primary_view"] == (
+            s["camera"] == "cam01"
+        )  # cam01 is the primary view in the fixtures
         assert [c["type"] for c in s["messages"][0]["content"]].count("image") == len(s["images"])
         lo, hi = SPANS[s["phase"]]
         assert all(lo <= t <= hi for t in s["frame_times"])
