@@ -359,7 +359,8 @@ services:
       VMS_STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD in .env}
       VMS_DB_DSN: postgresql+asyncpg://${POSTGRES_USER:-vms}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-vms}
       VMS_REDIS_URL: redis://redis:6379/0
-      VMS_EVENTS_RULES_PATH: /app/config/rules.yaml
+      # EVENTS_RULES_FILE (in .env) picks another file in config/, e.g. a gitignored rules.local.yaml.
+      VMS_EVENTS_RULES_PATH: /app/config/${EVENTS_RULES_FILE:-rules.yaml}
       VMS_EVENTS_ZONES_YAML_FALLBACK: /app/config/zones.yaml
       # The VLM gate (P3-D4) calls the LLM gateway. Ollama runs on the host (or laptop B: set
       # VMS_LLM_OLLAMA_URL in .env), and must listen on more than loopback to be reachable from here

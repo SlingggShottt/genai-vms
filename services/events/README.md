@@ -173,6 +173,7 @@ fallback, or the API once it is a Compose service — see `config/zones.example.
 | Env var | Default | |
 |---|---|---|
 | `VMS_EVENTS_RULES_PATH` | `config/rules.yaml` | restart to apply edits |
+| `EVENTS_RULES_FILE` (Compose, in `.env`) | `rules.yaml` | picks another file in `config/` for the container, e.g. a gitignored `rules.local.yaml` with site overrides; the shipped `rules.yaml` stays at the defaults (a test enforces that) |
 | `VMS_EVENTS_SITE_TIMEZONE` | `Asia/Kolkata` | zone schedules are site-local `HH:MM` |
 | `VMS_EVENTS_API_BASE_URL` / `VMS_EVENTS_SERVICE_TOKEN` | unset | zones from `GET /internal/v1/zones`, else the YAML |
 | `VMS_EVENTS_ZONES_YAML_FALLBACK` | `config/zones.yaml` | refreshed every 60 s |
