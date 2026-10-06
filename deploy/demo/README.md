@@ -28,6 +28,28 @@ cannot share the card, and Ollama silently falls back to the CPU when perception
 localhost:11434/api/generate -d '{"model":"qwen2.5vl:3b","keep_alive":0}'` and it reloads onto the
 GPU).
 
+### Footage expires after one day
+
+The MinIO lifecycle rules delete segments and keyframes after 24 h. The database and the vector
+index keep their rows, so afterwards search says "the recording has been removed by the retention
+policy" and shows nothing, and playback fails (evidence pictures stored with incident reports
+survive). **Record fresh footage the day of the demo:**
+
+```bash
+DRY_RUN=1 deploy/demo/refresh.sh      # checks the preconditions and prints the plan, changes nothing
+deploy/demo/refresh.sh                # about 45 min; `make demo-refresh` is the same
+```
+
+It replays three real MEVA bus-station cameras (a waiting room, a car park, an entrance) for 10
+minutes with perception on the GPU, then gives the whole GPU to the verification gate, and brings
+the demo stack back. It needs the re-encoded clips in `ml/datasets/raw/meva/sim/` (gitignored,
+research-only video; how they are made is in `ml/evaluation/results/meva-detection-run.md`, which
+also lists what the last run found). The last run raised 49 candidates and 37 verified alerts, 31 of
+them waiting-room loitering; the local rules file (`EVENTS_RULES_FILE`, see the events README)
+should suppress those, but that has not been re-measured. `WITH_CAM01=1` adds the looping `cam01`
+clip, which has not been tried alongside the three MEVA cameras. The script itself has been
+checked with `DRY_RUN=1` only; a full run is untested.
+
 ## What to show
 
 1. **Search** (`/search`). Try *a person in a red top near the service door*; compare **Fast** (about a

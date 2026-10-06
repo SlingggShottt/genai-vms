@@ -87,3 +87,6 @@ demo: ## Start Ollama, retrieval, reasoning, api and the UI on the host (see dep
 
 demo-stop: ## Stop what `make demo` started
 	deploy/demo/stop.sh
+
+demo-refresh: ## Re-record the demo footage on MEVA clips and run the rules + VLM gate (~45 min; DRY_RUN=1 to check first)
+	deploy/demo/refresh.sh
