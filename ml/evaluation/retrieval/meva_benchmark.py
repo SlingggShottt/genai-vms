@@ -436,8 +436,9 @@ async def main() -> None:
     print(f"calibration without a prior: {cal}")
     prior_start = replay_start(args.replay_start, first)
     if prior_start is not None:
-        # the stream cannot begin before the simulator was started, and starts within seconds of it
-        with_prior = calibrate(tracks, clips, first, prior=(prior_start - 1.0, prior_start + 8.0))
+        # the stream cannot begin before the simulator started; it began 6 s after in the one
+        # run measured, so allow 15
+        with_prior = calibrate(tracks, clips, first, prior=(prior_start - 1.0, prior_start + 15.0))
         print(f"calibration inside the simulator's start window: {with_prior}")
         cal["agrees_with_simulator_start"] = abs(with_prior["t0"] - cal["t0"]) <= 1.5
         if not cal["agrees_with_simulator_start"]:

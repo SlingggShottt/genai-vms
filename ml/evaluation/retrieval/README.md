@@ -31,6 +31,28 @@ uv run --package vms-retrieval python ml/evaluation/retrieval/meva_benchmark.py
 Unit tests of the metrics and the timeline alignment (`make test` does not collect `ml/`):
 `uv run --package vms-retrieval pytest ml/evaluation/retrieval/tests`.
 
+## Last run (2026-10-06, local profile, 36 queries, 221 windows, random = 36-minute stream picked blindly)
+
+| | hit@1 | hit@5 | hit@10 | MRR | median per query |
+|---|---|---|---|---|---|
+| fast mode | 0.14 | 0.36 | 0.56 | 0.25 | 0.24 s |
+| reason mode | 0.22 | 0.39 | 0.67 | 0.32 | 16.5 s |
+| random | 0.03 | 0.13 | 0.24 | – | – |
+
+In counts: fast puts a relevant window at rank 1 for 5 of 36 queries and in the top 10 for 20;
+reason mode 8 and 24. Query by query, reason mode found its first relevant window earlier on 12
+queries, later on 7, and at the same rank on 17: an edge, not proof, with this few queries.
+
+What it shows: search separates *what is in the picture* far better than *what is happening*.
+Phone, laptop, document, riding, stand-up, trunk and pick-up-a-person queries land in the top 10
+(posture and device family: 7 of 7); vehicle turning left, starting or stopping, a person entering
+or leaving through a door, hand-shaking, picking up or setting down an object, never do — a
+single-frame image embedding cannot see motion, and nothing in the index describes it. Part of the
+hit rate may be scene recognition rather than action recognition, because clips of one activity
+often share a location; the benchmark cannot tell the two apart. Returned windows lie on clips, not
+black gaps, 92–94 % of the time. The two security-relevant singletons (theft, abandon-package) are
+single clips: theft appeared at rank 6 in reason mode only, abandon-package never.
+
 ## How it is scored
 
 - **Relevant window.** A result window is relevant to a query when it overlaps a clip of that

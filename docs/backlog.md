@@ -677,6 +677,14 @@
 - [ ] Metrics R@1/5/10, mAP, tIoU@0.3/0.5, latency per stage.
 - [ ] Ablation runner: `embed`, `embed+filters`, `+rerank`, `+jit`, for `local` and `hybrid` profiles.
 - [ ] Baseline report generated on the first 50 queries.
+      Not ticked. A first harness exists with labels nobody had to annotate: `ml/evaluation/retrieval` joins the 121
+      labelled MEVA example clips (36 activities) into one recorded stream and scores 36 plain-language queries by
+      whether the returned windows overlap a clip of that activity (results:
+      `ml/evaluation/results/meva-retrieval-benchmark.md`). Fast mode finds a relevant window at rank 1 for 5 of 36
+      queries and in the top 10 for 20 (random: ~1 and ~9); reason mode 8 and 24 at ~70× the latency (better on 12
+      queries, worse on 7). What is still missing here: the `queries.jsonl` format and labelling guide, ≥ 150 queries
+      with half implicit, mAP/tIoU, filters/JIT ablations and the `hybrid` profile. The MEVA queries are one clean
+      activity name each, and clips of one activity often share a scene, so the numbers are a ceiling.
 
 ---
 
