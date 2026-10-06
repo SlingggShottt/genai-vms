@@ -1,0 +1,46 @@
+# One natural-language query per MEVA activity in the examples set, written the way an operator
+# would ask, not copied from the label. `activity` must match a label in meva_ex_manifest.json
+# (the test in meva_benchmark.py checks both ways). `family` only groups the report.
+queries:
+  # a person and a vehicle
+  - {activity: enter-vehicle, family: person-vehicle, query: a person gets into a car}
+  - {activity: exit-vehicle, family: person-vehicle, query: a person gets out of a car}
+  - {activity: open-vehicle-door, family: person-vehicle, query: a person opens a car door}
+  - {activity: close-vehicle-door, family: person-vehicle, query: a person closes a car door}
+  - {activity: open-trunk, family: person-vehicle, query: someone opens the trunk of a car}
+  - {activity: close-trunk, family: person-vehicle, query: someone closes the trunk of a car}
+  - {activity: load-vehicle, family: person-vehicle, query: someone loading bags or boxes into a vehicle}
+  - {activity: unload-vehicle, family: person-vehicle, query: a person taking things out of a vehicle}
+  - {activity: vehicle-picksup-person, family: person-vehicle, query: a car stops and picks up a person}
+  - {activity: vehicle-dropsoff-person, family: person-vehicle, query: a car stops and drops off a person}
+  # a vehicle moving
+  - {activity: vehicle-reversing, family: vehicle-motion, query: a car driving in reverse}
+  - {activity: vehicle-starting, family: vehicle-motion, query: a parked car starts to move}
+  - {activity: vehicle-stopping, family: vehicle-motion, query: a moving car comes to a stop}
+  - {activity: vehicle-turning-left, family: vehicle-motion, query: a car turning left}
+  - {activity: vehicle-turning-right, family: vehicle-motion, query: a car turning right}
+  - {activity: vehicle-uturn, family: vehicle-motion, query: a car making a u-turn}
+  # a person and a building
+  - {activity: enter-through-structure, family: building, query: a person walks into a building through a door}
+  - {activity: exit-through-structure, family: building, query: a person walks out of a building through a door}
+  - {activity: open-facility-door, family: building, query: a person opens the door of a building}
+  # two or more people
+  - {activity: people-talking, family: people, query: two people standing and talking to each other}
+  - {activity: embrace-interaction, family: people, query: two people hugging}
+  - {activity: hand-interaction, family: people, query: two people shaking hands}
+  - {activity: object-transfer, family: people, query: one person hands an object to another person}
+  - {activity: purchasing, family: people, query: a person buying something at a counter}
+  # a person and an object
+  - {activity: pick-up-object, family: object, query: a person picks something up from the ground}
+  - {activity: set-down-object, family: object, query: a person puts an object down}
+  - {activity: heavy-carry, family: object, query: a person carrying a large heavy object}
+  - {activity: abandon-package, family: object, query: a person leaves a bag on the ground and walks away}
+  - {activity: theft, family: object, query: someone steals an item}
+  # posture and devices
+  - {activity: sit-down, family: posture-device, query: a person sits down on a chair or bench}
+  - {activity: stand-up, family: posture-device, query: a person stands up from a seat}
+  - {activity: talk-on-phone, family: posture-device, query: a person talking on a phone held to the ear}
+  - {activity: text-on-phone, family: posture-device, query: a person looking at and typing on a phone}
+  - {activity: laptop-interaction, family: posture-device, query: a person using a laptop}
+  - {activity: read-document, family: posture-device, query: a person reading papers}
+  - {activity: riding, family: posture-device, query: a person riding a bicycle or scooter}
