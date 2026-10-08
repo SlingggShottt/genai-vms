@@ -339,8 +339,8 @@ jobs:
 
   # --- Integration tests (testcontainers) -----------------------------------------
   # 428 tests against real Postgres, Redis, Qdrant and Kafka containers (`make test-int`). They are
-  # not part of ci-success yet: `continue-on-error` until a first run on GitHub's runners has shown
-  # they are stable there. Run by hand on 2026-10-08 they found two tests that had never passed.
+  # part of ci-success since 2026-10-08: the first run on GitHub found the one GPU-only test (now
+  # skipped without CUDA) and the next two runs passed in full (about 3.5 minutes).
   integration:
     needs: changes
     if: >-
@@ -348,7 +348,6 @@ jobs:
       needs.changes.outputs.events == 'true' || needs.changes.outputs.correlation == 'true' ||
       needs.changes.outputs.indexer == 'true'
     runs-on: ubuntu-latest
-    continue-on-error: true
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -498,6 +497,7 @@ jobs:
       - lint-test-annotation-kit
       - lint-test-ml-tooling
       - obs-rules
+      - integration
       - frontend
       - docker-build-api
       - docker-build-ingestion
