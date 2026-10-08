@@ -1,0 +1,356 @@
+{
+ "incident_id": "01a105b6-356c-7e06-91cf-7876bf38d2e5",
+ "group_id": "01a105a1-0798-7ece-99c1-e93fd7a9c2de",
+ "event_type": "intrusion",
+ "severity": "high",
+ "evidence": {
+  "events": [
+   {
+    "id": "ev-evt-01",
+    "caption": "A person is walking on the sidewalk, passing by a red box.",
+    "camera_id": "cam01",
+    "event_type": "intrusion"
+   }
+  ],
+  "phases": [
+   {
+    "phase": "baseline",
+    "views": [
+     {
+      "vqa": [],
+      "frames": [
+       {
+        "id": "ev-fr-01",
+        "ts": "2026-10-04T06:31:44.752832Z",
+        "uri": "s3://vms-evidence/01a105b6-356c-7e06-91cf-7876bf38d2e5/ev-fr-01.jpg"
+       },
+       {
+        "id": "ev-fr-02",
+        "ts": "2026-10-04T06:31:53.261332Z",
+        "uri": "s3://vms-evidence/01a105b6-356c-7e06-91cf-7876bf38d2e5/ev-fr-02.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-01",
+       "text": "People walking on a busy city street, with a person in a brown jacket and blue bag walking towards the camera."
+      },
+      "camera_id": "cam01"
+     }
+    ]
+   },
+   {
+    "phase": "precursor",
+    "views": [
+     {
+      "vqa": [],
+      "frames": [
+       {
+        "id": "ev-fr-03",
+        "ts": "2026-10-04T06:31:53.761832Z",
+        "uri": "s3://vms-evidence/01a105b6-356c-7e06-91cf-7876bf38d2e5/ev-fr-03.jpg"
+       },
+       {
+        "id": "ev-fr-04",
+        "ts": "2026-10-04T06:31:59.290928Z",
+        "uri": "s3://vms-evidence/01a105b6-356c-7e06-91cf-7876bf38d2e5/ev-fr-04.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-02",
+       "text": "People walking on a busy street with various shops and signs visible."
+      },
+      "camera_id": "cam01"
+     }
+    ]
+   },
+   {
+    "phase": "action",
+    "views": [
+     {
+      "vqa": [],
+      "frames": [
+       {
+        "id": "ev-fr-05",
+        "ts": "2026-10-04T06:31:59.290928Z",
+        "uri": "s3://vms-evidence/01a105b6-356c-7e06-91cf-7876bf38d2e5/ev-fr-05.jpg"
+       },
+       {
+        "id": "ev-fr-06",
+        "ts": "2026-10-04T06:32:04.796428Z",
+        "uri": "s3://vms-evidence/01a105b6-356c-7e06-91cf-7876bf38d2e5/ev-fr-06.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-03",
+       "text": "People walking on a busy street with various shops and signs visible."
+      },
+      "camera_id": "cam01"
+     }
+    ]
+   },
+   {
+    "phase": "aftermath",
+    "views": [
+     {
+      "vqa": [
+       {
+        "a": "Cannot tell",
+        "q": "Is anyone crossing a barrier such as a fence, gate or door?",
+        "id": "ev-qa-01"
+       },
+       {
+        "a": "Cannot tell",
+        "q": "Is a person inside the restricted area?",
+        "id": "ev-qa-02"
+       },
+       {
+        "a": "Yes",
+        "q": "Is the person carrying anything?",
+        "id": "ev-qa-03"
+       },
+       {
+        "a": "No",
+        "q": "Is any staff member or guard visible?",
+        "id": "ev-qa-04"
+       }
+      ],
+      "frames": [
+       {
+        "id": "ev-fr-07",
+        "ts": "2026-10-04T06:32:05.296928Z",
+        "uri": "s3://vms-evidence/01a105b6-356c-7e06-91cf-7876bf38d2e5/ev-fr-07.jpg"
+       },
+       {
+        "id": "ev-fr-08",
+        "ts": "2026-10-04T06:32:07.802462Z",
+        "uri": "s3://vms-evidence/01a105b6-356c-7e06-91cf-7876bf38d2e5/ev-fr-08.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-04",
+       "text": "People walking on a busy street, some carrying shopping bags, with a 'Tax Refund' sign visible."
+      },
+      "camera_id": "cam01"
+     }
+    ]
+   }
+  ],
+  "window": {
+   "end": "2026-10-04T06:32:08.261332Z",
+   "start": "2026-10-04T06:31:34.757832Z"
+  },
+  "cameras": [
+   "cam01"
+  ],
+  "group_id": "01a105a1-0798-7ece-99c1-e93fd7a9c2de",
+  "severity": "high",
+  "event_type": "intrusion",
+  "provenance": {
+   "tg": "zero-shot:ollama/qwen2.5vl:3b",
+   "phavr": "zero-shot:local",
+   "profile": "local",
+   "fallback_used": false
+  },
+  "phase_timeline": [
+   {
+    "end": "2026-10-04T06:31:53.273130Z",
+    "phase": "baseline",
+    "start": "2026-10-04T06:31:34.757832Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   },
+   {
+    "end": "2026-10-04T06:31:59.290928Z",
+    "phase": "precursor",
+    "start": "2026-10-04T06:31:53.273130Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   },
+   {
+    "end": "2026-10-04T06:32:05.048195Z",
+    "phase": "action",
+    "start": "2026-10-04T06:31:59.290928Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   },
+   {
+    "end": "2026-10-04T06:32:08.261332Z",
+    "phase": "aftermath",
+    "start": "2026-10-04T06:32:05.048195Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   }
+  ],
+  "primary_camera": "cam01",
+  "schema_version": "evidence.v1"
+ },
+ "report": {
+  "title": "Person in brown jacket and blue bag walking on busy street",
+  "window": {
+   "end": "2026-10-04T06:32:08.261332Z",
+   "start": "2026-10-04T06:31:34.757832Z"
+  },
+  "cameras": [
+   "cam01"
+  ],
+  "summary": "A person in a brown jacket and blue bag is walking on a busy city street, passing by a red box.",
+  "group_id": "01a105a1-0798-7ece-99c1-e93fd7a9c2de",
+  "severity": "high",
+  "confidence": 0.7,
+  "event_type": "intrusion",
+  "provenance": {
+   "profile": "local",
+   "model_calls": 2,
+   "dropped_claims": 0,
+   "prompt_versions": [
+    "1.0",
+    "1.0"
+   ],
+   "synthesis_model": "ollama/qwen2.5vl:3b"
+  },
+  "incident_id": "01a105b6-356c-7e06-91cf-7876bf38d2e5",
+  "limitations": [
+   "Cannot tell if anyone is crossing a barrier such as a fence, gate or door.",
+   "Cannot tell if a person is inside the restricted area."
+  ],
+  "causal_chain": [
+   {
+    "step": 1,
+    "evidence": [
+     "ev-cap-02",
+     "ev-fr-03",
+     "ev-fr-04"
+    ],
+    "description": "People are walking on a busy street with various shops and signs visible."
+   },
+   {
+    "step": 2,
+    "evidence": [
+     "ev-cap-03",
+     "ev-fr-05",
+     "ev-fr-06"
+    ],
+    "description": "People are walking on a busy street with various shops and signs visible."
+   },
+   {
+    "step": 3,
+    "evidence": [
+     "ev-cap-04",
+     "ev-fr-07",
+     "ev-fr-08"
+    ],
+    "description": "People are walking on a busy street, some carrying shopping bags, with a 'Tax Refund' sign visible."
+   }
+  ],
+  "evidence_index": [
+   "ev-cap-01",
+   "ev-cap-02",
+   "ev-cap-03",
+   "ev-cap-04",
+   "ev-fr-01",
+   "ev-fr-02",
+   "ev-fr-03",
+   "ev-fr-04",
+   "ev-fr-05",
+   "ev-fr-06",
+   "ev-fr-07",
+   "ev-fr-08",
+   "ev-qa-02"
+  ],
+  "phase_analysis": [
+   {
+    "phase": "baseline",
+    "summary": "A person in a brown jacket and blue bag is walking on the sidewalk, passing by a red box.",
+    "evidence": [
+     "ev-cap-01",
+     "ev-fr-01",
+     "ev-fr-02"
+    ]
+   },
+   {
+    "phase": "precursor",
+    "summary": "People are walking on a busy street with various shops and signs visible.",
+    "evidence": [
+     "ev-cap-02",
+     "ev-fr-03",
+     "ev-fr-04"
+    ]
+   },
+   {
+    "phase": "action",
+    "summary": "People are walking on a busy street with various shops and signs visible.",
+    "evidence": [
+     "ev-cap-03",
+     "ev-fr-05",
+     "ev-fr-06"
+    ]
+   },
+   {
+    "phase": "aftermath",
+    "summary": "People are walking on a busy street, some carrying shopping bags, with a 'Tax Refund' sign visible.",
+    "evidence": [
+     "ev-cap-04",
+     "ev-fr-07",
+     "ev-fr-08"
+    ]
+   }
+  ],
+  "schema_version": "incident.v1",
+  "recommended_actions": [
+   {
+    "action": "Monitor the area for any unusual activity or behavior.",
+    "priority": "medium",
+    "owner_role": "operator"
+   }
+  ],
+  "scene_understanding": {
+   "actors": [
+    {
+     "ref": "subject",
+     "evidence": [
+      "ev-cap-01",
+      "ev-fr-01",
+      "ev-fr-02"
+     ],
+     "description": "a person in a brown jacket and blue bag"
+    }
+   ],
+   "location": "busy city street",
+   "conditions": "not stated"
+  },
+  "contributing_factors": {
+   "primary": [
+    {
+     "text": "Person in brown jacket and blue bag is walking on a busy street.",
+     "evidence": [
+      "ev-cap-01",
+      "ev-fr-01",
+      "ev-fr-02"
+     ]
+    }
+   ],
+   "environmental": [
+    {
+     "text": "Busy city street with various shops and signs visible.",
+     "evidence": [
+      "ev-cap-02",
+      "ev-fr-03",
+      "ev-fr-04"
+     ]
+    },
+    {
+     "text": "People carrying shopping bags.",
+     "evidence": [
+      "ev-cap-04",
+      "ev-fr-07",
+      "ev-fr-08"
+     ]
+    }
+   ],
+   "security_gaps": [
+    {
+     "text": "No staff member or guard visible.",
+     "evidence": [
+      "ev-qa-02"
+     ]
+    }
+   ]
+  }
+ }
+}

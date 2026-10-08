@@ -1,0 +1,230 @@
+{
+ "incident_id": "01a105ad-9d53-7ac2-aa6e-2f0be1bf5dff",
+ "group_id": "01a1059f-137f-7859-9e96-2d72247dcf49",
+ "event_type": "intrusion",
+ "severity": "high",
+ "evidence": {
+  "events": [
+   {
+    "id": "ev-evt-01",
+    "caption": "A person is walking on the sidewalk, passing by a red box that has been highlighted in the image.",
+    "camera_id": "cam01",
+    "event_type": "intrusion"
+   }
+  ],
+  "phases": [
+   {
+    "phase": "action",
+    "views": [
+     {
+      "vqa": [],
+      "frames": [
+       {
+        "id": "ev-fr-01",
+        "ts": "2026-10-04T06:31:45.753832Z",
+        "uri": "s3://vms-evidence/01a105ad-9d53-7ac2-aa6e-2f0be1bf5dff/ev-fr-01.jpg"
+       },
+       {
+        "id": "ev-fr-02",
+        "ts": "2026-10-04T06:31:46.754832Z",
+        "uri": "s3://vms-evidence/01a105ad-9d53-7ac2-aa6e-2f0be1bf5dff/ev-fr-02.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-01",
+       "text": "People walking on a busy street, some carrying shopping bags and others in casual attire."
+      },
+      "camera_id": "cam01"
+     }
+    ]
+   },
+   {
+    "phase": "aftermath",
+    "views": [
+     {
+      "vqa": [],
+      "frames": [
+       {
+        "id": "ev-fr-03",
+        "ts": "2026-10-04T06:31:46.754832Z",
+        "uri": "s3://vms-evidence/01a105ad-9d53-7ac2-aa6e-2f0be1bf5dff/ev-fr-03.jpg"
+       },
+       {
+        "id": "ev-fr-04",
+        "ts": "2026-10-04T06:32:01.292928Z",
+        "uri": "s3://vms-evidence/01a105ad-9d53-7ac2-aa6e-2f0be1bf5dff/ev-fr-04.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-02",
+       "text": "People walking on a busy street, some carrying shopping bags and others wearing masks."
+      },
+      "camera_id": "cam01"
+     }
+    ]
+   }
+  ],
+  "window": {
+   "end": "2026-10-04T06:32:01.754832Z",
+   "start": "2026-10-04T06:31:30.753832Z"
+  },
+  "cameras": [
+   "cam01"
+  ],
+  "group_id": "01a1059f-137f-7859-9e96-2d72247dcf49",
+  "severity": "high",
+  "event_type": "intrusion",
+  "provenance": {
+   "tg": "rules",
+   "phavr": "zero-shot:local",
+   "profile": "local",
+   "fallback_used": true
+  },
+  "phase_timeline": [
+   {
+    "end": "2026-10-04T06:31:37.753832Z",
+    "phase": "baseline",
+    "start": "2026-10-04T06:31:30.753832Z",
+    "source": "rules"
+   },
+   {
+    "end": "2026-10-04T06:31:42.753832Z",
+    "phase": "precursor",
+    "start": "2026-10-04T06:31:37.753832Z",
+    "source": "rules"
+   },
+   {
+    "end": "2026-10-04T06:31:45.753832Z",
+    "phase": "escalation",
+    "start": "2026-10-04T06:31:42.753832Z",
+    "source": "rules"
+   },
+   {
+    "end": "2026-10-04T06:31:46.754832Z",
+    "phase": "action",
+    "start": "2026-10-04T06:31:45.753832Z",
+    "source": "rules"
+   },
+   {
+    "end": "2026-10-04T06:32:01.754832Z",
+    "phase": "aftermath",
+    "start": "2026-10-04T06:31:46.754832Z",
+    "source": "rules"
+   }
+  ],
+  "primary_camera": "cam01",
+  "schema_version": "evidence.v1"
+ },
+ "report": {
+  "title": "Person walking past red box on busy street",
+  "window": {
+   "end": "2026-10-04T06:32:01.754832Z",
+   "start": "2026-10-04T06:31:30.753832Z"
+  },
+  "cameras": [
+   "cam01"
+  ],
+  "summary": "A person is seen walking past a red box on a busy street, with no immediate signs of an intrusion.",
+  "group_id": "01a1059f-137f-7859-9e96-2d72247dcf49",
+  "severity": "high",
+  "confidence": 0.7,
+  "event_type": "intrusion",
+  "provenance": {
+   "profile": "local",
+   "model_calls": 2,
+   "dropped_claims": 0,
+   "prompt_versions": [
+    "1.0",
+    "1.0"
+   ],
+   "synthesis_model": "ollama/qwen2.5vl:3b"
+  },
+  "incident_id": "01a105ad-9d53-7ac2-aa6e-2f0be1bf5dff",
+  "limitations": [
+   "No immediate signs of an intrusion"
+  ],
+  "causal_chain": [
+   {
+    "step": 1,
+    "evidence": [
+     "ev-cap-01",
+     "ev-fr-01",
+     "ev-fr-02"
+    ],
+    "description": "Person walking past red box"
+   },
+   {
+    "step": 2,
+    "evidence": [
+     "ev-cap-02",
+     "ev-fr-03",
+     "ev-fr-04"
+    ],
+    "description": "No immediate signs of an intrusion"
+   }
+  ],
+  "evidence_index": [
+   "ev-cap-01",
+   "ev-cap-02",
+   "ev-evt-01",
+   "ev-fr-01",
+   "ev-fr-02",
+   "ev-fr-03",
+   "ev-fr-04"
+  ],
+  "phase_analysis": [],
+  "schema_version": "incident.v1",
+  "recommended_actions": [
+   {
+    "action": "Monitor the area for any unusual activity",
+    "priority": "medium",
+    "owner_role": "operator"
+   }
+  ],
+  "scene_understanding": {
+   "actors": [
+    {
+     "ref": "subject",
+     "evidence": [
+      "ev-evt-01"
+     ],
+     "description": "a person"
+    }
+   ],
+   "location": "busy street near a red box",
+   "conditions": "not stated"
+  },
+  "contributing_factors": {
+   "primary": [
+    {
+     "text": "Person walking past red box",
+     "evidence": [
+      "ev-cap-01",
+      "ev-fr-01",
+      "ev-fr-02"
+     ]
+    }
+   ],
+   "environmental": [
+    {
+     "text": "Busy street near a red box",
+     "evidence": [
+      "ev-cap-01",
+      "ev-fr-01",
+      "ev-fr-02"
+     ]
+    }
+   ],
+   "security_gaps": [
+    {
+     "text": "No immediate signs of an intrusion",
+     "evidence": [
+      "ev-cap-02",
+      "ev-fr-03",
+      "ev-fr-04"
+     ]
+    }
+   ]
+  }
+ }
+}
