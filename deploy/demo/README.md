@@ -47,8 +47,10 @@ research-only video; how they are made is in `ml/evaluation/results/meva-detecti
 also lists what the last run found). The last run raised 49 candidates and 37 verified alerts, 31 of
 them waiting-room loitering; the local rules file (`EVENTS_RULES_FILE`, see the events README)
 should suppress those, but that has not been re-measured. `WITH_CAM01=1` adds the looping `cam01`
-clip, which has not been tried alongside the three MEVA cameras. The script itself has been
-checked with `DRY_RUN=1` only; a full run is untested.
+clip, which has not been tried alongside the three MEVA cameras. What has been run for real: a
+150 s replay with the gate (7 candidates judged, configuration restored, stack back up), and a
+37-minute replay with `RUN_GATE=0` (the retrieval benchmark's stream). A full 10-minute replay
+followed by about 50 gate decisions through the script has not been done in one go.
 
 ## What to show
 

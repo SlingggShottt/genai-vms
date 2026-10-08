@@ -9,6 +9,7 @@ export const reportSummarySchema = z.object({
   error: z.string().nullable(),
   created_at: z.string(),
   finished_at: z.string().nullable(),
+  has_pdf: z.boolean().default(false),
 });
 
 export const reportsSchema = z.array(reportSummarySchema);

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>{{ i.title }}</title><style>{{ css | safe }}</style></head>
+<body>
+<h1>{{ i.title }}</h1>
+<p class="meta sans">
+  <span class="badge {{ i.severity }}">{{ severity_mark }} {{ i.severity | upper }}</span>
+  <span class="badge">{{ i.event_type_label }}</span>
+  {{ i.window_text }} · {{ i.cameras | join(", ") }}{% if i.confidence is not none %} · confidence {{ (i.confidence * 100) | round | int }}%{% endif %}
+</p>
+<p class="summary">{{ r.summary }}</p>
+
+<h2>Phases</h2>
+<table>
+  <tr><th style="width:17%">Phase</th><th style="width:20%">When</th><th>What it showed</th></tr>
+  {% for p in phases %}
+  <tr>
+    <td class="sans"><strong>{{ p.label }}</strong></td>
+    <td>{{ p.when }}</td>
+    <td>{{ p.summary }} <span class="ids">{{ p.evidence | join(" ") }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% if frames %}
+<h2>Evidence</h2>
+<div class="grid">
+  {% for f in frames %}
+  <figure><img src="{{ f.src }}" alt=""><figcaption>{{ f.caption }}</figcaption></figure>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h2>Scene</h2>
+<p><strong>Where:</strong> {{ r.scene_understanding.location }}. <strong>Conditions:</strong> {{ r.scene_understanding.conditions }}.</p>
+{% if r.scene_understanding.actors %}
+<ul>{% for a in r.scene_understanding.actors %}<li><strong>{{ a.ref }}:</strong> {{ a.description }} <span class="ids">{{ a.evidence | join(" ") }}</span></li>{% endfor %}</ul>
+{% endif %}
+
+<h2>How it unfolded</h2>
+<ol>{% for s in r.causal_chain %}<li>{{ s.description }} <span class="ids">{{ s.evidence | join(" ") }}</span></li>{% endfor %}</ol>
+
+{% set cf = r.contributing_factors %}
+{% if cf.primary or cf.environmental or cf.security_gaps %}
+<h2>Contributing factors</h2>
+{% for title, items in (("Primary", cf.primary), ("Environmental", cf.environmental), ("Security gaps", cf.security_gaps)) %}
+  {% if items %}<h3>{{ title }}</h3><ul>{% for f in items %}<li>{{ f.text }} <span class="ids">{{ f.evidence | join(" ") }}</span></li>{% endfor %}</ul>{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if r.recommended_actions %}
+<h2>Recommended actions</h2>
+<table>
+  <tr><th style="width:12%">Priority</th><th style="width:18%">Owner</th><th>Action</th></tr>
+  {% for a in r.recommended_actions %}<tr><td class="sans">{{ a.priority }}</td><td>{{ a.owner_role }}</td><td>{{ a.action }}</td></tr>{% endfor %}
+</table>
+{% endif %}
+
+<h2>What this report cannot tell</h2>
+{% if r.limitations %}<ul>{% for l in r.limitations %}<li>{{ l }}</li>{% endfor %}</ul>{% endif %}
+<p class="note">{{ provenance }}. Statements cite the evidence ids shown; a statement that cited nothing was left out, not patched. This report was written by a language model from still frames and detector output: it is a starting point for a person's review, not a finding.</p>
+{% if i.notes %}<h2>Reviewer notes</h2><p>{{ i.notes }}</p>{% endif %}
+</body>
+</html>

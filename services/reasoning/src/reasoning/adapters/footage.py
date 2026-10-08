@@ -59,6 +59,10 @@ class Footage:
             self._cache[uri] = await self._s3.get_bytes(uri)
         return self._cache[uri]
 
+    async def put(self, uri: str, data: bytes, content_type: str) -> None:
+        """Store `data` at `uri` (the PDF of a report)."""
+        await self._s3.put_bytes(uri, data, content_type=content_type)
+
     async def keep(self, uri: str, dest_uri: str) -> None:
         """Copy a keyframe somewhere that is not subject to the keyframe bucket's retention."""
         await self._s3.put_bytes(dest_uri, await self.image(uri), content_type="image/jpeg")

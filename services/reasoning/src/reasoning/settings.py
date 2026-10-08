@@ -55,6 +55,9 @@ class ReasoningSettings(VMSBaseSettings):
     daily_report_hour: int = Field(default=6, ge=0, le=23)
     daily_report_auto: bool = True
     evidence_bucket: str = "vms-evidence"
+    reports_bucket: str = "vms-reports"  # the PDFs of incident and daily reports
+    pdf_enabled: bool = True
+    site_name: str = "GenAI-VMS"  # printed in the page header of a PDF
 
     db: DatabaseSettings = Field(default_factory=DatabaseSettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)

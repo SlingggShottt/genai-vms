@@ -9,7 +9,7 @@ emit, and a time expression in the text beats a time the model computed.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from vms_common.contracts.search import (
@@ -58,12 +58,20 @@ COLOR_WORDS: dict[str, str] = {
 }  # fmt: skip
 
 # event type hints from action words
+# Whole words (a plural "s"/"es" is allowed): "ran" must not be found inside "entrance" or "orange".
 EVENT_HINTS: dict[str, tuple[str, ...]] = {
-    "intrusion": ("intrusion", "intruder", "trespass", "restricted", "enter", "entered", "breach"),
+    "intrusion": (
+        "intrusion", "intruder", "trespass", "trespassing", "trespasser", "restricted", "enter",
+        "entered", "entering", "breach", "breached",
+    ),
     "loitering": ("loiter", "loitering", "lingering", "waiting", "standing around", "stationary"),
-    "crowding": ("crowd", "crowding", "gathering", "gathered", "many people", "group"),
-    "running": ("run", "running", "ran", "rushing", "sprinting", "chasing"),
+    "crowding": ("crowd", "crowding", "crowded", "gathering", "gathered", "many people", "group"),
+    "running": ("run", "running", "ran", "runner", "rushing", "sprinting", "chasing"),
     "abandoned_object": ("abandoned", "unattended", "left behind", "left a bag", "left bag"),
+}  # fmt: skip
+_HINT_RE = {
+    t: re.compile("|".join(rf"(?<![a-z]){re.escape(k)}(?:e?s)?(?![a-z])" for k in kws))
+    for t, kws in EVENT_HINTS.items()
 }
 
 _WORD = re.compile(r"[a-z]+")
@@ -73,28 +81,55 @@ def _words(text: str) -> list[str]:
     return _WORD.findall(text.lower())
 
 
+def _forms(word: str) -> set[str]:
+    """The word and what it would be in the singular ("buses" -> "bus", "lorries" -> "lorry")."""
+    out = {word}
+    if word.endswith("ies") and len(word) > 4:
+        out.add(word[:-3] + "y")
+    if word.endswith("es") and len(word) > 3:
+        out.add(word[:-2])
+    if word.endswith("s") and len(word) > 2:
+        out.add(word[:-1])
+    return out
+
+
 def categories_in(text: str) -> list[str]:
-    words = set(_words(text))
+    words = {f for w in _words(text) for f in _forms(w)}
     return [cat for cat, syn in CATEGORY_WORDS.items() if words.intersection(syn)]
 
 
+_NOT_A_COLOUR_AFTER_DARK = frozenset({"hours", "night", "outside", "conditions", "time"})
+
+
 def colors_in(text: str) -> list[str]:
+    """Colour words in `text`. "dark" means black clothing ("a dark jacket") but not the time of
+    day ("after dark", "in the dark"): it counts only when a describing word follows it."""
     seen: list[str] = []
-    for w in _words(text):
+    words = _words(text)
+    for i, w in enumerate(words):
         c = COLOR_WORDS.get(w)
+        if w == "dark":
+            following = words[i + 1] if i + 1 < len(words) else None
+            if following is None or following in _NOT_A_COLOUR_AFTER_DARK:
+                continue
         if c and c not in seen:
             seen.append(c)
     return seen
 
 
 def zones_in(text: str, known_zones: list[str]) -> list[str]:
+    """Areas the text names, as whole words ("gate" is not in "investigate")."""
     low = text.lower().replace("-", " ")
-    return [z for z in known_zones if z.lower().replace("-", " ") in low]
+    return [
+        z
+        for z in known_zones
+        if re.search(rf"(?<![a-z0-9]){re.escape(z.lower().replace('-', ' '))}(?![a-z0-9])", low)
+    ]
 
 
 def event_hints_in(text: str) -> list[str]:
     low = text.lower()
-    return [t for t, kws in EVENT_HINTS.items() if any(k in low for k in kws)]
+    return [t for t, rx in _HINT_RE.items() if rx.search(low)]
 
 
 _AGO = re.compile(r"\b(?:last|past)\s+(\d+)\s*(second|sec|minute|min|hour|hr|day)s?\b")
@@ -104,11 +139,60 @@ _UNIT = {
 }  # fmt: skip
 
 
+_MONTHS = {
+    "january": 1, "jan": 1, "february": 2, "feb": 2, "march": 3, "mar": 3, "april": 4, "apr": 4,
+    "may": 5, "june": 6, "jun": 6, "july": 7, "jul": 7, "august": 8, "aug": 8, "september": 9,
+    "sept": 9, "sep": 9, "october": 10, "oct": 10, "november": 11, "nov": 11, "december": 12,
+    "dec": 12,
+}  # fmt: skip
+_MONTH = "|".join(sorted(_MONTHS, key=len, reverse=True))
+_ISO_DATE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+_DAY_MONTH = re.compile(
+    rf"\b(\d{{1,2}})(?:st|nd|rd|th)?\s+(?:of\s+)?({_MONTH})\b(?:,?\s+(\d{{4}}))?"
+)
+_MONTH_DAY = re.compile(rf"\b({_MONTH})\s+(\d{{1,2}})(?:st|nd|rd|th)?\b(?:,?\s+(\d{{4}}))?")
+
+
+def find_date(text: str, today: date) -> date | None:
+    """A calendar date written in `text` (2026-10-04, 4 October, October 4th, the 4th of October),
+    or None. Without a year it is the most recent such date that is not after `today`."""
+    low = text.lower()
+    m = _ISO_DATE.search(low)
+    if m:
+        year, month, day = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        explicit_year = True
+    else:
+        m = _DAY_MONTH.search(low)
+        if m:
+            day, month, year_s = int(m.group(1)), _MONTHS[m.group(2)], m.group(3)
+        else:
+            m = _MONTH_DAY.search(low)
+            if not m:
+                return None
+            month, day, year_s = _MONTHS[m.group(1)], int(m.group(2)), m.group(3)
+        year, explicit_year = (int(year_s), True) if year_s else (today.year, False)
+    try:
+        found = date(year, month, day)
+    except ValueError:
+        return None
+    if not explicit_year and found > today:
+        try:
+            found = date(year - 1, month, day)
+        except ValueError:
+            return None
+    return found
+
+
 def resolve_time(query: str, now: datetime, tz: ZoneInfo) -> tuple[datetime, datetime] | None:
     """The window a time expression in `query` means, in UTC, or None if there is none."""
     low = query.lower()
     local = now.astimezone(tz)
     midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    day = find_date(low, local.date())
+    if day is not None:  # a named day: the whole of it, on the site's clock
+        start = datetime(day.year, day.month, day.day, tzinfo=tz)
+        return start.astimezone(now.tzinfo), (start + timedelta(days=1)).astimezone(now.tzinfo)
 
     m = _AGO.search(low)
     if m:
@@ -190,7 +274,14 @@ def finalize_plan(
     if text_colors and entities and not any("color" in e.attributes for e in entities):
         entities[0] = entities[0].model_copy(update={"attributes": {"color": text_colors[0]}})
 
-    zones = [z for z in {*plan.spatial.zones, *zones_in(query, known_zones)} if z in known_zones]
+    # An area the text names is the area. Only when it names none is the model's choice used (it may
+    # read "by the door" as the service door), and a small model answers "which areas?" by listing
+    # every area it was shown (recorded: four of five on a query naming one), so more than two
+    # is no choice at all.
+    zones = zones_in(query, known_zones)
+    if not zones:
+        chosen = [z for z in plan.spatial.zones if z in known_zones]
+        zones = chosen if len(chosen) <= 2 else []
     from_text = resolve_time(query, now, tz)
     if from_text:
         temporal = QueryTemporal(start=from_text[0], end=from_text[1])

@@ -1,0 +1,738 @@
+{
+ "when": "2026-10-06 19:41 UTC",
+ "runs": {
+  "baseline": {
+   "answers": {
+    "questions": 72,
+    "answered": 72,
+    "errors": 0,
+    "judged": 71,
+    "judge_failures": 1,
+    "faithfulness": {
+     "n": 71,
+     "mean": 4.648,
+     "ci95": [
+      4.437,
+      4.831
+     ]
+    },
+    "relevance": {
+     "n": 71,
+     "mean": 4.507,
+     "ci95": [
+      4.225,
+      4.746
+     ]
+    },
+    "faithfulness_adj": {
+     "n": 71,
+     "mean": 2.901,
+     "ci95": [
+      2.803,
+      2.972
+     ]
+    },
+    "relevance_adj": {
+     "n": 71,
+     "mean": 2.831,
+     "ci95": [
+      2.704,
+      2.93
+     ]
+    },
+    "judge_named_a_problem": 71,
+    "faithfulness_4_or_5": 0.93,
+    "citation_precision": {
+     "checked": 0,
+     "strict": null,
+     "lenient": null
+    },
+    "citation_consistency": {
+     "checked": 33,
+     "consistent": 26,
+     "contradicted": 2,
+     "unclear": 5
+    },
+    "problems_that_copy_the_prompt_example": 6,
+    "answers_that_cite": 0.417,
+    "scope": {
+     "routed": {
+      "questions": 60,
+      "rate": 0.783
+     },
+     "camera_scoped": {
+      "questions": 50,
+      "rate": 0.28
+     },
+     "day_scoped": {
+      "questions": 42,
+      "rate": 0.0
+     }
+    },
+    "tags_written": 92,
+    "tags_that_matched_no_record": 27,
+    "median_seconds": 1.61,
+    "by_category": {
+     "count_events": {
+      "questions": 13,
+      "faithfulness": {
+       "n": 13,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 13,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      }
+     },
+     "count_objects": {
+      "questions": 8,
+      "faithfulness": {
+       "n": 8,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 8,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      }
+     },
+     "daily_report": {
+      "questions": 1,
+      "faithfulness": {
+       "n": 1,
+       "mean": 5.0,
+       "ci95": [
+        NaN,
+        NaN
+       ]
+      },
+      "relevance": {
+       "n": 1,
+       "mean": 5.0,
+       "ci95": [
+        NaN,
+        NaN
+       ]
+      }
+     },
+     "date_specific": {
+      "questions": 10,
+      "faithfulness": {
+       "n": 10,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 10,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      }
+     },
+     "incidents": {
+      "questions": 6,
+      "faithfulness": {
+       "n": 6,
+       "mean": 4.667,
+       "ci95": [
+        4.333,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 6,
+       "mean": 4.667,
+       "ci95": [
+        4.333,
+        5.0
+       ]
+      }
+     },
+     "list_events": {
+      "questions": 10,
+      "faithfulness": {
+       "n": 10,
+       "mean": 4.7,
+       "ci95": [
+        4.1,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 10,
+       "mean": 4.7,
+       "ci95": [
+        4.1,
+        5.0
+       ]
+      }
+     },
+     "no_data": {
+      "questions": 4,
+      "faithfulness": {
+       "n": 4,
+       "mean": 2.25,
+       "ci95": [
+        1.25,
+        3.5
+       ]
+      },
+      "relevance": {
+       "n": 4,
+       "mean": 2.25,
+       "ci95": [
+        1.25,
+        3.5
+       ]
+      }
+     },
+     "out_of_scope": {
+      "questions": 8,
+      "faithfulness": {
+       "n": 8,
+       "mean": 4.25,
+       "ci95": [
+        3.25,
+        4.875
+       ]
+      },
+      "relevance": {
+       "n": 8,
+       "mean": 3.0,
+       "ci95": [
+        1.75,
+        4.125
+       ]
+      }
+     },
+     "search": {
+      "questions": 8,
+      "faithfulness": {
+       "n": 7,
+       "mean": 4.571,
+       "ci95": [
+        4.286,
+        4.857
+       ]
+      },
+      "relevance": {
+       "n": 7,
+       "mean": 4.571,
+       "ci95": [
+        4.286,
+        4.857
+       ]
+      }
+     },
+     "timeline": {
+      "questions": 4,
+      "faithfulness": {
+       "n": 4,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 4,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      }
+     }
+    },
+    "by_expectation": {
+     "answer": {
+      "questions": 60,
+      "faithfulness": {
+       "n": 59,
+       "mean": 4.864,
+       "ci95": [
+        4.729,
+        4.966
+       ]
+      },
+      "relevance": {
+       "n": 59,
+       "mean": 4.864,
+       "ci95": [
+        4.729,
+        4.966
+       ]
+      }
+     },
+     "no_data": {
+      "questions": 4,
+      "faithfulness": {
+       "n": 4,
+       "mean": 2.25,
+       "ci95": [
+        1.25,
+        3.5
+       ]
+      },
+      "relevance": {
+       "n": 4,
+       "mean": 2.25,
+       "ci95": [
+        1.25,
+        3.5
+       ]
+      }
+     },
+     "refuse": {
+      "questions": 8,
+      "faithfulness": {
+       "n": 8,
+       "mean": 4.25,
+       "ci95": [
+        3.25,
+        4.875
+       ]
+      },
+      "relevance": {
+       "n": 8,
+       "mean": 3.0,
+       "ci95": [
+        1.75,
+        4.125
+       ]
+      }
+     }
+    }
+   },
+   "reports": {
+    "incidents": 21,
+    "with_a_report": 13,
+    "schema_valid": 13,
+    "schema_valid_rate": 1.0,
+    "citations_not_in_index": 0,
+    "citations_not_in_bundle": 0,
+    "statements_left_out_for_citing_nothing": 23,
+    "judged": 13,
+    "accuracy": {
+     "n": 13,
+     "mean": 4.0,
+     "ci95": [
+      4.0,
+      4.0
+     ]
+    },
+    "completeness": {
+     "n": 13,
+     "mean": 3.923,
+     "ci95": [
+      3.769,
+      4.0
+     ]
+    },
+    "causality": {
+     "n": 13,
+     "mean": 3.692,
+     "ci95": [
+      3.462,
+      3.923
+     ]
+    },
+    "actionability": {
+     "n": 13,
+     "mean": 3.615,
+     "ci95": [
+      3.308,
+      3.846
+     ]
+    }
+   }
+  },
+  "after": {
+   "answers": {
+    "questions": 72,
+    "answered": 72,
+    "errors": 0,
+    "judged": 71,
+    "judge_failures": 1,
+    "faithfulness": {
+     "n": 71,
+     "mean": 4.535,
+     "ci95": [
+      4.296,
+      4.746
+     ]
+    },
+    "relevance": {
+     "n": 71,
+     "mean": 4.394,
+     "ci95": [
+      4.099,
+      4.648
+     ]
+    },
+    "faithfulness_adj": {
+     "n": 71,
+     "mean": 2.873,
+     "ci95": [
+      2.775,
+      2.958
+     ]
+    },
+    "relevance_adj": {
+     "n": 71,
+     "mean": 2.789,
+     "ci95": [
+      2.648,
+      2.901
+     ]
+    },
+    "judge_named_a_problem": 71,
+    "faithfulness_4_or_5": 0.901,
+    "citation_precision": {
+     "checked": 0,
+     "strict": null,
+     "lenient": null
+    },
+    "citation_consistency": {
+     "checked": 53,
+     "consistent": 37,
+     "contradicted": 2,
+     "unclear": 14
+    },
+    "problems_that_copy_the_prompt_example": 4,
+    "answers_that_cite": 0.458,
+    "scope": {
+     "routed": {
+      "questions": 60,
+      "rate": 1.0
+     },
+     "camera_scoped": {
+      "questions": 50,
+      "rate": 1.0
+     },
+     "day_scoped": {
+      "questions": 42,
+      "rate": 1.0
+     }
+    },
+    "tags_written": 80,
+    "tags_that_matched_no_record": 14,
+    "median_seconds": 1.55,
+    "by_category": {
+     "count_events": {
+      "questions": 13,
+      "faithfulness": {
+       "n": 13,
+       "mean": 4.769,
+       "ci95": [
+        4.308,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 13,
+       "mean": 4.769,
+       "ci95": [
+        4.308,
+        5.0
+       ]
+      }
+     },
+     "count_objects": {
+      "questions": 8,
+      "faithfulness": {
+       "n": 8,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 8,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      }
+     },
+     "daily_report": {
+      "questions": 1,
+      "faithfulness": {
+       "n": 1,
+       "mean": 5.0,
+       "ci95": [
+        NaN,
+        NaN
+       ]
+      },
+      "relevance": {
+       "n": 1,
+       "mean": 5.0,
+       "ci95": [
+        NaN,
+        NaN
+       ]
+      }
+     },
+     "date_specific": {
+      "questions": 10,
+      "faithfulness": {
+       "n": 10,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 10,
+       "mean": 5.0,
+       "ci95": [
+        5.0,
+        5.0
+       ]
+      }
+     },
+     "incidents": {
+      "questions": 6,
+      "faithfulness": {
+       "n": 6,
+       "mean": 4.667,
+       "ci95": [
+        4.333,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 6,
+       "mean": 4.667,
+       "ci95": [
+        4.333,
+        5.0
+       ]
+      }
+     },
+     "list_events": {
+      "questions": 10,
+      "faithfulness": {
+       "n": 10,
+       "mean": 4.4,
+       "ci95": [
+        3.5,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 10,
+       "mean": 4.4,
+       "ci95": [
+        3.5,
+        5.0
+       ]
+      }
+     },
+     "no_data": {
+      "questions": 4,
+      "faithfulness": {
+       "n": 4,
+       "mean": 3.0,
+       "ci95": [
+        1.5,
+        4.5
+       ]
+      },
+      "relevance": {
+       "n": 4,
+       "mean": 3.0,
+       "ci95": [
+        1.5,
+        4.5
+       ]
+      }
+     },
+     "out_of_scope": {
+      "questions": 8,
+      "faithfulness": {
+       "n": 8,
+       "mean": 4.25,
+       "ci95": [
+        3.25,
+        4.875
+       ]
+      },
+      "relevance": {
+       "n": 8,
+       "mean": 3.0,
+       "ci95": [
+        1.5,
+        4.5
+       ]
+      }
+     },
+     "search": {
+      "questions": 8,
+      "faithfulness": {
+       "n": 7,
+       "mean": 4.0,
+       "ci95": [
+        3.286,
+        4.571
+       ]
+      },
+      "relevance": {
+       "n": 7,
+       "mean": 4.0,
+       "ci95": [
+        3.286,
+        4.571
+       ]
+      }
+     },
+     "timeline": {
+      "questions": 4,
+      "faithfulness": {
+       "n": 4,
+       "mean": 4.75,
+       "ci95": [
+        4.25,
+        5.0
+       ]
+      },
+      "relevance": {
+       "n": 4,
+       "mean": 4.75,
+       "ci95": [
+        4.25,
+        5.0
+       ]
+      }
+     }
+    },
+    "by_expectation": {
+     "answer": {
+      "questions": 60,
+      "faithfulness": {
+       "n": 59,
+       "mean": 4.678,
+       "ci95": [
+        4.458,
+        4.847
+       ]
+      },
+      "relevance": {
+       "n": 59,
+       "mean": 4.678,
+       "ci95": [
+        4.458,
+        4.847
+       ]
+      }
+     },
+     "no_data": {
+      "questions": 4,
+      "faithfulness": {
+       "n": 4,
+       "mean": 3.0,
+       "ci95": [
+        1.5,
+        4.5
+       ]
+      },
+      "relevance": {
+       "n": 4,
+       "mean": 3.0,
+       "ci95": [
+        1.5,
+        4.5
+       ]
+      }
+     },
+     "refuse": {
+      "questions": 8,
+      "faithfulness": {
+       "n": 8,
+       "mean": 4.25,
+       "ci95": [
+        3.25,
+        4.875
+       ]
+      },
+      "relevance": {
+       "n": 8,
+       "mean": 3.0,
+       "ci95": [
+        1.5,
+        4.5
+       ]
+      }
+     }
+    }
+   },
+   "reports": {
+    "incidents": 21,
+    "with_a_report": 13,
+    "schema_valid": 13,
+    "schema_valid_rate": 1.0,
+    "citations_not_in_index": 0,
+    "citations_not_in_bundle": 0,
+    "statements_left_out_for_citing_nothing": 23,
+    "judged": 13,
+    "accuracy": {
+     "n": 13,
+     "mean": 4.0,
+     "ci95": [
+      4.0,
+      4.0
+     ]
+    },
+    "completeness": {
+     "n": 13,
+     "mean": 3.923,
+     "ci95": [
+      3.769,
+      4.0
+     ]
+    },
+    "causality": {
+     "n": 13,
+     "mean": 3.692,
+     "ci95": [
+      3.462,
+      3.923
+     ]
+    },
+    "actionability": {
+     "n": 13,
+     "mean": 3.615,
+     "ci95": [
+      3.308,
+      3.846
+     ]
+    }
+   }
+  }
+ },
+ "human": null
+}

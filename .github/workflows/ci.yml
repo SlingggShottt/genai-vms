@@ -38,6 +38,8 @@ jobs:
       reasoning: ${{ steps.filter.outputs.reasoning }}
       camera_sim: ${{ steps.filter.outputs.camera_sim }}
       annotation_kit: ${{ steps.filter.outputs.annotation_kit }}
+      ml_tooling: ${{ steps.filter.outputs.ml_tooling }}
+      obs: ${{ steps.filter.outputs.obs }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
@@ -79,6 +81,15 @@ jobs:
               - 'ml/annotation/**'
               - 'config/vqa_bank.yaml'
               - 'config/rules.yaml'
+            ml_tooling:
+              - 'ml/evaluation/**'
+              - 'ml/training/**'
+              - 'services/reasoning/**'  # the dataset builder's tests check its prompt against the service's
+              - 'tools/annotation_kit/**'
+            obs:
+              - 'deploy/compose/obs/**'
+              - 'deploy/k8s/obs/**'
+              - '.github/workflows/ci.yml'
             frontend:
               - 'frontend/**'
 
@@ -306,6 +317,62 @@ jobs:
       - run: uv run ruff format --check tools/annotation_kit ml/annotation
       - run: uv run pytest tools/annotation_kit -m "not integration"
 
+  lint-test-ml-tooling:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.ml_tooling == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      # The evaluation harnesses and the training-data builders live outside the workspace members,
+      # so their lint and unit tests (synthetic videos, no network, no model) run here.
+      - run: uv run ruff check ml/evaluation ml/training
+      - run: uv run ruff format --check ml/evaluation ml/training
+      - run: uv run pytest ml/evaluation ml/training -m "not integration"
+
+  # --- Integration tests (testcontainers) -----------------------------------------
+  # 428 tests against real Postgres, Redis, Qdrant and Kafka containers (`make test-int`). They are
+  # part of ci-success since 2026-10-08: the first run on GitHub found the one GPU-only test (now
+  # skipped without CUDA) and the next two runs passed in full (about 3.5 minutes).
+  integration:
+    needs: changes
+    if: >-
+      needs.changes.outputs.shared == 'true' || needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.events == 'true' || needs.changes.outputs.correlation == 'true' ||
+      needs.changes.outputs.indexer == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run pytest -m integration -q
+
+  # --- Alert rules ------------------------------------------------------------
+  obs-rules:
+    needs: changes
+    if: needs.changes.outputs.obs == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # promtool ships in the Prometheus image. The rules are tested against synthetic series, and
+      # every dashboard expression is parsed, with the same Prometheus version the Compose file runs.
+      - name: Check and test the alert rules
+        run: make obs-test
+
   # --- Frontend --------------------------------------------------------------
 
   frontend:
@@ -428,6 +495,9 @@ jobs:
       - lint-test-reasoning
       - lint-test-camera-sim
       - lint-test-annotation-kit
+      - lint-test-ml-tooling
+      - obs-rules
+      - integration
       - frontend
       - docker-build-api
       - docker-build-ingestion

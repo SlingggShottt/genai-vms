@@ -10,7 +10,7 @@ COMPOSE := docker compose --env-file $(ENV_FILE) -f $(COMPOSE_FILE)
 PROFILE ?=
 SVC ?=
 
-.PHONY: help setup up down test test-int lint topics qdrant-collections sim migrate migration k8s-render k8s-up k8s-down demo demo-stop
+.PHONY: help setup up down test test-int lint topics qdrant-collections sim migrate migration k8s-render k8s-check obs-test k8s-up k8s-down demo demo-stop
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -71,6 +71,18 @@ KUBECTL ?= kubectl
 k8s-render: ## Render the minikube manifests to stdout (needs overlays/minikube/secrets.env)
 	@test -f $(K8S_OVERLAY)/secrets.env || { echo "copy $(K8S_OVERLAY)/secrets.env.example to secrets.env first"; exit 1; }
 	$(KUBECTL) kustomize --load-restrictor=LoadRestrictionsNone $(K8S_OVERLAY)
+
+k8s-check: ## Render every overlay (minikube, gpu, host-gpu), schema-check it and assert what it is for
+	deploy/k8s/check.sh
+
+PROMTOOL = docker run --rm -i -v $(CURDIR)/deploy/compose/obs:/obs -w /obs --entrypoint promtool prom/prometheus:v2.55.1
+obs-test: ## Check the Prometheus config and alert rules, run the rule tests, parse every dashboard query
+	docker run --rm -v $(CURDIR)/deploy/compose/obs/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
+	  -v $(CURDIR)/deploy/compose/obs/alerts.yml:/etc/prometheus/alerts.yml:ro --entrypoint promtool \
+	  prom/prometheus:v2.55.1 check config /etc/prometheus/prometheus.yml
+	$(PROMTOOL) check rules /obs/alerts.yml
+	$(PROMTOOL) test rules alerts_test.yml
+	python3 deploy/compose/obs/dashboard_queries.py | $(PROMTOOL) check rules /dev/stdin
 
 k8s-up: ## Build the images into minikube and apply the manifests
 	eval $$(minikube docker-env) && \

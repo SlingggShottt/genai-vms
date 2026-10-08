@@ -29,6 +29,7 @@ export const incidentSummarySchema = z.object({
   window_end: z.string(),
   confidence: z.number().nullable(),
   created_at: z.string(),
+  has_pdf: z.boolean().default(false),
 });
 
 export const incidentsPageSchema = z.object({ items: z.array(incidentSummarySchema) });

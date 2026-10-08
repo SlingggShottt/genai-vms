@@ -20,6 +20,7 @@ resources:
   - apps/retrieval.yaml
   - apps/reasoning.yaml
   - apps/indexer.yaml
+  - apps/indexer-hpa.yaml
   - apps/events.yaml
   - apps/correlation.yaml
   - apps/ingestion.yaml

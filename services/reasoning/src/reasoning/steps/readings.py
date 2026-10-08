@@ -31,6 +31,13 @@ class ViewDraft(BaseModel):
     answers: list[_Answer] = Field(default_factory=list)
 
 
+def _question_id(raw: str) -> str:
+    """The id as asked. The prompt lists questions as `[intrusion.area_lit]`, and the model copies
+    the brackets into its answer's `id` more often than not (measured: 31 of 38 stored views lost
+    every answer to this); quotes and backticks turn up too. They are formatting, not part of it."""
+    return raw.strip().strip("[]()`'\" ").strip()
+
+
 def clean_answers(draft: ViewDraft, questions: list[VQAQuestion]) -> list[tuple[str, str, str]]:
     """Keep only answers to questions that were asked, in the allowed vocabulary (matched
     case-insensitively, returned in its canonical spelling). Anything else is dropped rather
@@ -39,7 +46,7 @@ def clean_answers(draft: ViewDraft, questions: list[VQAQuestion]) -> list[tuple[
     seen: set[str] = set()
     out: list[tuple[str, str, str]] = []
     for a in draft.answers:
-        q = asked.get(a.id.strip())
+        q = asked.get(_question_id(a.id))
         if q is None or q.id in seen:
             continue
         canon = {x.lower(): x for x in q.answers}

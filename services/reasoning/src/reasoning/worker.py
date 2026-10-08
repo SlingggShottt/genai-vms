@@ -32,6 +32,7 @@ from reasoning.domain.evidence import PhaseReading, build_bundle
 from reasoning.metrics import job_seconds, jobs_total, queue_depth
 from reasoning.reports.daily import ReportQueue
 from reasoning.reports.daily import generate as generate_report
+from reasoning.reports.pdf import write_daily_pdf, write_incident_pdf
 from reasoning.settings import ReasoningSettings
 from reasoning.steps.phases import locate_phases
 from reasoning.steps.readings import read_view
@@ -95,6 +96,7 @@ class ReasoningWorker:
                 return False
             try:
                 await generate_report(self._sessions, self._gateway, report_id, self._tz)
+                await self._daily_pdf(report_id)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
@@ -313,12 +315,55 @@ class ReasoningWorker:
         await self._store.finish(job.id)
         await self._announce(incident_id, ctx.group_id, "generated", ctx.severity, report.title)
         log.info("incident_generated", incident_id=str(incident_id), calls=result.calls)
+        await self._incident_pdf(incident_id)
+
+    async def _incident_pdf(self, incident_id: uuid.UUID) -> None:
+        """The PDF of a finished report. Its failure leaves a report without a PDF, nothing more."""
+        if not self._s.pdf_enabled or self._sessions is None:
+            return
+        try:
+            uri = await write_incident_pdf(
+                sessions=self._sessions,
+                images=self._footage,
+                store=self._footage,
+                incident_id=incident_id,
+                bucket=self._s.reports_bucket,
+                tz=self._tz,
+                site=self._s.site_name,
+            )
+            log.info("incident_pdf_written", incident_id=str(incident_id), uri=uri)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("incident_pdf_failed", incident_id=str(incident_id))
+
+    async def _daily_pdf(self, report_id: uuid.UUID) -> None:
+        if not self._s.pdf_enabled or self._sessions is None:
+            return
+        try:
+            await write_daily_pdf(
+                sessions=self._sessions,
+                store=self._footage,
+                report_id=report_id,
+                bucket=self._s.reports_bucket,
+                tz=self._tz,
+                site=self._s.site_name,
+                profile=self._profile,
+            )
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("daily_pdf_failed", report_id=str(report_id))
 
     async def _fail(self, job: JobRow, incident_id: uuid.UUID, reason: str) -> None:
         try:
             await self._store.finish(job.id, failed=reason[:500])
         except Exception:
             log.exception("could_not_mark_job_failed")
+        try:  # the report row created before the failure must not stay "generating" for ever
+            await self._store.abandon_incidents(job.id, reason[:500])
+        except Exception:
+            log.exception("could_not_mark_incident_failed")
 
     async def _announce(
         self,

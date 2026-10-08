@@ -103,6 +103,7 @@ async def test_poison_message_goes_to_dlq_without_retrying(kafka_bootstrap_serve
     finally:
         await dlq_consumer.stop()
 
+    # aiokafka hands headers back as (str, bytes) pairs
     headers = dict(dlq_record.headers)
-    assert headers[b"x-origin-topic"].decode() == topic
-    assert headers[b"x-attempts"].decode() == "1"  # parse failures don't retry
+    assert headers["x-origin-topic"].decode() == topic
+    assert headers["x-attempts"].decode() == "1"  # parse failures don't retry

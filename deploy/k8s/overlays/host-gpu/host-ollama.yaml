@@ -1,0 +1,35 @@
+# Ollama runs on a GPU machine OUTSIDE the cluster (Docker Compose or a plain install, started with
+# OLLAMA_HOST=0.0.0.0) and the pods reach it as `ollama:11434`. A Service with no selector plus an
+# Endpoints of the same name sends that traffic to the machine's address.
+#
+# EDIT the address below: 192.0.2.10 is a documentation address, not a real host.
+# With a DNS name instead of an IP, use an ExternalName Service in place of these two objects:
+#   apiVersion: v1
+#   kind: Service
+#   metadata: { name: ollama }
+#   spec: { type: ExternalName, externalName: gpu-host.example.org }
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+spec:
+  ports:
+    - { name: http, port: 11434, targetPort: 11434 }
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: ollama
+  labels:
+    app.kubernetes.io/name: ollama
+    app.kubernetes.io/part-of: genai-vms
+    vms.io/tier: app
+subsets:
+  - addresses:
+      - ip: 192.0.2.10
+    ports:
+      - { name: http, port: 11434 }

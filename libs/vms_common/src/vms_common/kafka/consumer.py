@@ -24,13 +24,45 @@ from aiokafka.structs import ConsumerRecord
 from pydantic import BaseModel, ValidationError
 
 from vms_common.logging import get_logger
+from vms_common.metrics import counter, gauge
 
 log = get_logger(__name__)
+
+# vms_kafka_consumer_lag{group,topic}: messages the group has not committed yet, summed over the
+# partitions THIS process holds. With several replicas, `sum by (group, topic)` gives the total.
+consumer_lag = gauge(
+    "kafka", "consumer", "lag", "Messages behind the end of the topic", ("group", "topic")
+)
+LAG_REPORT_INTERVAL_S = 15.0
+# vms_kafka_dlq_total{group,topic}: messages this group gave up on (sent to the dead-letter topic).
+dead_letters = counter(
+    "kafka", "dlq", "total", "Messages sent to the dead-letter topic", ("group", "topic")
+)
 
 MessageT = TypeVar("MessageT", bound=BaseModel)
 
 RETRY_BACKOFF_SECONDS: tuple[float, ...] = (1.0, 5.0, 20.0)
 MAX_ATTEMPTS = len(RETRY_BACKOFF_SECONDS)
+
+
+def partition_lag(end: int, committed: int | None, beginning: int) -> int:
+    """Messages between where the group is and the end of the partition. A group that has never
+    committed starts at the beginning (`auto_offset_reset="earliest"`)."""
+    return max(0, end - (committed if committed is not None else beginning))
+
+
+async def lag_by_topic(consumer: AIOKafkaConsumer) -> dict[str, int]:
+    """{topic: lag} over the partitions the consumer is assigned right now."""
+    parts = list(consumer.assignment())
+    if not parts:
+        return {}
+    ends = await consumer.end_offsets(parts)
+    beginnings = await consumer.beginning_offsets(parts)
+    lags: dict[str, int] = {}
+    for tp in parts:
+        committed = await consumer.committed(tp)
+        lags[tp.topic] = lags.get(tp.topic, 0) + partition_lag(ends[tp], committed, beginnings[tp])
+    return lags
 
 
 class BaseConsumer(ABC, Generic[MessageT]):
@@ -86,8 +118,26 @@ class BaseConsumer(ABC, Generic[MessageT]):
         """Consume forever. Call `start()` first (or use as an async context manager)."""
         if self._consumer is None:
             raise RuntimeError("call start() (or use 'async with') before run()")
-        async for record in self._consumer:
-            await self._process_one(record)
+        reporter = asyncio.create_task(self._report_lag())
+        try:
+            async for record in self._consumer:
+                await self._process_one(record)
+        finally:
+            reporter.cancel()
+
+    async def _report_lag(self) -> None:
+        """Publish `vms_kafka_consumer_lag` every few seconds. Never fatal: a broker hiccup costs a
+        data point, not the consumer."""
+        while True:
+            try:
+                if self._consumer is not None:
+                    for topic, lag in (await lag_by_topic(self._consumer)).items():
+                        consumer_lag.labels(group=self._group_id, topic=topic).set(lag)
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                log.debug("consumer_lag_unavailable", error=str(exc))
+            await asyncio.sleep(LAG_REPORT_INTERVAL_S)
 
     async def _process_one(self, record: ConsumerRecord) -> None:
         message, parse_error = self._parse(record)
@@ -146,6 +196,7 @@ class BaseConsumer(ABC, Generic[MessageT]):
         await self._dlq_producer.send_and_wait(
             self._dlq_topic, value=record.value, key=record.key, headers=headers
         )
+        dead_letters.labels(group=self._group_id, topic=record.topic).inc()
         log.error(
             "message_dead_lettered",
             topic=record.topic,

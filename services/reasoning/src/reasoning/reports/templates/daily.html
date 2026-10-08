@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Daily security report {{ period }}</title><style>{{ css | safe }}</style></head>
+<body>
+<h1>Daily security report</h1>
+<p class="meta sans">{{ period }} · times in {{ f.timezone }}</p>
+<p class="summary">{{ narrative }}</p>
+{% if narrative_source == "template" %}
+<p class="note">Written from a fixed template: the language model was unavailable, or a number in its text did not match the figures.</p>
+{% endif %}
+
+<div class="tiles sans">
+  <div class="tile"><span class="v">{{ f.events_total }}</span><span class="l">Verified events{% if f.events_rejected %} ({{ f.events_rejected }} false alarms rejected){% endif %}</span></div>
+  <div class="tile"><span class="v">{{ high }}</span><span class="l">High severity or above</span></div>
+  <div class="tile"><span class="v">{{ f.incidents_total }}</span><span class="l">Incident reports</span></div>
+  <div class="tile"><span class="v">{{ f.alerts_total }}</span><span class="l">Alerts ({{ f.alerts_open }} still open)</span></div>
+</div>
+
+<h2>Events by hour</h2>
+{{ hours_svg | safe }}
+
+<h2>Breakdown</h2>
+<table>
+  <tr><th style="width:33%">By type</th><th style="width:33%">By camera</th><th>By severity</th></tr>
+  <tr>
+    <td>{% for k, v in by_type %}<div>{{ k }} <strong>{{ v }}</strong></div>{% else %}none{% endfor %}</td>
+    <td>{% for k, v in by_camera %}<div>{{ k }} <strong>{{ v }}</strong></div>{% else %}none{% endfor %}</td>
+    <td>{% for k, v in by_severity %}<div>{{ k }} <strong>{{ v }}</strong></div>{% else %}none{% endfor %}</td>
+  </tr>
+</table>
+
+<h2>Response times</h2>
+<table>
+  <tr><th></th><th>Median</th><th>90th percentile</th></tr>
+  <tr><td>Acknowledge</td><td>{{ ack_p50 }}</td><td>{{ ack_p90 }}</td></tr>
+  <tr><td>Resolve</td><td>{{ resolve_p50 }}</td><td>{{ resolve_p90 }}</td></tr>
+</table>
+<p class="meta">People seen at once, peak per camera: {% for k, v in peaks %}{{ k }} {{ v }}{% if not loop.last %}, {% endif %}{% else %}no counts{% endfor %}. Linked groups: {{ f.groups_total }}, of which across several cameras: {{ f.groups_multi_camera }}.</p>
+
+<h2>Incident reports ({{ f.incidents_total }})</h2>
+<table>
+  <tr><th style="width:14%">Time</th><th style="width:14%">Severity</th><th>Incident</th><th style="width:20%">Cameras</th></tr>
+  {% for i in f.incidents %}
+  <tr><td>{{ i.at }}</td><td class="sans">{{ i.severity }}</td><td>{{ i.title }}</td><td>{{ i.cameras | join(", ") }}</td></tr>
+  {% else %}<tr><td colspan="4">None in this period.</td></tr>{% endfor %}
+</table>
+</body>
+</html>

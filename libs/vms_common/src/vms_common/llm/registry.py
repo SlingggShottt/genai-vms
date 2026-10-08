@@ -262,6 +262,14 @@ class ModelRegistry:
                 f"unknown task {name!r} (profile {profile or self.profile}); known: {sorted(tasks)}"
             ) from None
 
+    def uses_provider(self, provider: str) -> bool:
+        """Whether any task of the active profile names `provider` (primary or fallback)."""
+        return any(
+            ref.provider == provider
+            for task in self._profiles[self.profile].values()
+            for ref in task.candidates
+        )
+
     def task_names(self) -> list[str]:
         return sorted(self._profiles[self.profile])
 

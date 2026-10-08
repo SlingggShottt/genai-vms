@@ -1,0 +1,41 @@
+# What the Prometheus Operator (kube-prometheus-stack) needs to scrape this system. The pods carry
+# prometheus.io/* annotations too, for a plain Prometheus; the operator ignores those.
+# Two PodMonitors because two kinds of pod expose metrics: the workers on a port named `metrics`
+# (their own tiny HTTP server) and the api and retrieval on their HTTP port at /metrics. The
+# frontend also has a port named `http`, which is why the second one selects by name.
+# `service` is set from the pod's name label because the alerts and the dashboard group by it.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: genai-vms-workers
+  labels:
+    app.kubernetes.io/part-of: genai-vms
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: genai-vms
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+          targetLabel: service
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: genai-vms-http
+  labels:
+    app.kubernetes.io/part-of: genai-vms
+spec:
+  selector:
+    matchExpressions:
+      - { key: app.kubernetes.io/name, operator: In, values: [api, retrieval] }
+  podMetricsEndpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+          targetLabel: service

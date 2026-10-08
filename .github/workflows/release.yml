@@ -1,0 +1,88 @@
+# Builds the service images and pushes them to GHCR (P7-J3).
+#
+#   - a tag `v1.2.3` publishes `1.2.3`, `1.2` and `sha-<short>` for every image;
+#   - "Run workflow" (workflow_dispatch) publishes `sha-<short>` and `manual` for the chosen ref,
+#     which is how to try this workflow before tagging anything.
+# It does NOT run on every push to main: the heavy images take a long time and a first run of a
+# workflow that was never run before should be one a person started. Add a `push: branches: [main]`
+# trigger here once a manual run has gone green.
+#
+# Platforms: the light services are built for amd64 and arm64. `retrieval` and `reasoning` carry
+# PyTorch and are amd64 only (the arm64 build has not been tried and would take hours under QEMU).
+# `perception` is not built here: its base image is nvidia/cuda, so it is a GPU host's image, built
+# on that host (`make up PROFILE=perception`), not something a cloud VM without a GPU can run.
+name: Release images
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false # one broken image should not hide the state of the others
+      matrix:
+        include:
+          - { name: api, dockerfile: services/api/Dockerfile, context: ".", platforms: "linux/amd64,linux/arm64" }
+          - { name: ingestion, dockerfile: services/ingestion/Dockerfile, context: ".", platforms: "linux/amd64,linux/arm64" }
+          - { name: indexer, dockerfile: services/indexer/Dockerfile, context: ".", platforms: "linux/amd64,linux/arm64" }
+          - { name: events, dockerfile: services/events/Dockerfile, context: ".", platforms: "linux/amd64,linux/arm64" }
+          - { name: correlation, dockerfile: services/correlation/Dockerfile, context: ".", platforms: "linux/amd64,linux/arm64" }
+          - { name: camera-sim, dockerfile: tools/camera_sim/Dockerfile, context: ".", platforms: "linux/amd64,linux/arm64" }
+          - { name: frontend, dockerfile: frontend/Dockerfile, context: frontend, platforms: "linux/amd64,linux/arm64" }
+          - { name: retrieval, dockerfile: services/retrieval/Dockerfile, context: ".", platforms: "linux/amd64" }
+          - { name: reasoning, dockerfile: services/reasoning/Dockerfile, context: ".", platforms: "linux/amd64" }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+        if: contains(matrix.platforms, 'arm64')
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # GHCR wants a lower-case path; the repository owner may not be.
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/genai-vms-${{ matrix.name }}
+          flavor: latest=false
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,format=short
+            type=raw,value=manual,enable=${{ github.event_name == 'workflow_dispatch' }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: ${{ matrix.platforms }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # The frontend is built for the Caddy deployment (deploy/compose/Caddyfile): media
+          # on the same origin. Other images ignore build args they do not declare.
+          build-args: |
+            VITE_MEDIAMTX_WEBRTC_URL=/webrtc
+            VITE_MEDIAMTX_HLS_URL=/hls
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

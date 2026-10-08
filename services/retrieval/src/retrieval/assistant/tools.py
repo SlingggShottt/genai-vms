@@ -128,6 +128,7 @@ class ListEvents(_Timed):
 
 class ListIncidents(_Timed):
     severity: str | None = None
+    camera: str | None = None
     limit: int = Field(default=5, ge=1, le=10)
 
     @field_validator("severity")
@@ -259,6 +260,7 @@ _INCIDENTS_SQL = text(
     "SELECT id::text, title, severity, event_type, status, window_start, camera_ids, "
     "report->>'summary' FROM reasoning.incidents WHERE status IN ('generated','reviewed','closed') "
     "AND (CAST(:sev AS text) IS NULL OR severity = CAST(:sev AS text)) "
+    "AND (CAST(:cam AS text) IS NULL OR CAST(:cam AS text) = ANY(camera_ids)) "
     "AND (CAST(:t0 AS timestamptz) IS NULL OR window_end >= CAST(:t0 AS timestamptz)) "
     "AND (CAST(:t1 AS timestamptz) IS NULL OR window_start <= CAST(:t1 AS timestamptz)) "
     "ORDER BY window_start DESC LIMIT :n"
@@ -270,7 +272,8 @@ async def list_incidents(ctx: ToolContext, a: ListIncidents) -> str:
     async with ctx.sessions() as s:
         rows = (
             await s.execute(
-                _INCIDENTS_SQL, {"sev": a.severity, "t0": start, "t1": end, "n": a.limit}
+                _INCIDENTS_SQL,
+                {"sev": a.severity, "cam": a.camera, "t0": start, "t1": end, "n": a.limit},
             )
         ).all()
     if not rows:

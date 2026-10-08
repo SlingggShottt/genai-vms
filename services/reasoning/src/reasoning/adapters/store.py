@@ -217,16 +217,18 @@ class ReasoningStore:
             )
             return [SegmentInfo(*r) for r in rows]
 
-    async def abandon_incidents(self, job_id: uuid.UUID) -> None:
-        """A job claimed again after its worker died: the half-written reports it left are
-        marked failed so the list does not show them as still being written."""
+    async def abandon_incidents(self, job_id: uuid.UUID, reason: str | None = None) -> None:
+        """The half-written reports a job left (its worker died and it was claimed again, or it
+        failed after the report row was created) are marked failed, with the reason when there is
+        one, so the list does not show them as still being written."""
         async with self._sessions() as s, s.begin():
             await s.execute(
                 text(
-                    "UPDATE reasoning.incidents SET status = 'failed', updated_at = now() "
+                    "UPDATE reasoning.incidents SET status = 'failed', updated_at = now(), "
+                    "notes = COALESCE(:reason, notes) "
                     "WHERE job_id = :j AND status = 'generating'"
                 ),
-                {"j": job_id},
+                {"j": job_id, "reason": reason},
             )
 
     # --- incidents ----------------------------------------------------------------------

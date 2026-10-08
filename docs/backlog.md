@@ -69,11 +69,12 @@
 - [x] `CODEOWNERS` created from `design_architecture.md §3`.
 
 ### P1-D2 · Shared runtime library v1 — 5 pts · Must · E01 · NFR-REL-01, NFR-OBS-01
+> **2026-10-08:** the integration test had never passed: its DLQ assertion looked headers up by `bytes` keys, but aiokafka returns `(str, bytes)` pairs, so the poison-message test raised `KeyError`. Fixed; both tests (consumed and committed; poison message to the DLQ with its origin topic and one attempt) pass, run against the dev broker with the same body because a second Kafka container did not fit in memory alongside the stack. The testcontainers fixture itself was not run.
 - [x] `vms_common.config` (pydantic-settings), `logging` (structlog JSON with context binding), `ids` (uuid7), `metrics` helpers.
 - [x] `vms_common.kafka`: async producer, consumer base class with validate → handle → commit, retry backoff, DLQ publish.
 - [x] `vms_common.storage`: S3 client (put/get/stream/presign), URI parse/build helpers.
 - [x] `contracts/segment.py` (`SegmentV1`) + fixture + round-trip test.
-- [ ] Integration test with testcontainers Kafka: message produced → consumed → committed; poison message → DLQ.
+- [x] Integration test with testcontainers Kafka: message produced → consumed → committed; poison message → DLQ.
       **Written** (`libs/vms_common/tests/integration/test_kafka_consumer.py`), **not executed** — no Docker daemon in
       the environment this was built in. Run `make test-int` (needs Docker) before trusting it fully.
 
@@ -499,7 +500,7 @@
       series (design §15). 320 unit tests; a 66-variant mutation check (break the gateway/lease/registry/cache/parser/
       adapter on purpose) kills all 66. Its first pass had 7 survivors: five were real test gaps (now covered), one was
       a redundant cache-key input (removed), one an equivalent mutant (dropped).
-- [ ] Benchmark note: latency + VRAM for `qwen2.5vl:3b` and `qwen2.5:3b` on 4 GB; model tags verified.
+- [x] Benchmark note: latency + VRAM for `qwen2.5vl:3b` and `qwen2.5:3b` on 4 GB; model tags verified.
       **Benchmark done, tag verification half done.** `ml/evaluation/results/p3-d3-llm-benchmark.md` (harness:
       `ml/evaluation/llm_benchmark.py`): the text model is 100 % on the GPU (2.4 GB, 0.25 s warm); the vision model
       is only ~53 % on the GPU (rest on CPU; 18–31 % beside perception) — 1 / 2 / 4 images ≈ 3 / 5 / 11 s warm,
@@ -617,31 +618,32 @@
 ## Divyansh — 23 pts
 
 ### P4-D1 · Retrieval service & query decomposition — 5 pts · Must · E11 · FR-SRC-01, FR-SRC-02
+> **2026-10-08:** 30 golden queries (20 vocabulary, 10 replaying what `qwen2.5:3b` really answered; `services/retrieval/tests/unit/test_golden_queries.py`). They found three planner bugs, fixed: a model that lists every area it was shown became a zone filter, event words matched inside other words (`ran` in *entrance* and *orange*), and *after dark* became the colour black.
 > **Status 2026-10-04 — partly built** (`services/retrieval`): `POST /search` with `fast`/`reason`, plan from the keyword vocabulary or `query_decompose/1.0` (categories mapped to the detector's, times from the text), search log. **Not done:** the 30 golden query → plan tests with `FakeGateway` recordings.
-- [ ] `services/retrieval` FastAPI app; `POST /search` accepts query, filters, `mode=fast|reason`.
-- [ ] Prompt `query_decompose/1.0` → `QueryPlan` validated; relative times resolved with site timezone; filters from request override plan.
-- [ ] 30 golden query → plan tests (with `FakeGateway` recordings) covering attributes, time, zones, implicit actions.
+- [x] `services/retrieval` FastAPI app; `POST /search` accepts query, filters, `mode=fast|reason`.
+- [x] Prompt `query_decompose/1.0` → `QueryPlan` validated; relative times resolved with site timezone; filters from request override plan.
+- [x] 30 golden query → plan tests (with `FakeGateway` recordings) covering attributes, time, zones, implicit actions.
 
 ### P4-D2 · Coarse hybrid retrieval — 8 pts · Must · E11 · FR-SRC-03, FR-SRC-10
 > **Status 2026-10-04 — partly built:** SigLIP 2 text encoder on CPU, `frames` + `tracks` search with plan filters, RRF, 10 s windows, per-stage timings. `knowledge` (dense + BM25) is searched and fused with Postgres full-text on captions. `mode=fast` measured at p95 0.25 s (30 fresh queries, `ml/evaluation/results/p7-latency.md`). The `mode=fast` p95 ≤ 1 s criterion is met.
-- [ ] SigLIP 2 text encoder on CPU; visual queries against `frames` and `tracks` with payload filters from the plan.
-- [ ] Dense + sparse search on `knowledge` (event captions) for text queries.
+- [x] SigLIP 2 text encoder on CPU; visual queries against `frames` and `tracks` with payload filters from the plan.
+- [x] Dense + sparse search on `knowledge` (event captions) for text queries.
 - [ ] Reciprocal rank fusion; grouping hits into segment-window candidates (merge within 10 s per camera); top-K = 30.
-- [ ] `mode=fast` returns in p95 ≤ 1 s on the Phase 2 archive (measured).
-- [ ] Per-stage timings included in response for logging.
+- [x] `mode=fast` returns in p95 ≤ 1 s on the Phase 2 archive (measured).
+- [x] Per-stage timings included in response for logging.
 
 ### P4-D3 · LLM reasoning rerank & traces — 5 pts · Must · E11 · FR-SRC-04
 > **Status 2026-10-04 — partly built:** twin excerpts, batched rerank (5 per call, top 10), score + ≤ 60-word trace + `missing[]`, weighted blend. **Not done:** emitting `candidate.v1` to JIT (nothing consumes `missing[]` yet), reasoning weights read from config rather than settings.
-- [ ] Loads twin excerpts (only matched tracks ± context, token-capped) for candidates; batched prompts (5 candidates/call).
-- [ ] Output per candidate: score 0–1, trace ≤ 60 words, `missing[]` sub-questions; validated with retry.
+- [x] Loads twin excerpts (only matched tracks ± context, token-capped) for candidates; batched prompts (5 candidates/call).
+- [x] Output per candidate: score 0–1, trace ≤ 60 words, `missing[]` sub-questions; validated with retry.
 - [ ] Final ranking = weighted fused + reasoning score; weights configurable; emits `candidate.v1` to JIT for top-N with `missing`.
 
 ### P4-D4 · Search UI — 5 pts · Must · E11 · FR-SRC-01, FR-SRC-08
 > **Status 2026-10-04 — built, driven in a real browser (Brave) for fast and reason mode:** query bar, camera/time filters, fast/reason toggle, result cards with the collapsible trace, "Open in playback" at the result's time (Playback now honours `?camera=&start=&end=`), fast results first then the reasoned ranking, empty/error states. No component tests were written.
-- [ ] Search page: query bar with example placeholder, camera/time filter chips, fast/reason toggle.
-- [ ] Result cards: keyframe, camera, time, score, collapsible ReasoningTrace (§B.7), "Open in playback" at exact timestamp.
-- [ ] Progressive rendering: fast results first, reasoned ranking replaces them when ready.
-- [ ] Empty/error states per §B.8.
+- [x] Search page: query bar with example placeholder, camera/time filter chips, fast/reason toggle.
+- [x] Result cards: keyframe, camera, time, score, collapsible ReasoningTrace (§B.7), "Open in playback" at exact timestamp.
+- [x] Progressive rendering: fast results first, reasoned ranking replaces them when ready.
+- [x] Empty/error states per §B.8.
 
 ## Jatin — 23 pts
 
@@ -664,9 +666,9 @@
 
 ### P4-J4 · Search API, logging & event-caption indexing — 3 pts · Must · E11 · FR-SRC-09
 > **Status 2026-10-04 — partly built:** the api proxies `/search*` with auth, presigned urls and timeouts; `retrieval.search_logs` is written. Event captions are indexed into `knowledge` by the indexer (see P6-J3).
-- [ ] API proxies `/search*` to retrieval with auth and timeouts.
+- [x] API proxies `/search*` to retrieval with auth and timeouts.
 - [ ] `retrieval.search_logs` stores query, plan, candidates, final results, per-stage latency, profile.
-- [ ] Indexer consumes `event.v1` and writes captions into `knowledge` (dense + sparse) with payload.
+- [x] Indexer consumes `event.v1` and writes captions into `knowledge` (dense + sparse) with payload.
 
 ### P4-J5 · Image search & mask UI — 3 pts · Must · E11 · FR-SRC-06, FR-SRC-07
 - [ ] "Search by image" upload dialog and "Find similar" crop tool on any paused frame (playback, event detail).
@@ -677,6 +679,14 @@
 - [ ] Metrics R@1/5/10, mAP, tIoU@0.3/0.5, latency per stage.
 - [ ] Ablation runner: `embed`, `embed+filters`, `+rerank`, `+jit`, for `local` and `hybrid` profiles.
 - [ ] Baseline report generated on the first 50 queries.
+      Not ticked. A first harness exists with labels nobody had to annotate: `ml/evaluation/retrieval` joins the 121
+      labelled MEVA example clips (36 activities) into one recorded stream and scores 36 plain-language queries by
+      whether the returned windows overlap a clip of that activity (results:
+      `ml/evaluation/results/meva-retrieval-benchmark.md`). Fast mode finds a relevant window at rank 1 for 5 of 36
+      queries and in the top 10 for 20 (random: ~1 and ~9); reason mode 8 and 24 at ~70× the latency (better on 12
+      queries, worse on 7). What is still missing here: the `queries.jsonl` format and labelling guide, ≥ 150 queries
+      with half implicit, mAP/tIoU, filters/JIT ablations and the `hybrid` profile. The MEVA queries are one clean
+      activity name each, and clips of one activity often share a scene, so the numbers are a ceiling.
 
 ---
 
@@ -691,56 +701,87 @@
 ## Divyansh — 22 pts
 
 ### P5-D1 · TG dataset builder — 3 pts · Must · E12
-- [ ] `phase_labels.jsonl` → instruction JSONL: ≤ 16 timestamped frames (≤ 360 p) + prompt → phase JSON target.
-- [ ] Multi-view samples include all views with camera tags; split 70/15/15 **by source video**; manifest + hash committed.
-- [ ] Frames + JSONL packaged as a Kaggle dataset.
+- [x] `phase_labels.jsonl` → instruction JSONL: ≤ 16 timestamped frames (≤ 360 p) + prompt → phase JSON target.
+- [x] Multi-view samples include all views with camera tags; split 70/15/15 **by source video**; manifest + hash committed.
+- [x] Frames + JSONL packaged as a Kaggle dataset.
+      > **Status 2026-10-06 — builder written, never run on real labels** (`ml/training/tg/`, README there): `phase_labels.v1`
+      > validated with the annotation kit's schema; one sample per clip × camera, frames ≤ 360 p, the `phase_tg` 1.0 prompt
+      > rendered like `services/reasoning` does (a test runs the service's `locate_phases` and requires the same prompt),
+      > split by source video 70/15/15 in a shared, extend-only `splits.json`, `manifest.json` with prompt and file hashes,
+      > `dataset-metadata.json` for Kaggle. 16 unit tests on synthetic videos (five deliberate bugs caught), run in CI.
+      > **Differs from the story text on purpose:** 5–8 frames per sample, not ≤ 16 (the service shows at most 8), and the
+      > answer is one stage per frame (what `FrameLabels` parses), not spans; all views of a clip in one sample is not built.
+      > Nothing has been uploaded to Kaggle: there are no phase annotations yet.
 
 ### P5-D2 · TG adapter fine-tuning — 8 pts · Must · E12
+> **2026-10-08 — trainer and notebook written, not run on real data:** `ml/training/train_adapter.py` (QLoRA, design hyperparameters, answer-only loss, checkpoint/resume that reproduces an uninterrupted run, best-adapter + model card, upload) and `train_adapter_kaggle.ipynb`. Verified on a 10 M-parameter random model and the synthetic dataset (see `ml/training/README.md`); **not** on the 3B model, a T4, Kaggle or any real annotation. Uses Transformers + PEFT, not Unsloth. Experiment tracking is `metrics.jsonl` (loss, validation loss and token accuracy); mIoU per epoch is not computed in the loop (the evaluation harness scores the finished adapter). Nothing is ticked: each item needs the real run.
 - [ ] Unsloth QLoRA notebook on Qwen2.5-VL-3B with hyperparameters from design §8.3; runs within one Kaggle session (checkpointing to resume).
 - [ ] Experiment tracking (config, loss curves, val mIoU per epoch).
 - [ ] Best adapter uploaded to `vms-models/tg/v1` with model card (data, metrics, limits).
 
 ### P5-D3 · TG evaluation — 3 pts · Must · E18 · EV-02
-- [ ] `ml/evaluation/reasoning/phase`: mIoU and boundary MAE on test split.
+- [x] `ml/evaluation/reasoning/phase`: mIoU and boundary MAE on test split.
 - [ ] Baselines: zero-shot base 3B (same prompt) and zero-shot cloud VLM on ≤ 40 clips (free tier).
 - [ ] Error analysis: confusion between adjacent phases, per event type, single vs multi-view.
+      > **Status 2026-10-06 — harness written, no real result** (`ml/evaluation/reasoning/phase/`, README there): mIoU,
+      > boundary error, frame accuracy and usable-answer rate with 95 % bootstrap intervals, by event type and single/multi-view;
+      > methods `rules` (the service's detector-timing fallback) and `model` (any `phase_tg` gateway task, same fallback). 13
+      > unit tests. Run once against the real zero-shot `qwen2.5vl:3b` on synthetic clips as a plumbing check only. **Not done:**
+      > the baselines on real clips (no annotations yet), the cloud-VLM baseline, the confusion matrix between adjacent phases.
 
 ### P5-D4 · Reasoning orchestrator — 5 pts · Must · E12 · FR-RSN-01, FR-RSN-04…06
 > **Status 2026-10-04 — partly built** (`services/reasoning`): `reasoning.jobs` queue with `SKIP LOCKED` and lease recovery, auto-queue from closed `correlation.v1` groups (high+, capped per hour) and `POST /events/{id}/analyze`, ±15 s window, TG → evidence → synthesis, queue position and stage in the job. Phase location uses the **zero-shot base model** (no adapter is trained), falling back to detector timing, recorded in provenance. **Not done:** `job.progress` on the WebSocket (the UI polls), the cloud fallback step.
-- [ ] Consumes `correlation.v1` (closed, severity ≥ threshold) and `POST /events/{id}/analyze`; `reasoning.jobs` queue with `SKIP LOCKED`.
-- [ ] Gathers synced clips for all cameras (window ±15 s), samples frames, runs TG → `phasetimeline.v1` → calls evidence module → stores bundle.
+- [x] Consumes `correlation.v1` (closed, severity ≥ threshold) and `POST /events/{id}/analyze`; `reasoning.jobs` queue with `SKIP LOCKED`.
+- [x] Gathers synced clips for all cameras (window ±15 s), samples frames, runs TG → `phasetimeline.v1` → calls evidence module → stores bundle.
 - [ ] Job progress via API WS `job.progress`; queue position exposed.
 - [ ] Fallback chain: TG adapter → zero-shot base → cloud profile, recorded in provenance.
 
 ### P5-D5 · Adapter serving (`hf_local`) — 3 pts · Must · E12
-- [ ] Gateway provider loads 4-bit base once and hot-swaps `tg` / `phavr` LoRA adapters via PEFT under the GPU lease.
-- [ ] Pixel/frame caps configurable; OOM caught → retry with fewer frames.
+> **2026-10-08 — backend built, verified on a tiny model only:** `llm/hf_local.py` (see design §8.3): base loaded once, adapters fetched and hot-swapped, frame back-off on out-of-memory, error translation, wired into the gateway when a profile uses `hf_local`. 22 unit tests with a fake runtime (mutation-checked) and a real run with a 10 M-parameter random Qwen2.5-VL through the real transformers, PEFT and bitsandbytes code in fp16 and 4-bit (base loaded once; plain, `tg` and `phavr` outputs differ and repeat; VRAM released on unload). **Not measured:** VRAM and latency of the real 3B model (download too slow here) and quality of any adapter (none trained).
+- [x] Gateway provider loads 4-bit base once and hot-swaps `tg` / `phavr` LoRA adapters via PEFT under the GPU lease.
+- [x] Pixel/frame caps configurable; OOM caught → retry with fewer frames.
 - [ ] Measured VRAM and latency per call documented.
 
 ## Jatin — 22 pts
 
 ### P5-J1 · PhaVR dataset builder — 3 pts · Must · E12
-- [ ] `phavr_labels.jsonl` → instruction JSONL for captioning and VQA tasks per phase × view (≤ 8 frames).
-- [ ] Same video-level split as TG (shared manifest); packaged as a Kaggle dataset.
+- [x] `phavr_labels.jsonl` → instruction JSONL for captioning and VQA tasks per phase × view (≤ 8 frames).
+- [x] Same video-level split as TG (shared manifest); packaged as a Kaggle dataset.
+      > **Status 2026-10-06 — builder written, never run on real labels** (`ml/training/phavr/`, README there): reads
+      > `phavr_label.v1` plus the phase labels (for video locations); 2–4 frames per phase × view (the service's cap), the
+      > `phase_vr` 1.0 prompt and the VQA bank rendered as `services/reasoning` does (a test runs the service's real
+      > `read_view` and requires the same prompt), canonical answers, skip-and-list for anything unusable; shares the TG
+      > builder's extend-only `splits.json` so both adapters have the same train/val/test videos. 10 tests on synthetic
+      > videos, run in CI. **Differs from the story text:** ≤ 4 frames, not ≤ 8 (the service shows at most 4). Not packaged
+      > or uploaded: there are no labels yet.
 
 ### P5-J2 · PhaVR adapter fine-tuning — 8 pts · Must · E12
+> **2026-10-08:** the same trainer and notebook serve PhaVR (see P5-D2). Nothing is ticked: the real run needs verified captions and VQA answers, which do not exist.
 - [ ] Unsloth QLoRA notebook (same base/hyperparameters), mixed caption + VQA batches.
 - [ ] Experiment tracking; best adapter to `vms-models/phavr/v1` with model card.
 
 ### P5-J3 · PhaVR evaluation — 3 pts · Must · E18 · EV-02
-- [ ] BLEU-4, METEOR, ROUGE-L, CIDEr for captions; exact/normalized-match accuracy for VQA, per view type.
+- [x] BLEU-4, METEOR, ROUGE-L, CIDEr for captions; exact/normalized-match accuracy for VQA, per view type.
 - [ ] Baselines: zero-shot base 3B and cloud VLM subset; results table + qualitative examples.
+      > **Status 2026-10-06 — harness written, no real result** (`ml/evaluation/reasoning/phavr/`, README there): BLEU-4,
+      > CIDEr-D, ROUGE-L, a METEOR variant (`meteor_exact`: identical words only, **not** the published METEOR, which needs
+      > downloads) and VQA accuracy with 95 % intervals, by stage and primary/other view; methods `template` (no model) and
+      > `model` (any `phase_vr` gateway task, cleaned with the service's own `clean_answers`). 18 tests. A plumbing run against
+      > the real zero-shot model found that the service dropped most VQA answers (the model copies the prompt's `[id]`
+      > brackets); fixed in `services/reasoning` with tests. **Not done:** results on real labels, the cloud baseline,
+      > qualitative examples.
 
 ### P5-J4 · Evidence builder — 5 pts · Must · E12 · FR-RSN-03, FR-RSN-04
 > **Status 2026-10-04 — built inside `services/reasoning` by Track D** at the user's request: per phase × camera frames, caption + VQA-bank questions, stable ids, frames copied to `vms-evidence`, `evidence.v1`. Uses the zero-shot base model, not PhaVR.
 - [ ] `reasoning/evidence`: for each phase × view, sample frames, run PhaVR caption + VQA bank for the event type.
-- [ ] Assemble `evidence.v1` with stable evidence ids and frame URIs in `vms-evidence`; validated against contract.
+- [x] Assemble `evidence.v1` with stable evidence ids and frame URIs in `vms-evidence`; validated against contract.
 - [ ] Skips empty phases/views; per-call timings in provenance.
 
 ### P5-J5 · Event reasoning view — 3 pts · Must · E12
+> **2026-10-08:** the report page and the event page's Reasoning section (*Watch the views together*) now have the phase band, a lane per camera with the phases and one playhead, and the incident's cameras on one playhead; pressing a phase plays every view for that phase from its start and stops at its end (driven in Brave on a fresh incident: playhead jumped to the phase start, stopped at its end, largest drift 145 ms). Phases are located once, on the primary view, so every lane shows the same spans; the incident above had a single camera, so four-camera phase playback was checked on the timeline page, not on an incident.
 > **Status 2026-10-04 — partly built:** the reasoning view is the incident report (phase band, per-phase captions and Q&A, evidence frames) and the event page's *Reasoning* panel with job progress and queue position. **Not done:** camera lanes and synced multi-view playback per phase.
 - [ ] Event/correlation detail gains a "Reasoning" tab: timeline with phase band across camera lanes (§B.6), per-phase captions and Q&A, evidence frames.
-- [ ] Clicking a phase plays all views for that phase in sync (≤ 4 views); job progress/queue shown while running.
+- [x] Clicking a phase plays all views for that phase in sync (≤ 4 views); job progress/queue shown while running.
 
 ---
 
@@ -753,57 +794,64 @@
 ## Divyansh — 23 pts
 
 ### P6-D1 · Incident report synthesis — 8 pts · Must · E13 · FR-INC-01…03
+> **2026-10-08:** golden tests on five real evidence bundles (`services/reasoning/tests/unit/test_incident_synthesis.py`, fixtures from stored incidents): schema-valid, citations valid, an invented id quoted back and corrected, an uncited claim dropped, a model that is down failing with its reason. Mutation-checked.
 > **Status 2026-10-04 — partly built:** two schema-validated steps (stage summaries; causal chain, factors, actions) with citation checks, ≤ 2 retries quoting the problems, uncited claims dropped (never patched), `failed` with the raw output kept; `reasoning.incidents` + `incidentready.v1`. **Not done:** golden tests on 5 fixture bundles, S3 copy of the report, WS `incident.ready`.
-- [ ] Hierarchical prompts: phase summaries → causal chain & contributing factors → final report, each schema-validated.
-- [ ] Citation validator (every evidence id exists; each causal step and factor has ≥ 1); retry with error text ≤ 2; `failed` status with raw output.
+- [x] Hierarchical prompts: phase summaries → causal chain & contributing factors → final report, each schema-validated.
+- [x] Citation validator (every evidence id exists; each causal step and factor has ≥ 1); retry with error text ≤ 2; `failed` status with raw output.
 - [ ] Persists `reasoning.incidents` (JSONB + S3 copy), publishes `incidentready.v1`, WS `incident.ready`.
-- [ ] Golden tests on 5 fixture evidence bundles (schema-valid, citations valid).
+- [x] Golden tests on 5 fixture evidence bundles (schema-valid, citations valid).
 
 ### P6-D2 · RAG assistant agent & streaming — 8 pts · Must · E14 · FR-AST-02…04, FR-AST-06
+> **2026-10-08:** 25+ scripted conversations (`tests/unit/test_assistant.py`): the lookup each question gets, whole turns with a scripted model, citations resolved server-side, unknown tags reported, a repeated lookup stopped. They found that *daily security report* was not routed (fixed).
 > **Status 2026-10-04 — partly built** (`services/retrieval/src/retrieval/assistant`): seven parameterised tools (`search_footage`, `list_events`, `list_incidents`, `get_incident`, `get_timeline`, `count_objects` over `vision.minute_counts`, `get_daily_report`); SSE `tool_call`, `tool_result`, `token`, `citation`, `done`, `error`; citation tags resolved server-side. The local model has no native tool calling, so clear questions are routed by keywords and only the rest go to a JSON-action planner (≤ 4 calls). **Not done:** the 25 scripted `FakeGateway` conversations, `zone` in `count_objects` (counts are per camera), a rate/size cap on tool results beyond truncation.
-- [ ] Tools per design §10.3 with JSON schemas; `count_objects` uses pre-defined parameterized SQL only.
+- [x] Tools per design §10.3 with JSON schemas; `count_objects` uses pre-defined parameterized SQL only.
 - [ ] Agent loop (≤ 5 tool rounds), citation format enforcement, "nothing found" behaviour.
-- [ ] `POST /assistant/sessions/{id}/messages` streams SSE events `token`, `tool_call`, `tool_result`, `citation`, `done`, `error`.
-- [ ] 25 scripted conversations pass tool-selection and citation checks with `FakeGateway` recordings.
+- [x] `POST /assistant/sessions/{id}/messages` streams SSE events `token`, `tool_call`, `tool_result`, `citation`, `done`, `error`.
+- [x] 25 scripted conversations pass tool-selection and citation checks with `FakeGateway` recordings.
 
 ### P6-D3 · Conversation memory — 2 pts · Should · E14 · FR-AST-01, FR-AST-05
+> **2026-10-08:** memory is now unit-tested (`tests/unit/test_assistant.py`): the 12-message window, the rolling summary, tool output cut to its budget.
 > **Status 2026-10-04 — built, not unit-tested end to end:** sessions and messages in `retrieval.chat_sessions` / `chat_messages` (migration 0010), last 12 messages verbatim plus a rolling summary updated in the background, tool output truncated.
-- [ ] Sessions/messages persisted; last 12 messages + rolling summary; tool results truncated to budget.
+- [x] Sessions/messages persisted; last 12 messages + rolling summary; tool results truncated to budget.
 
 ### P6-D4 · Assistant UI — 5 pts · Must · E14 · FR-AST-01, FR-AST-03
 > **Status 2026-10-04 — built, driven in a real browser:** conversation list, streaming chat, tool activity with what each lookup found, citation chips (event → its alert page, incident → report, footage → playback at the moment), starter questions from the last 24 h, stop button, retry. Records the model did not cite are shown as "Records consulted", never as its citations.
-- [ ] Session list + chat column (§B.7); streaming render; tool activity lines; EvidenceChip citations opening clips/incidents.
-- [ ] Suggested starter questions from the last 24 h; stop-generation button; error/retry states.
+- [x] Session list + chat column (§B.7); streaming render; tool activity lines; EvidenceChip citations opening clips/incidents.
+- [x] Suggested starter questions from the last 24 h; stop-generation button; error/retry states.
 
 ## Jatin — 23 pts
 
 ### P6-J1 · Daily security report job — 5 pts · Must · E15 · FR-RPT-01…04
+> **2026-10-08:** server-side PDF built (`reasoning/reports/pdf.py`, WeasyPrint, §B.11), stored in `vms-reports`, `pdf_uri` on the row (migration 0014), *Download PDF* on the report page; verified in Brave (the button opens a presigned MinIO link that delivers the file) and for a report made by the running worker. **Still not done:** the PDF is not indexed into `knowledge`; `supercronic` in Compose is replaced by the worker's own 06:00 schedule.
 > **Status 2026-10-04 — partly built** (`services/reasoning/src/reasoning/reports`): `DailyFacts` from fixed SQL, narrative from `daily_narrative/1.0` with every number checked against the figures (one retry, then a template text; `narrative_source` says which), `reasoning.daily_reports` (migration 0011), the worker queues yesterday's report after 06:00 IST, `POST /reports/daily` (≤ 7 days) and `python -m reasoning.reports.daily`. **Not done:** server-side charts and PDF (WeasyPrint; the UI draws the charts and the browser prints to PDF), indexing into `knowledge`, supercronic in Compose (the worker schedules it).
-- [ ] `DailyFacts` aggregation SQL; charts (events by hour/type/camera, alert response times).
-- [ ] Narrative via gateway with numeric post-check (numbers must exist in facts) → regenerate once → template fallback.
+- [x] `DailyFacts` aggregation SQL; charts (events by hour/type/camera, alert response times).
+- [x] Narrative via gateway with numeric post-check (numbers must exist in facts) → regenerate once → template fallback.
 - [ ] Jinja2 + WeasyPrint PDF per §B.11 → `vms-reports`; row in `reasoning.daily_reports`; indexed into `knowledge`.
 - [ ] Entry point `python -m reasoning.reports.daily`; supercronic in Compose; `POST /reports/daily` on demand (≤ 7-day range).
 
 ### P6-J2 · Incident UI & PDF export — 5 pts · Must · E13 · FR-INC-04, FR-INC-06
+> **2026-10-08:** the incident PDF is built on the same pipeline (see P6-J1): A4, phase table, evidence grid, causal chain, factors, actions, limitations and the provenance sentence; written by the worker when a report is generated; *Download PDF* on the report page. Barlow / Source Serif 4 are used only where installed (the container has DejaVu).
 > **Status 2026-10-04 — partly built:** incidents list (severity filter) and report view with evidence chips, provenance note, notes and reviewed/closed. **Not done:** server-side PDF (the page offers print-to-PDF).
-- [ ] Incidents list (filters, severity, status) and report view per §B.7 with EvidenceChips and ProvenanceNote.
-- [ ] Status/notes editing (operator+); incident PDF via the same PDF pipeline.
+- [x] Incidents list (filters, severity, status) and report view per §B.7 with EvidenceChips and ProvenanceNote.
+- [x] Status/notes editing (operator+); incident PDF via the same PDF pipeline.
 
 ### P6-J3 · Incident indexing & similar incidents — 3 pts · Should · E13 · FR-INC-05
 > **Status 2026-10-04 — partly built:** the indexer writes event captions and incident-report sections to `knowledge` (dense bge-small + BM25, `vms_common.qdrant.knowledge`), search fuses them, and `GET /incidents/{id}/similar` returns up to 5 other reports (same event type boosted) shown on the report page. **Not done:** the assistant tool endpoints exposed per the frozen contract as a separate service API.
-- [ ] Indexer consumes `incidentready.v1`, indexes report sections into `knowledge`.
-- [ ] `GET /incidents/{id}/similar` returns ≤ 5 by hybrid similarity + same event type boost; shown in UI.
+- [x] Indexer consumes `incidentready.v1`, indexes report sections into `knowledge`.
+- [x] `GET /incidents/{id}/similar` returns ≤ 5 by hybrid similarity + same event type boost; shown in UI.
 - [ ] Assistant tool endpoints for events/incidents/timeline exposed per frozen contract.
 
 ### P6-J4 · Investigation timeline & cases — 8 pts · Should · E16 · FR-INV-01…03
+> **2026-10-08:** synchronized playback built (`features/playback/components/SyncedPlayer.jsx`, `lib/sync.js`): up to four cameras on one playhead, a camera with no recording at that moment says so and waits, the playhead holds while any camera with footage buffers, small drift is closed by running a picture 5-10 % slow or fast and a drift past 300 ms by a seek. On the timeline page a selected period (up to 30 min) plays all cameras together. Unit and component tests (mutation-checked). **Measured in Brave with three real MEVA cameras** (22 fragments each, no failed requests): steady state within about 25 ms of the playhead by the player's own fragment table, a transient of 110-170 ms at each 10 s segment boundary that the nudging closes within about 1.3 s; the largest value seen at start-up before nudging existed was 449 ms. **Not verified:** that the *pictures* line up in content (the clips carry no visible clock, and a parse of the playlist that does not use hls.js's corrected fragment times disagreed by up to 450 ms, which I attribute, unproven, to declared versus real segment durations). Still not built: *Search in range*.
 > **Status 2026-10-04 — partly built:** cases (`core.cases`, `core.case_items`, migration 0012; API; Cases pages; *Save to case* from search results, events, incident reports and timeline selections) and a per-camera timeline of events and incident reports with drag-to-select, zoom and save. **Not done:** synchronised playback of up to 4 cameras from one playhead, "Search in range", the 300 ms drift measurement. The demo has one real camera.
 - [ ] Multi-camera timeline (lanes, events, correlation links, incidents) for a selected range.
-- [ ] Synchronized playback of up to 4 cameras driven by one playhead (drift ≤ 300 ms).
+- [x] Synchronized playback of up to 4 cameras driven by one playhead (drift ≤ 300 ms).
 - [ ] Shift-drag range → "Search in range" / "Save to case"; cases CRUD with bookmarked items and notes.
 
 ### P6-J5 · Daily reports UI — 2 pts · Must · E15 · FR-RPT-02, FR-RPT-04
+> **2026-10-08:** the report page has *Download PDF* beside print-to-PDF.
 > **Status 2026-10-04 — built, driven in a real browser:** reports list with live status, *Generate report* dialog (date range, ≤ 7 days), report page with the narrative, tiles, hourly chart, breakdowns, response times and the incident list, print-to-PDF.
-- [ ] Reports list, "Generate report" dialog (date range), status while generating, preview + download PDF.
+- [x] Reports list, "Generate report" dialog (date range), status while generating, preview + download PDF.
 
 ---
 
@@ -824,10 +872,12 @@
 - [ ] Namespaces, PVCs, resource requests sized for a 16 GB laptop; `SERVICES.md` published.
 
 ### P7-D2 · GPU scheduling in Kubernetes — 5 pts · Must · E17
+> **Status 2026-10-07 — manifests written, never applied (no cluster, no GPU node here):** `deploy/k8s/overlays/gpu` (perception and an in-cluster Ollama with a PVC and a model-pull Job both ask for `nvidia.com/gpu: 1` and are placed by `vms.io/gpu-role` = `perception` / `genai` / `shared`; a `shared` single GPU needs the device plugin's time-slicing, which shares the card but not its VRAM) and `overlays/host-gpu` (the fallback: Ollama stays on a host machine and pods reach it as the Service `ollama` with an Endpoints, or `ExternalName`; perception is off there). `make k8s-check` renders all three overlays, passes `kubeconform -strict`, asserts what each is for, and was mutation-checked. Reasoning does not request a GPU: it calls Ollama (it would only with in-process `hf_local` adapters, which do not exist). Perception on a host cannot reach the cluster's Kafka (in-cluster advertised name), so that direction is **not built**. "Tested" fallback is therefore render-tested only.
 - [ ] NVIDIA device plugin; `vms.io/gpu-role` node labels; perception/reasoning request `nvidia.com/gpu`.
 - [ ] Documented, tested fallback: GPU services on host Compose exposed to the cluster via `ExternalName`/Endpoints.
 
 ### P7-D3 · Observability — 5 pts · Should · E17 · NFR-OBS-01, NFR-OBS-02
+> **Status 2026-10-08 — mostly built:** the missing series are in (`vms_kafka_consumer_lag`, `vms_kafka_dlq_total`, `vms_gpu_memory_bytes`, and `vms_http_request_seconds` for the api and retrieval, which had no request metrics at all); nine alert rules tested with `promtool test rules` and mutation-checked (`make obs-test`, CI job `obs-rules`); the dashboard has 22 panels (lag, dead letters, GPU memory, ingestion per camera, HTTP rate/errors/latency, firing alerts) with every query parsed; `deploy/k8s/obs/` (PodMonitors, generated PrometheusRule, dashboard ConfigMap, chart values rendered with the real chart). Lag was checked against the live Kafka. **Not done:** `vms_stream_reconnects_total`, separate Pipeline/GenAI/API dashboards (one overview exists), a real install on a cluster, GPU gauge seen live only as a one-off read (perception was not running).
 > **Status 2026-10-04 — partly built:** `vms_common.metrics.serve(port)` exposes the workers' metrics (ingestion 9101, perception 9102, indexer 9103, events 9104, correlation 9105, reasoning 9106; the api and retrieval serve `/metrics`); new series for search stages, assistant turns, reasoning stages/outcomes/queue depth, indexer lag and perception latency; `obs` Compose profile with Prometheus and Grafana and a provisioned 14-panel dashboard (`deploy/compose/obs/`). **Not done:** `vms_kafka_consumer_lag`, `vms_gpu_memory_bytes` (needs an exporter), alert rules, the kube-prometheus-stack values.
 - [ ] All metrics in design §15 exported; kube-prometheus-stack with ServiceMonitors (and Compose `obs` profile).
 - [ ] Grafana dashboards: Pipeline health (lag, fps, segments), GenAI (latency/tokens per provider, queue depth), API (RPS, p95, errors).
@@ -838,33 +888,40 @@
 - [ ] Measures NFR-PERF-01…05 p50/p95 from metrics + logs; results JSON + Markdown summary.
 
 ### P7-D5 · Resilience tests — 3 pts · Must · E17 · NFR-REL-01…04
+> **2026-10-08:** all 428 integration tests were run for the first time since they were written (api 319, correlation/events/indexer 84, migrations and lease 22, plus the Kafka consumer pair): two had never passed (the DLQ header lookup, P1-D2, and a claim-timing test that depended on how soon after import it ran) and are fixed. CI has a new `integration` job: its first run on GitHub passed 427 of 428 (the one failure was the GPU embedder test, now skipped without CUDA), the next two passed in full, and it now gates `ci-success`.
 > **Status 2026-10-04 — partly built, run on the stack:** `python -m vms_common.kafka.dlq_replay` (list, filter by topic, dry run, limit; unit-tested planning); `ml/evaluation/resilience/chaos.py` restarted the indexer, events and correlation five times in 7 minutes while footage flowed — 42 segments, 839/839 frame points and 1,403/1,403 track points in Qdrant, no sequence gap, no missing twin, no event in two groups (`ml/evaluation/results/p7-resilience.md`); `llm_down.py` shows every GenAI feature degrading with Ollama stopped — fast search unaffected, reason search falls back with a note, the assistant says the model is unavailable, the daily report uses its template, an analysis job fails with a reason, the gate holds candidates with back-off and drops none (`p7-degradation.md`). The harness also found a real bug: ingestion's ffmpeg segmenter had no input timeout, so a publisher that stopped sending without closing its connection left it blocked forever and recording stopped silently; fixed (socket timeout + no-progress watchdog, verified with a frozen publisher: reconnects in 13 s, recording resumes in 26 s). **Not done:** restarting the recorder and perception under load, pod-kill runs on Kubernetes.
+> **2026-10-08:** the degradation is now also pinned by unit tests (phase location falls back to the detector's timing, an unreadable view is left out, a report step with the model down fails with its reason; golden synthesis tests on five real evidence bundles). The chaos script restarts the three consumers only; ingestion, reasoning, retrieval and the api are not restarted by it, so the first item stays open.
 - [ ] Chaos script restarts each worker mid-stream; verifies zero missing segments/events and no duplicates.
-- [ ] DLQ replay tool; GPU/LLM-down scenario shows graceful degradation.
+- [x] DLQ replay tool; GPU/LLM-down scenario shows graceful degradation.
 
 ## Jatin — 23 pts
 
 ### P7-J1 · Kubernetes app layer — 5 pts · Must · E17 · NFR-POR-01
+> **Status 2026-10-07:** the base and `minikube` overlay (rendered, schema-checked, never applied) plus an HPA on the indexer (`base/apps/indexer-hpa.yaml`, 1–3 on CPU, needs metrics-server). **The daily-report CronJob is deliberately not built:** the reasoning worker already queues yesterday's report itself after `daily_report_hour` and skips a day already scheduled, so a CronJob would duplicate it. `make k8s-up` has never been run.
 - [ ] Kustomize base + `minikube` overlay: Deployments/Services for all app services and frontend, ConfigMaps (models/rules/correlation), Secret generator, probes.
 - [ ] ingress-nginx routes (`/`, `/api`), migrations `Job`, daily report `CronJob`, HPA on indexer.
 - [ ] `make k8s-up` brings the full app up on minikube.
 
 ### P7-J2 · Cloud Docker deployment — 5 pts · Must · E17
+> **Status 2026-10-07 — written and partly verified, not deployed:** `deploy/compose/docker-compose.prod.yml` (GHCR images, Caddy, no host ports but 80/443/8189-udp, `cloud` profile, required secrets), `Caddyfile`, `.env.prod.example`, `update.sh` (pull, migrate, topics, start, `--status`, `--rollback`) and the runbook in `deploy/compose/README.md`. The `cloud` profile now sends `phase_tg` / `phase_vr` to Gemini too (the VM has no Ollama). Verified: config render and required variables, the Caddyfile and nginx in a real browser (no CSP violations; WHEP and HLS redirects fixed after the test found the HLS 302 lost its prefix), `update.sh` against a stub `docker`, the migration command in the api image. **Not verified:** a real VM, certificates, the `media.` site, hls.js playback, WebRTC over NAT. **Perception does not run in the cloud** (GPU image); archive mode is described, not rehearsed.
 - [ ] `docker-compose.prod.yml` with Caddy (TLS), `cloud` LLM profile, CPU perception (≤ 2 cameras) or pre-indexed archive mode.
 - [ ] Deployed on a free/student-credit VM; runbook (provisioning, env, backups, update) in `deploy/compose/README.md`.
 
 ### P7-J3 · Continuous delivery — 3 pts · Must · E17
+> **Status 2026-10-07 — workflows written, never run on GitHub:** `.github/workflows/release.yml` (buildx + QEMU, GHCR, semver + sha tags, amd64+arm64 for the light services, amd64 only for retrieval/reasoning, perception not built; tag or manual dispatch) and `deploy.yml` (manual dispatch, SSH with host-key checking, environment `production`, inputs through the environment); both pass `actionlint`. The push-to-main trigger is left off until a manual run has gone green.
 - [ ] GitHub Actions builds multi-arch images on tags/main and pushes to GHCR with semver + sha tags.
 - [ ] Manual-dispatch deploy workflow to the VM over SSH.
 
 ### P7-J4 · Response-quality evaluation — 5 pts · Must · E18 · EV-03
+> **Status 2026-10-07 — harness built and run:** `ml/evaluation/response_quality` (72 questions, 21 incidents), results in `ml/evaluation/results/response-quality.md`, blind human sheet + rubric form in the run directories. Objective before/after on the assistant (router fixes + the camera list now including switched-off cameras): first lookup right 78 % → 100 %, camera used 28 % → 100 %, day used 0 % → 100 %, written tags matching no record 29 % → 18 %. The **3B judge (llama3.2:3b) is weak**: it names a problem for every answer, repeats its prompt's example in some, returns no per-citation judgements, and scored the two runs alike, so citation precision is checked by a model-free event-type/camera agreement check instead and the human sheet is what decides the judge's worth. **No person has filled the sheets yet.**
 - [ ] `ml/evaluation/response_quality`: judge prompts (faithfulness, relevance, citation precision) using a different model family; 20 % human-verification sheet.
-- [ ] Incident report rubric (1–5 × accuracy, completeness, causality, actionability) forms + aggregation; schema-valid rate.
+- [x] Incident report rubric (1–5 × accuracy, completeness, causality, actionability) forms + aggregation; schema-valid rate.
 - [ ] Runs on ≥ 60 assistant questions and all test-set incidents; results summary.
 
 ### P7-J5 · Usability kit & security hardening — 5 pts · Must · E18, E17 · EV-05, NFR-SEC-*
+> **Status 2026-10-07:** the usability kit is written (`ml/evaluation/usability`: SUS questionnaire, 4 task scripts, consent note, result templates, a tested scorer) — no sessions held. Security headers and a Content-Security-Policy now exist in `deploy/compose/Caddyfile` and were exercised in a real browser against the production build (no violations; see the compose README for what was substituted). Not done: presign-expiry check re-verified, and everything that needs the real domain.
 > **Status 2026-10-04 — hardening partly built:** rate limiting on login / search / assistant / analyses & reports (Redis, 429 + `Retry-After`, fails open), security headers in the api and in the frontend's nginx, the role × endpoint matrix extended to the endpoints added since (166 matrix tests), `gitleaks` was already in pre-commit. **Not done:** the usability kit (SUS questionnaire, task scripts, consent note, results template — for K & P), Caddy and a Content-Security-Policy (needs the deployment's real origins).
-- [ ] SUS questionnaire, 4 task scripts, consent note and results template for K & P.
+- [x] SUS questionnaire, 4 task scripts, consent note and results template for K & P.
 - [ ] Hardening: rate limiting on auth/search/assistant, CORS allow-list, security headers (Caddy), presign expiry check, role × endpoint matrix passing, gitleaks clean.
 
 ---

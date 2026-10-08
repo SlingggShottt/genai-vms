@@ -91,6 +91,9 @@ class Incident(Base):
     provenance: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
     raw_output: Mapped[str | None] = mapped_column(Text, nullable=True)  # kept when status=failed
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    pdf_uri: Mapped[str | None] = mapped_column(
+        Text, nullable=True
+    )  # s3://vms-reports/incidents/..
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -128,4 +131,5 @@ class DailyReport(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    pdf_uri: Mapped[str | None] = mapped_column(Text, nullable=True)  # s3://vms-reports/daily/..
     locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

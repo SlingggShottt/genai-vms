@@ -7,12 +7,15 @@ the model's planner. The router never answers anything; it only chooses what to 
 from __future__ import annotations
 
 import re
+from datetime import UTC, date, datetime
 from typing import Any
 
-from retrieval.domain.plan import categories_in, event_hints_in
+from retrieval.domain.plan import categories_in, event_hints_in, find_date
 
 _COUNT = re.compile(r"\bhow many\b|\bnumber of\b|\bcount\b|\bpeak\b|\bbusiest\b|\bcrowded\b")
-_DAILY = re.compile(r"\bdaily report\b|\breport for\b|\bsummary of (the |yesterday|today)")
+_DAILY = re.compile(
+    r"\bdaily (?:\w+ )?report\b|\breport for\b|\bsummary of (the |yesterday|today)"
+)  # "daily security report" too
 _INCIDENT = re.compile(r"\bincidents?\b|\bincident reports?\b")
 _EVENT = re.compile(
     r"\bevents?\b|\balerts?\b|\bwhat happened\b|\bhappen(ed)?\b|\bserious\b|\bsuspicious\b|"
@@ -28,7 +31,10 @@ _HOUR_WORDS = re.compile(r"\bbusiest\b|\bpeak\b|\bhour\b|\bwhen\b|\bwhat time\b"
 DEFAULT_WHEN = "last 24 hours"
 
 
-def _when(q: str) -> str:
+def _when(q: str, today: date) -> str:
+    named = find_date(q, today)
+    if named is not None:  # "on 4 October" -> the day, in a form every tool understands
+        return named.isoformat()
     for phrase in (
         "yesterday",
         "today",
@@ -54,17 +60,36 @@ def _camera(q: str, cameras: list[str]) -> str | None:
     return next((c for c in cameras if c.lower().replace("-", "") in low.replace("-", "")), None)
 
 
-def route(question: str, cameras: list[str]) -> tuple[str, dict[str, Any]] | None:
-    """(tool, arguments) for a question that clearly means one lookup, else None."""
+def _without_camera(q: str, camera: str | None) -> str:
+    """`q` with the camera's code (written with or without its hyphens) taken out."""
+    if not camera:
+        return q
+    parts = [re.escape(p) for p in re.split(r"[-_ ]", camera.lower()) if p]
+    return re.sub(r"[-_ ]?".join(parts), " ", q)
+
+
+def route(
+    question: str, cameras: list[str], today: date | None = None
+) -> tuple[str, dict[str, Any]] | None:
+    """(tool, arguments) for a question that clearly means one lookup, else None. `today` is the
+    site's date, needed to place a day written without a year."""
     q = question.lower()
-    when = _when(q)
+    today = today or datetime.now(UTC).date()
+    when = _when(q, today)
     camera = _camera(question, cameras)
+    # A camera called "bus-g340" is not a question about buses.
+    words = _without_camera(q, camera)
 
     if _DAILY.search(q):
-        day = "yesterday" if "yesterday" in q else "today"
-        return "get_daily_report", {"date": day}
-    if _COUNT.search(q):
-        cats = categories_in(q) or ["person"]
+        named = find_date(q, today)
+        return "get_daily_report", {
+            "date": named.isoformat() if named else "yesterday" if "yesterday" in q else "today"
+        }
+    # "how many" is a count of things seen, unless it is a count of events or incidents: those are
+    # in the list's own header, and the person counter would answer a different question.
+    counts_records = (_EVENT.search(q) or _INCIDENT.search(q)) and not categories_in(words)
+    if _COUNT.search(q) and not counts_records:
+        cats = categories_in(words) or ["person"]
         args: dict[str, Any] = {
             "category": cats[0],
             "when": when,
@@ -76,7 +101,10 @@ def route(question: str, cameras: list[str]) -> tuple[str, dict[str, Any]] | Non
     if _TIMELINE.search(q):
         return "get_timeline", {"when": when, **({"cameras": [camera]} if camera else {})}
     if _INCIDENT.search(q):
-        return "list_incidents", {"when": when, "limit": 5}
+        args = {"when": when, "limit": 5}
+        if camera:
+            args["camera"] = camera
+        return "list_incidents", args
     if _EVENT.search(q):
         args = {"when": when, "limit": 10}
         hints = event_hints_in(q)
@@ -85,7 +113,7 @@ def route(question: str, cameras: list[str]) -> tuple[str, dict[str, Any]] | Non
         if camera:
             args["camera"] = camera
         return "list_events", args
-    if _FIND.search(q) or categories_in(q):
+    if _FIND.search(q) or categories_in(words):
         return "search_footage", {
             "query": question.strip().rstrip("?"),
             "when": when if when != DEFAULT_WHEN else None,

@@ -1,0 +1,360 @@
+{
+ "incident_id": "01a10707-d711-7fd0-ad3d-d44ca745544e",
+ "group_id": "01a106eb-5387-75d6-824d-a0e3f8f772cb",
+ "event_type": "abandoned_object",
+ "severity": "high",
+ "evidence": {
+  "events": [
+   {
+    "id": "ev-evt-01",
+    "caption": "A bag or suitcase has been left on its own, with no person near it.",
+    "camera_id": "bus-g331",
+    "event_type": "abandoned_object"
+   }
+  ],
+  "phases": [
+   {
+    "phase": "baseline",
+    "views": [
+     {
+      "vqa": [
+       {
+        "a": "Suitcase",
+        "q": "What kind of item was left?",
+        "id": "ev-qa-01"
+       },
+       {
+        "a": "No",
+        "q": "Is the person who left the item still visible?",
+        "id": "ev-qa-02"
+       },
+       {
+        "a": "No",
+        "q": "Does the person walk away from the item?",
+        "id": "ev-qa-03"
+       },
+       {
+        "a": "Cannot tell",
+        "q": "Was the item put down on purpose, rather than dropped or set down for a moment?",
+        "id": "ev-qa-04"
+       }
+      ],
+      "frames": [
+       {
+        "id": "ev-fr-01",
+        "ts": "2026-10-04T12:28:55.965412Z",
+        "uri": "s3://vms-evidence/01a10707-d711-7fd0-ad3d-d44ca745544e/ev-fr-01.jpg"
+       },
+       {
+        "id": "ev-fr-02",
+        "ts": "2026-10-04T12:30:00.093010Z",
+        "uri": "s3://vms-evidence/01a10707-d711-7fd0-ad3d-d44ca745544e/ev-fr-02.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-01",
+       "text": "People are sitting and standing in a waiting area, some are using their phones, and a person is walking towards the door."
+      },
+      "camera_id": "bus-g331"
+     }
+    ]
+   },
+   {
+    "phase": "action",
+    "views": [
+     {
+      "vqa": [
+       {
+        "a": "Cannot tell",
+        "q": "What kind of item was left?",
+        "id": "ev-qa-05"
+       },
+       {
+        "a": "No",
+        "q": "Is the person who left the item still visible?",
+        "id": "ev-qa-06"
+       },
+       {
+        "a": "No",
+        "q": "Does the person walk away from the item?",
+        "id": "ev-qa-07"
+       },
+       {
+        "a": "Cannot tell",
+        "q": "Was the item put down on purpose, rather than dropped or set down for a moment?",
+        "id": "ev-qa-08"
+       }
+      ],
+      "frames": [
+       {
+        "id": "ev-fr-03",
+        "ts": "2026-10-04T12:30:00.626343Z",
+        "uri": "s3://vms-evidence/01a10707-d711-7fd0-ad3d-d44ca745544e/ev-fr-03.jpg"
+       },
+       {
+        "id": "ev-fr-04",
+        "ts": "2026-10-04T12:30:25.213701Z",
+        "uri": "s3://vms-evidence/01a10707-d711-7fd0-ad3d-d44ca745544e/ev-fr-04.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-02",
+       "text": "People are gathered in a waiting area, some sitting on benches and others standing. A person in a blue jacket is walking towards a bench."
+      },
+      "camera_id": "bus-g331"
+     }
+    ]
+   },
+   {
+    "phase": "aftermath",
+    "views": [
+     {
+      "vqa": [
+       {
+        "a": "Suitcase",
+        "q": "What kind of item was left?",
+        "id": "ev-qa-09"
+       },
+       {
+        "a": "No",
+        "q": "Is the person who left the item still visible?",
+        "id": "ev-qa-10"
+       },
+       {
+        "a": "No",
+        "q": "Does the person walk away from the item?",
+        "id": "ev-qa-11"
+       },
+       {
+        "a": "Cannot tell",
+        "q": "Was the item put down on purpose, rather than dropped or set down for a moment?",
+        "id": "ev-qa-12"
+       }
+      ],
+      "frames": [
+       {
+        "id": "ev-fr-05",
+        "ts": "2026-10-04T12:30:25.747034Z",
+        "uri": "s3://vms-evidence/01a10707-d711-7fd0-ad3d-d44ca745544e/ev-fr-05.jpg"
+       },
+       {
+        "id": "ev-fr-06",
+        "ts": "2026-10-04T12:30:38.717670Z",
+        "uri": "s3://vms-evidence/01a10707-d711-7fd0-ad3d-d44ca745544e/ev-fr-06.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-03",
+       "text": "People are sitting and standing in a waiting area, some are holding items, and one person is sitting on a bench with a backpack beside them."
+      },
+      "camera_id": "bus-g331"
+     }
+    ]
+   }
+  ],
+  "window": {
+   "end": "2026-10-04T12:30:39.147034Z",
+   "start": "2026-10-04T12:28:55.794976Z"
+  },
+  "cameras": [
+   "bus-g331"
+  ],
+  "group_id": "01a106eb-5387-75d6-824d-a0e3f8f772cb",
+  "severity": "high",
+  "event_type": "abandoned_object",
+  "provenance": {
+   "tg": "zero-shot:ollama/qwen2.5vl:3b",
+   "phavr": "zero-shot:local",
+   "profile": "local",
+   "fallback_used": false
+  },
+  "phase_timeline": [
+   {
+    "end": "2026-10-04T12:30:00.152524Z",
+    "phase": "baseline",
+    "start": "2026-10-04T12:28:55.794976Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   },
+   {
+    "end": "2026-10-04T12:30:25.702651Z",
+    "phase": "action",
+    "start": "2026-10-04T12:30:00.152524Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   },
+   {
+    "end": "2026-10-04T12:30:39.147034Z",
+    "phase": "aftermath",
+    "start": "2026-10-04T12:30:25.702651Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   }
+  ],
+  "primary_camera": "bus-g331",
+  "schema_version": "evidence.v1"
+ },
+ "report": {
+  "title": "Abandoned Suitcase in Bus Waiting Area",
+  "window": {
+   "end": "2026-10-04T12:30:39.147034Z",
+   "start": "2026-10-04T12:28:55.794976Z"
+  },
+  "cameras": [
+   "bus-g331"
+  ],
+  "summary": "A suitcase was left in a bus waiting area, causing confusion and potential safety issues. The operator should ensure the area is monitored and check for any suspicious behavior.",
+  "group_id": "01a106eb-5387-75d6-824d-a0e3f8f772cb",
+  "severity": "high",
+  "confidence": 0.9,
+  "event_type": "abandoned_object",
+  "provenance": {
+   "profile": "local",
+   "model_calls": 6,
+   "dropped_claims": 4,
+   "prompt_versions": [
+    "1.0",
+    "1.0"
+   ],
+   "synthesis_model": "ollama/qwen2.5:3b"
+  },
+  "incident_id": "01a10707-d711-7fd0-ad3d-d44ca745544e",
+  "limitations": [
+   "The exact cause of the person leaving the suitcase is unknown.",
+   "The person who left the suitcase was not visible in the footage.",
+   "4 statement(s) were left out because they cited no evidence."
+  ],
+  "causal_chain": [
+   {
+    "step": 1,
+    "evidence": [
+     "ev-cap-02",
+     "ev-qa-05",
+     "ev-qa-06",
+     "ev-qa-07",
+     "ev-qa-08",
+     "ev-fr-03",
+     "ev-fr-04"
+    ],
+    "description": "People gathered in the waiting area, some sitting and others standing."
+   },
+   {
+    "step": 2,
+    "evidence": [
+     "ev-cap-02",
+     "ev-qa-05",
+     "ev-qa-06",
+     "ev-qa-07",
+     "ev-qa-08",
+     "ev-fr-03",
+     "ev-fr-04"
+    ],
+    "description": "A person in a blue jacket walked towards a bench, possibly leaving the suitcase."
+   },
+   {
+    "step": 3,
+    "evidence": [
+     "ev-cap-03",
+     "ev-qa-09",
+     "ev-qa-10",
+     "ev-qa-11",
+     "ev-qa-12",
+     "ev-fr-05",
+     "ev-fr-06"
+    ],
+    "description": "The suitcase was found with the person who left it, indicating it was not dropped or set down for a moment."
+   }
+  ],
+  "evidence_index": [
+   "ev-cap-01",
+   "ev-cap-02",
+   "ev-cap-03",
+   "ev-fr-01",
+   "ev-fr-02",
+   "ev-fr-03",
+   "ev-fr-04",
+   "ev-fr-05",
+   "ev-fr-06",
+   "ev-qa-01",
+   "ev-qa-02",
+   "ev-qa-03",
+   "ev-qa-04",
+   "ev-qa-05",
+   "ev-qa-06",
+   "ev-qa-07",
+   "ev-qa-08",
+   "ev-qa-09",
+   "ev-qa-10",
+   "ev-qa-11",
+   "ev-qa-12"
+  ],
+  "phase_analysis": [
+   {
+    "phase": "baseline",
+    "summary": "A person is walking towards the door in a waiting area where people are sitting and standing, some are using their phones, and a person is walking towards the door.",
+    "evidence": [
+     "ev-cap-01",
+     "ev-qa-01",
+     "ev-qa-02",
+     "ev-qa-03",
+     "ev-qa-04",
+     "ev-fr-01",
+     "ev-fr-02"
+    ]
+   },
+   {
+    "phase": "aftermath",
+    "summary": "People are sitting and standing in the waiting area, some are holding items, and one person is sitting on a bench with a backpack beside them.",
+    "evidence": [
+     "ev-cap-03",
+     "ev-qa-09",
+     "ev-qa-10",
+     "ev-qa-11",
+     "ev-qa-12",
+     "ev-fr-05",
+     "ev-fr-06"
+    ]
+   }
+  ],
+  "schema_version": "incident.v1",
+  "recommended_actions": [
+   {
+    "action": "Increase surveillance in the waiting area and ensure security personnel are present to monitor the situation.",
+    "priority": "high",
+    "owner_role": "operator"
+   }
+  ],
+  "scene_understanding": {
+   "actors": [],
+   "location": "bus-g331 waiting area",
+   "conditions": "not stated"
+  },
+  "contributing_factors": {
+   "primary": [
+    {
+     "text": "The person who left the suitcase was not visible, possibly due to the person walking away from the area.",
+     "evidence": [
+      "ev-qa-05",
+      "ev-qa-06",
+      "ev-qa-07",
+      "ev-qa-08",
+      "ev-fr-03",
+      "ev-fr-04"
+     ]
+    }
+   ],
+   "environmental": [
+    {
+     "text": "The waiting area was crowded with people, creating a chaotic environment.",
+     "evidence": [
+      "ev-cap-02",
+      "ev-qa-05",
+      "ev-qa-06",
+      "ev-qa-07",
+      "ev-qa-08",
+      "ev-fr-03",
+      "ev-fr-04"
+     ]
+    }
+   ],
+   "security_gaps": []
+  }
+ }
+}

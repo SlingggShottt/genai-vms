@@ -1,0 +1,146 @@
+# promtool test rules deploy/compose/obs/alerts_test.yml
+rule_files:
+  - alerts.yml
+evaluation_interval: 1m
+
+tests:
+  - name: a service is down only when both its targets are
+    interval: 1m
+    input_series:
+      - { series: 'up{job="containers",service="api"}', values: "0x10" }
+      - { series: 'up{job="host",service="api"}', values: "1x10" }
+      - { series: 'up{job="containers",service="events"}', values: "0x10" }
+      - { series: 'up{job="host",service="events"}', values: "0x10" }
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ServiceDown
+        exp_alerts:
+          - exp_labels: { service: events, severity: critical }
+            exp_annotations: { summary: "events is not answering its metrics endpoint" }
+
+  - name: no new segments for a quarter of an hour
+    interval: 1m
+    input_series:
+      - { series: 'vms_ingest_segments_total{camera="cam01"}', values: "0+6x10 60x20" }
+      - { series: 'vms_ingest_segments_total{camera="cam02"}', values: "0+6x30" }
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: NoSegmentsIngested
+        exp_alerts: []
+      - eval_time: 28m
+        alertname: NoSegmentsIngested
+        exp_alerts:
+          - exp_labels: { camera: cam01, severity: warning }
+            exp_annotations:
+              summary: "No new segments from cam01 for 15 minutes"
+              description: "Check the camera stream and the ingestion service."
+
+  - name: consumer lag must persist before it alerts
+    interval: 1m
+    input_series:
+      - { series: 'vms_kafka_consumer_lag{group="g1",topic="vms.twin.v1",instance="a"}', values: "100x4 150x30" }
+      - { series: 'vms_kafka_consumer_lag{group="g1",topic="vms.twin.v1",instance="b"}', values: "0x4 120x30" }
+      - { series: 'vms_kafka_consumer_lag{group="g2",topic="vms.events.v1"}', values: "5x34" }
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: ConsumerLagHigh
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: ConsumerLagHigh
+        exp_alerts:
+          - exp_labels: { group: g1, topic: vms.twin.v1, severity: warning }  # two replicas added up: 270
+            exp_annotations: { summary: "g1 is 270 messages behind on vms.twin.v1" }
+
+  - name: a slow indexer
+    interval: 1m
+    input_series:
+      # every segment takes 40 s to become searchable (all in the le=60 bucket and above)
+      - { series: 'vms_indexer_lag_seconds_bucket{le="10"}', values: "0x40" }
+      - { series: 'vms_indexer_lag_seconds_bucket{le="30"}', values: "0x40" }
+      - { series: 'vms_indexer_lag_seconds_bucket{le="60"}', values: "0+10x40" }
+      - { series: 'vms_indexer_lag_seconds_bucket{le="+Inf"}', values: "0+10x40" }
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: IndexerSlow
+        exp_alerts: []
+      - eval_time: 25m
+        alertname: IndexerSlow
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations: { summary: "Footage takes 58.5s (p95) to become searchable; the target is 30 s" }
+
+  - name: a dead letter alerts at once and stops after the window
+    interval: 1m
+    input_series:
+      - { series: 'vms_kafka_dlq_total{group="g1",topic="vms.twin.v1"}', values: "0x5 1x40" }
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: MessagesDeadLettered
+        exp_alerts:
+          - exp_labels: { group: g1, topic: vms.twin.v1, severity: warning }
+            exp_annotations:
+              summary: "g1 gave up on 1 message(s) from vms.twin.v1"
+              description: "List them with `python -m vms_common.kafka.dlq_replay --list`, fix the cause, replay."
+      - eval_time: 40m
+        alertname: MessagesDeadLettered
+        exp_alerts: []
+
+  - name: model calls failing
+    interval: 1m
+    input_series:
+      - { series: 'vms_llm_request_seconds_count{provider="gemini",status="ok",task="rerank"}', values: "0+4x30" }
+      - { series: 'vms_llm_request_seconds_count{provider="gemini",status="timeout",task="rerank"}', values: "0+1x30" }
+      - { series: 'vms_llm_request_seconds_count{provider="gemini",status="unavailable",task="rerank"}', values: "0+1x30" }
+      - { series: 'vms_llm_request_seconds_count{provider="ollama",status="ok",task="assistant"}', values: "0+5x30" }
+      - { series: 'vms_llm_request_seconds_count{provider="ollama",status="unavailable",task="assistant"}', values: "0+0x30" }
+    alert_rule_test:
+      - eval_time: 25m
+        alertname: ModelCallsFailing
+        exp_alerts:
+          - exp_labels: { provider: gemini, severity: warning }
+            exp_annotations: { summary: "33.33% of gemini model calls are failing" }
+
+  - name: a reasoning backlog that does not clear
+    interval: 1m
+    input_series:
+      - { series: "vms_reasoning_queue_depth_jobs", values: "3x20 12x30" }
+    alert_rule_test:
+      - eval_time: 18m
+        alertname: ReasoningQueueBacklog
+        exp_alerts: []
+      - eval_time: 45m
+        alertname: ReasoningQueueBacklog
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations: { summary: "12 reasoning jobs are waiting" }
+
+  - name: a nearly full GPU
+    interval: 1m
+    input_series:
+      - { series: 'vms_gpu_memory_bytes{node="local",gpu="0",kind="used"}', values: "3000000000x5 4100000000x30" }
+      - { series: 'vms_gpu_memory_bytes{node="local",gpu="0",kind="total"}', values: "4294967296x35" }
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: GpuMemoryNearlyFull
+        exp_alerts: []
+      - eval_time: 25m
+        alertname: GpuMemoryNearlyFull
+        exp_alerts:
+          - exp_labels: { node: local, gpu: "0", severity: warning }
+            exp_annotations:
+              summary: "GPU 0 on local is 95.46% full"
+              description: "Two models are probably resident at once; check the GPU lease."
+
+  - name: server errors need both a share and some traffic
+    interval: 1m
+    input_series:
+      - { series: 'vms_http_request_seconds_count{service="api",status="2xx"}', values: "0+90x30" }
+      - { series: 'vms_http_request_seconds_count{service="api",status="5xx"}', values: "0+10x30" }
+      - { series: 'vms_http_request_seconds_count{service="retrieval",status="5xx"}', values: "0+1x30" }
+      - { series: 'vms_http_request_seconds_count{service="retrieval",status="2xx"}', values: "0+0x30" }
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: ApiServerErrors
+        exp_alerts:
+          - exp_labels: { service: api, severity: warning }
+            exp_annotations: { summary: "api: 10% of requests end in a 5xx" }

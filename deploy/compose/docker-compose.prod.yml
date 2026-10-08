@@ -1,0 +1,146 @@
+# GenAI-VMS on one cloud VM (P7-J2) - an overlay on docker-compose.yml:
+#
+#   docker compose --env-file .env.prod -f deploy/compose/docker-compose.yml \
+#                  -f deploy/compose/docker-compose.prod.yml up -d
+#
+# `deploy/compose/update.sh <tag>` runs exactly that (plus pull, migrations and topics); the
+# runbook is in README.md. What this file changes:
+#
+#   - images come from GHCR (release.yml builds them), not from a local build;
+#   - nothing but Caddy (80/443) and MediaMTX's WebRTC media port (8189/udp) is published: the
+#     databases, Kafka, MinIO's console, kafka-ui and the api have no host ports;
+#   - Caddy terminates TLS and serves the app, /api, /webrtc and /hls on one origin, and MinIO on
+#     media.<domain> (presigned URLs point there);
+#   - the language models are the `cloud` profile (Gemini / Groq): the VM has no GPU and no Ollama;
+#   - secrets that the dev file defaults are required here, so a missing one stops `up`.
+#
+# Profiles: COMPOSE_PROFILES=infra,core,genai,edge in .env.prod. `perception` is not in the list:
+# it needs a GPU image (see README.md, "What does not run in the cloud").
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+services:
+  caddy:
+    image: caddy:2.8
+    profiles: [edge]
+    container_name: vms-caddy
+    networks: [vms-net]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env.prod}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL in .env.prod}
+      # Content-Security-Policy-Report-Only for a first look at what a policy would block.
+      CSP_HEADER_NAME: ${CSP_HEADER_NAME:-Content-Security-Policy}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # the certificates: losing it re-issues them (rate limits apply)
+      - caddy_config:/config
+    depends_on: [api, frontend, mediamtx, minio]
+    logging: *logging
+
+  # --- the stack's own images -----------------------------------------------------------------
+  api:
+    image: ${VMS_IMAGE_REPO:?set VMS_IMAGE_REPO in .env.prod}/genai-vms-api:${VMS_TAG:?set VMS_TAG (update.sh does)}
+    build: !reset null
+    ports: !reset []
+    environment:
+      VMS_STORAGE_PUBLIC_ENDPOINT_URL: https://media.${DOMAIN}
+      VMS_ADMIN_PASSWORD: ${VMS_ADMIN_PASSWORD:?set VMS_ADMIN_PASSWORD in .env.prod}
+    logging: *logging
+
+  frontend:
+    image: ${VMS_IMAGE_REPO:?set VMS_IMAGE_REPO in .env.prod}/genai-vms-frontend:${VMS_TAG:?set VMS_TAG (update.sh does)}
+    build: !reset null
+    ports: !reset []
+    logging: *logging
+
+  ingestion:
+    image: ${VMS_IMAGE_REPO:?set VMS_IMAGE_REPO in .env.prod}/genai-vms-ingestion:${VMS_TAG:?set VMS_TAG (update.sh does)}
+    build: !reset null
+    logging: *logging
+
+  indexer:
+    image: ${VMS_IMAGE_REPO:?set VMS_IMAGE_REPO in .env.prod}/genai-vms-indexer:${VMS_TAG:?set VMS_TAG (update.sh does)}
+    build: !reset null
+    logging: *logging
+
+  correlation:
+    image: ${VMS_IMAGE_REPO:?set VMS_IMAGE_REPO in .env.prod}/genai-vms-correlation:${VMS_TAG:?set VMS_TAG (update.sh does)}
+    build: !reset null
+    logging: *logging
+
+  events:
+    image: ${VMS_IMAGE_REPO:?set VMS_IMAGE_REPO in .env.prod}/genai-vms-events:${VMS_TAG:?set VMS_TAG (update.sh does)}
+    build: !reset null
+    environment:
+      VMS_LLM_PROFILE: ${VMS_LLM_PROFILE:-cloud}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?the cloud profile needs GEMINI_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY:?the cloud profile needs GROQ_API_KEY}
+    logging: *logging
+
+  retrieval:
+    image: ${VMS_IMAGE_REPO:?set VMS_IMAGE_REPO in .env.prod}/genai-vms-retrieval:${VMS_TAG:?set VMS_TAG (update.sh does)}
+    build: !reset null
+    environment:
+      VMS_LLM_PROFILE: ${VMS_LLM_PROFILE:-cloud}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?the cloud profile needs GEMINI_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY:?the cloud profile needs GROQ_API_KEY}
+    logging: *logging
+
+  reasoning:
+    image: ${VMS_IMAGE_REPO:?set VMS_IMAGE_REPO in .env.prod}/genai-vms-reasoning:${VMS_TAG:?set VMS_TAG (update.sh does)}
+    build: !reset null
+    environment:
+      VMS_LLM_PROFILE: ${VMS_LLM_PROFILE:-cloud}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?the cloud profile needs GEMINI_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY:?the cloud profile needs GROQ_API_KEY}
+    logging: *logging
+
+  # --- infrastructure: no host ports ------------------------------------------------------------
+  kafka:
+    ports: !reset []
+    logging: *logging
+
+  kafka-ui:
+    profiles: !override [debug] # not started in production; `--profile debug` to look inside
+    ports: !reset []
+
+  postgres:
+    ports: !reset []
+    logging: *logging
+
+  qdrant:
+    ports: !reset []
+    logging: *logging
+
+  redis:
+    ports: !reset []
+    logging: *logging
+
+  minio:
+    ports: !reset [] # Caddy reaches it as minio:9000 on media.<domain>
+    logging: *logging
+
+  mediamtx:
+    # Only the WebRTC media (ICE over UDP) is published. Signalling (WHEP) and HLS go through
+    # Caddy on /webrtc and /hls. RTSP is not published: cameras reach the VM over a VPN or not at
+    # all (README.md, "What does not run in the cloud").
+    ports: !override
+      - "8189:8189/udp"
+    environment:
+      # The address browsers are told to send media to. Without it MediaMTX offers only its
+      # container address and no browser can connect.
+      MTX_WEBRTCADDITIONALHOSTS: ${PUBLIC_IP:?set PUBLIC_IP in .env.prod (the VM's public address)}
+      MTX_WEBRTCALLOWORIGINS: https://${DOMAIN}
+      MTX_HLSALLOWORIGINS: https://${DOMAIN}
+    logging: *logging
+
+volumes:
+  caddy_data:
+  caddy_config:

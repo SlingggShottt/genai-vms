@@ -10,6 +10,11 @@
 #
 # Environment:
 #   REPLAY_SECONDS   how long the simulator plays (default 620: the clips are 10 min)
+#   MANIFEST         simulator manifest to replay (default: the MEVA bus-station one)
+#   CAMERA_PREFIX    cameras in config/cameras.yaml + the API to enable for the run and disable after
+#                    (default bus-); the retrieval benchmark uses MANIFEST=ml/datasets/raw/meva/
+#                    camera_sim.meva-ex.yaml CAMERA_PREFIX=meva-ex RUN_GATE=0 (ml/evaluation/retrieval)
+#   RUN_GATE         0 = record and index only: no events service, so no candidates, events or alerts
 #   GATE_TIMEOUT     give up waiting for the gate after this many seconds (default 3600)
 #   VMS_RETRIEVAL_ARCHIVE_SINCE   floor for search once the stack restarts (default: today 00:00 UTC)
 #
@@ -37,7 +42,9 @@ DRY_RUN="${DRY_RUN:-0}"
 WITH_CAM01="${WITH_CAM01:-0}"
 REPLAY_SECONDS="${REPLAY_SECONDS:-620}"
 GATE_TIMEOUT="${GATE_TIMEOUT:-3600}"
-MEVA_MANIFEST="ml/datasets/raw/meva/camera_sim.meva.yaml"
+MEVA_MANIFEST="${MANIFEST:-ml/datasets/raw/meva/camera_sim.meva.yaml}"
+CAMERA_PREFIX="${CAMERA_PREFIX:-bus-}"
+RUN_GATE="${RUN_GATE:-1}"
 SIM_MANIFEST="config/camera_sim.yaml"
 SIM_BACKUP="$RUN/camera_sim.yaml.before-refresh"
 COMPOSE_CMD="docker compose --env-file .env -f deploy/compose/docker-compose.yml"
@@ -82,20 +89,20 @@ ensure_ollama() { # it exited once under memory pressure; the gate would publish
   echo "  Ollama did not come back" >&2
 }
 
-set_cameras() { # true|false -> bus-* cameras in config/cameras.yaml and in the API
-  "$PY" - "$1" <<'EOF'
+set_cameras() { # true|false -> the $CAMERA_PREFIX* cameras in config/cameras.yaml and in the API
+  "$PY" - "$1" "$CAMERA_PREFIX" <<'EOF'
 import re, sys
 import httpx
 from dotenv import dotenv_values
 
-value = sys.argv[1]
+value, prefix = sys.argv[1], sys.argv[2]
 path = "config/cameras.yaml"
 out, current = [], None
 for line in open(path).read().splitlines():
     m = re.match(r"\s*-\s*id:\s*(\S+)", line)
     if m:
         current = m.group(1)
-    if current and current.startswith("bus-") and re.match(r"\s*enabled:", line):
+    if current and current.startswith(prefix) and re.match(r"\s*enabled:", line):
         line = re.sub(r"enabled:.*", f"enabled: {value}", line)
     out.append(line)
 open(path, "w").write("\n".join(out) + "\n")
@@ -106,7 +113,7 @@ r = c.post("/auth/login", json={"email": env["VMS_ADMIN_EMAIL"], "password": env
 r.raise_for_status()
 c.headers["Authorization"] = "Bearer " + r.json()["access_token"]
 for cam in c.get("/cameras", params={"limit": 100}).json()["items"]:
-    if cam["code"].startswith("bus-"):
+    if cam["code"].startswith(prefix):
         c.patch(f"/cameras/{cam['id']}", json={"enabled": value == "true"}).raise_for_status()
         print(f"  {cam['code']}: enabled={value}")
 EOF
@@ -138,11 +145,11 @@ if [ "$DRY_RUN" = 1 ]; then
   say "Dry run: nothing changed. The real run would do:"
   cat <<EOF
   1. stop retrieval and reasoning; unload the language models
-  2. enable the bus-* cameras (cameras.yaml + API); use $MEVA_MANIFEST as $SIM_MANIFEST$( [ "$WITH_CAM01" = 1 ] && echo ' plus cam01')
+  2. enable the ${CAMERA_PREFIX}* cameras (cameras.yaml + API); use $MEVA_MANIFEST as $SIM_MANIFEST$( [ "$WITH_CAM01" = 1 ] && echo ' plus cam01')
   3. start perception, wait 70 s for ingestion to see the cameras, start vms-camera-sim, play ${REPLAY_SECONDS} s
   4. stop the simulator; wait for the perception and indexer consumer lag to reach 0 (now: perception=$(lag perception), indexer=$(lag indexer)); stop perception
-  5. start vms-events (rules file: config/\${EVENTS_RULES_FILE:-rules.yaml}); wait until every candidate of the run is decided (timeout ${GATE_TIMEOUT} s)
-  6. stop vms-events; restore $SIM_MANIFEST; disable the bus-* cameras; run deploy/demo/start.sh
+  5. $( [ "$RUN_GATE" = 1 ] && echo "start vms-events (rules file: config/\${EVENTS_RULES_FILE:-rules.yaml}); wait until every candidate of the run is decided (timeout ${GATE_TIMEOUT} s)" || echo "no gate (RUN_GATE=0)")
+  6. stop vms-events; restore $SIM_MANIFEST; disable the ${CAMERA_PREFIX}* cameras; run deploy/demo/start.sh
 EOF
   exit 0
 fi
@@ -184,7 +191,8 @@ grep -q "Setting newly assigned partitions" "$RUN/logs/perception.log" || die "p
 echo "  perception is consuming; waiting 70 s so ingestion picks up the cameras"
 sleep 70
 dksh "docker start vms-camera-sim >/dev/null" || dksh "COMPOSE_PROFILES=infra,tools $COMPOSE_CMD up -d --no-deps camera-sim"
-echo "  simulator started; playing for ${REPLAY_SECONDS} s"
+date -u +%Y-%m-%dT%H:%M:%SZ >"$RUN/last_replay_start"
+echo "  simulator started ($(cat "$RUN/last_replay_start")); playing for ${REPLAY_SECONDS} s"
 for s in $(seq 60 60 "$REPLAY_SECONDS"); do sleep 60; echo "  ${s}s: perception lag $(lag perception)"; done
 sleep $((REPLAY_SECONDS % 60))
 
@@ -202,26 +210,37 @@ stop_group perception
 sleep 5
 echo "  perception stopped"
 
-say "5/6 The gate (the whole GPU is free now)"
-dksh "COMPOSE_PROFILES=infra,core $COMPOSE_CMD up -d --no-deps events" 2>&1 | tail -2
-ensure_ollama
-quiet=0
-started=$SECONDS
-while [ $((SECONDS - started)) -lt "$GATE_TIMEOUT" ]; do
-  total="$(sql "select count(*) from events.candidates where created_at >= '$T0'")"
-  left="$(sql "select count(*) from events.candidates c where c.created_at >= '$T0' and not exists (select 1 from events.events e where e.id = c.id)")"
-  echo "  $((total - left))/$total candidates decided"
-  if [ "$total" -gt 0 ] && [ "$left" -eq 0 ]; then quiet=$((quiet + 1)); else quiet=0; fi
-  [ "$quiet" -ge 3 ] && break
+if [ "$RUN_GATE" = 1 ]; then
+  say "5/6 The gate (the whole GPU is free now)"
+  dksh "COMPOSE_PROFILES=infra,core $COMPOSE_CMD up -d --no-deps events" 2>&1 | tail -2
   ensure_ollama
-  sleep 20
-done
-[ "$quiet" -ge 3 ] || echo "  WARNING: stopped waiting after ${GATE_TIMEOUT} s with candidates still undecided"
+  quiet=0
+  started=$SECONDS
+  while [ $((SECONDS - started)) -lt "$GATE_TIMEOUT" ]; do
+    total="$(sql "select count(*) from events.candidates where created_at >= '$T0'")"
+    left="$(sql "select count(*) from events.candidates c where c.created_at >= '$T0' and not exists (select 1 from events.events e where e.id = c.id)")"
+    echo "  $((total - left))/$total candidates decided (events consumer lag $(lag events))"
+    # Done when nothing is waiting. With no candidates at all (a short or empty replay) the rules
+    # service must have caught up too, and had a few minutes to start: a group with no committed
+    # offset yet reports lag 0, which would otherwise end the wait before it has read anything.
+    if [ "$left" -eq 0 ] && { [ "$total" -gt 0 ] || { [ "$(lag events)" -eq 0 ] && [ $((SECONDS - started)) -ge 240 ]; }; }; then
+      quiet=$((quiet + 1))
+    else
+      quiet=0
+    fi
+    [ "$quiet" -ge 3 ] && break
+    ensure_ollama
+    sleep 20
+  done
+  [ "$quiet" -ge 3 ] || echo "  WARNING: stopped waiting after ${GATE_TIMEOUT} s with candidates still undecided"
 
-say "Result"
-sql "select c.camera_id, c.rule_id, count(*) as candidates, count(*) filter (where e.status = 'verified') as verified, count(*) filter (where e.status = 'rejected') as rejected, count(*) filter (where e.status = 'skipped') as skipped from events.candidates c left join events.events e on e.id = c.id where c.created_at >= '$T0' group by 1, 2 order by 1, 2" | column -s'|' -t || true
-echo "  alerts raised: $(sql "select count(*) from core.alerts where created_at >= '$T0'")"
-echo "  loitering alerts are usually noise in the waiting room; resolve them in the UI (Alerts) if they crowd the tray"
+  say "Result"
+  sql "select c.camera_id, c.rule_id, count(*) as candidates, count(*) filter (where e.status = 'verified') as verified, count(*) filter (where e.status = 'rejected') as rejected, count(*) filter (where e.status = 'skipped') as skipped from events.candidates c left join events.events e on e.id = c.id where c.created_at >= '$T0' group by 1, 2 order by 1, 2" | column -s'|' -t || true
+  echo "  alerts raised: $(sql "select count(*) from core.alerts where created_at >= '$T0'")"
+  echo "  loitering alerts are usually noise in the waiting room; resolve them in the UI (Alerts) if they crowd the tray"
+else
+  say "5/6 No gate (RUN_GATE=0): the footage is recorded and indexed, no events or alerts"
+fi
 
 say "6/6 Back to the demo stack"
 unload_models

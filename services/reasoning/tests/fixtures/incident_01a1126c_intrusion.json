@@ -1,0 +1,485 @@
+{
+ "incident_id": "01a1126c-53da-7bdf-aa93-f1bfa4e83873",
+ "group_id": "01a1120d-f695-74b1-a5a5-bc5dbc00d77e",
+ "event_type": "intrusion",
+ "severity": "high",
+ "evidence": {
+  "events": [
+   {
+    "id": "ev-evt-01",
+    "caption": "A person is standing near a car in a parking lot.",
+    "camera_id": "bus-g340",
+    "event_type": "intrusion"
+   }
+  ],
+  "phases": [
+   {
+    "phase": "baseline",
+    "views": [
+     {
+      "vqa": [
+       {
+        "a": "No",
+        "q": "Is anyone crossing a barrier such as a fence, gate or door?",
+        "id": "ev-qa-01"
+       },
+       {
+        "a": "Yes",
+        "q": "Is a person inside the restricted area?",
+        "id": "ev-qa-02"
+       },
+       {
+        "a": "Cannot tell",
+        "q": "Is the person carrying anything?",
+        "id": "ev-qa-03"
+       },
+       {
+        "a": "No",
+        "q": "Is any staff member or guard visible?",
+        "id": "ev-qa-04"
+       }
+      ],
+      "frames": [
+       {
+        "id": "ev-fr-01",
+        "ts": "2026-10-06T16:28:55.902948Z",
+        "uri": "s3://vms-evidence/01a1126c-53da-7bdf-aa93-f1bfa4e83873/ev-fr-01.jpg"
+       },
+       {
+        "id": "ev-fr-02",
+        "ts": "2026-10-06T16:29:03.769083Z",
+        "uri": "s3://vms-evidence/01a1126c-53da-7bdf-aa93-f1bfa4e83873/ev-fr-02.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-01",
+       "text": "A white SUV is parked in a parking lot, and a person is seen getting out of the vehicle. Another red SUV is also visible in the foreground."
+      },
+      "camera_id": "bus-g340"
+     }
+    ]
+   },
+   {
+    "phase": "precursor",
+    "views": [
+     {
+      "vqa": [
+       {
+        "a": "No",
+        "q": "Is anyone crossing a barrier such as a fence, gate or door?",
+        "id": "ev-qa-05"
+       },
+       {
+        "a": "No",
+        "q": "Is a person inside the restricted area?",
+        "id": "ev-qa-06"
+       },
+       {
+        "a": "No",
+        "q": "Is the person carrying anything?",
+        "id": "ev-qa-07"
+       },
+       {
+        "a": "No",
+        "q": "Is any staff member or guard visible?",
+        "id": "ev-qa-08"
+       }
+      ],
+      "frames": [
+       {
+        "id": "ev-fr-03",
+        "ts": "2026-10-06T16:29:04.302417Z",
+        "uri": "s3://vms-evidence/01a1126c-53da-7bdf-aa93-f1bfa4e83873/ev-fr-03.jpg"
+       },
+       {
+        "id": "ev-fr-04",
+        "ts": "2026-10-06T16:29:09.404553Z",
+        "uri": "s3://vms-evidence/01a1126c-53da-7bdf-aa93-f1bfa4e83873/ev-fr-04.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-02",
+       "text": "A person in a blue jumpsuit is standing next to a white SUV, while another person in a black shirt is walking towards the SUV. A red SUV is parked nearby."
+      },
+      "camera_id": "bus-g340"
+     }
+    ]
+   },
+   {
+    "phase": "action",
+    "views": [
+     {
+      "vqa": [
+       {
+        "a": "No",
+        "q": "Is anyone crossing a barrier such as a fence, gate or door?",
+        "id": "ev-qa-09"
+       },
+       {
+        "a": "No",
+        "q": "Is a person inside the restricted area?",
+        "id": "ev-qa-10"
+       },
+       {
+        "a": "Yes",
+        "q": "Is the person carrying anything?",
+        "id": "ev-qa-11"
+       },
+       {
+        "a": "No",
+        "q": "Is any staff member or guard visible?",
+        "id": "ev-qa-12"
+       }
+      ],
+      "frames": [
+       {
+        "id": "ev-fr-05",
+        "ts": "2026-10-06T16:29:09.937886Z",
+        "uri": "s3://vms-evidence/01a1126c-53da-7bdf-aa93-f1bfa4e83873/ev-fr-05.jpg"
+       },
+       {
+        "id": "ev-fr-06",
+        "ts": "2026-10-06T16:29:15.271219Z",
+        "uri": "s3://vms-evidence/01a1126c-53da-7bdf-aa93-f1bfa4e83873/ev-fr-06.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-03",
+       "text": "People are standing near a barrier, with one person carrying a large object, and others are observing the scene."
+      },
+      "camera_id": "bus-g340"
+     }
+    ]
+   },
+   {
+    "phase": "aftermath",
+    "views": [
+     {
+      "vqa": [
+       {
+        "a": "No",
+        "q": "Is anyone crossing a barrier such as a fence, gate or door?",
+        "id": "ev-qa-13"
+       },
+       {
+        "a": "No",
+        "q": "Is a person inside the restricted area?",
+        "id": "ev-qa-14"
+       },
+       {
+        "a": "Cannot tell",
+        "q": "Is the person carrying anything?",
+        "id": "ev-qa-15"
+       },
+       {
+        "a": "No",
+        "q": "Is any staff member or guard visible?",
+        "id": "ev-qa-16"
+       }
+      ],
+      "frames": [
+       {
+        "id": "ev-fr-07",
+        "ts": "2026-10-06T16:29:15.271219Z",
+        "uri": "s3://vms-evidence/01a1126c-53da-7bdf-aa93-f1bfa4e83873/ev-fr-07.jpg"
+       },
+       {
+        "id": "ev-fr-08",
+        "ts": "2026-10-06T16:29:17.937886Z",
+        "uri": "s3://vms-evidence/01a1126c-53da-7bdf-aa93-f1bfa4e83873/ev-fr-08.jpg"
+       }
+      ],
+      "caption": {
+       "id": "ev-cap-04",
+       "text": "People standing near a white SUV, with a red SUV in the foreground, and a grassy area and road in the background."
+      },
+      "camera_id": "bus-g340"
+     }
+    ]
+   }
+  ],
+  "window": {
+   "end": "2026-10-06T16:29:28.137886Z",
+   "start": "2026-10-06T16:28:55.471219Z"
+  },
+  "cameras": [
+   "bus-g340"
+  ],
+  "group_id": "01a1120d-f695-74b1-a5a5-bc5dbc00d77e",
+  "severity": "high",
+  "event_type": "intrusion",
+  "provenance": {
+   "tg": "zero-shot:ollama/qwen2.5vl:3b",
+   "phavr": "zero-shot:local",
+   "profile": "local",
+   "fallback_used": false
+  },
+  "phase_timeline": [
+   {
+    "end": "2026-10-06T16:29:04.035750Z",
+    "phase": "baseline",
+    "start": "2026-10-06T16:28:55.471219Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   },
+   {
+    "end": "2026-10-06T16:29:09.786818Z",
+    "phase": "precursor",
+    "start": "2026-10-06T16:29:04.035750Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   },
+   {
+    "end": "2026-10-06T16:29:15.271219Z",
+    "phase": "action",
+    "start": "2026-10-06T16:29:09.786818Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   },
+   {
+    "end": "2026-10-06T16:29:28.137886Z",
+    "phase": "aftermath",
+    "start": "2026-10-06T16:29:15.271219Z",
+    "source": "zero-shot:ollama/qwen2.5vl:3b"
+   }
+  ],
+  "primary_camera": "bus-g340",
+  "schema_version": "evidence.v1"
+ },
+ "report": {
+  "title": "Intrusion Incident in Parking Lot",
+  "window": {
+   "end": "2026-10-06T16:29:28.137886Z",
+   "start": "2026-10-06T16:28:55.471219Z"
+  },
+  "cameras": [
+   "bus-g340"
+  ],
+  "summary": "An intrusion occurred in a parking lot where a person was seen carrying a large object near a white SUV. Security measures were not in place, leading to an unmonitored situation.",
+  "group_id": "01a1120d-f695-74b1-a5a5-bc5dbc00d77e",
+  "severity": "high",
+  "confidence": 0.9,
+  "event_type": "intrusion",
+  "provenance": {
+   "profile": "local",
+   "model_calls": 4,
+   "dropped_claims": 3,
+   "prompt_versions": [
+    "1.0",
+    "1.0"
+   ],
+   "synthesis_model": "ollama/qwen2.5:3b"
+  },
+  "incident_id": "01a1126c-53da-7bdf-aa93-f1bfa4e83873",
+  "limitations": [
+   "The evidence does not provide information on the identity of the individuals involved or their intentions.",
+   "The evidence does not indicate the specific actions taken by the security personnel, if any.",
+   "The evidence does not show the exact time when the intrusion occurred.",
+   "3 statement(s) were left out because they cited no evidence."
+  ],
+  "causal_chain": [
+   {
+    "step": 1,
+    "evidence": [
+     "ev-cap-02",
+     "ev-qa-05",
+     "ev-qa-06",
+     "ev-qa-09",
+     "ev-qa-10",
+     "ev-qa-13",
+     "ev-qa-14",
+     "ev-fr-03",
+     "ev-fr-04"
+    ],
+    "description": "A person in a blue jumpsuit and a black shirt were seen near a white SUV, indicating potential unauthorized presence."
+   },
+   {
+    "step": 2,
+    "evidence": [
+     "ev-cap-03",
+     "ev-qa-09",
+     "ev-qa-10",
+     "ev-qa-13",
+     "ev-qa-14",
+     "ev-qa-15",
+     "ev-qa-16",
+     "ev-fr-05",
+     "ev-fr-06"
+    ],
+    "description": "People were observed standing near a barrier with one person carrying a large object, suggesting an attempt to enter the restricted area."
+   },
+   {
+    "step": 3,
+    "evidence": [
+     "ev-cap-04",
+     "ev-qa-13",
+     "ev-qa-14",
+     "ev-qa-15",
+     "ev-qa-16",
+     "ev-fr-07",
+     "ev-fr-08"
+    ],
+    "description": "People were seen standing near a white SUV with a red SUV in the foreground, indicating a potential unauthorized entry into the restricted area."
+   }
+  ],
+  "evidence_index": [
+   "ev-cap-01",
+   "ev-cap-02",
+   "ev-cap-03",
+   "ev-cap-04",
+   "ev-fr-01",
+   "ev-fr-02",
+   "ev-fr-03",
+   "ev-fr-04",
+   "ev-fr-05",
+   "ev-fr-06",
+   "ev-fr-07",
+   "ev-fr-08",
+   "ev-qa-01",
+   "ev-qa-02",
+   "ev-qa-05",
+   "ev-qa-06",
+   "ev-qa-08",
+   "ev-qa-09",
+   "ev-qa-10",
+   "ev-qa-11",
+   "ev-qa-12",
+   "ev-qa-13",
+   "ev-qa-14",
+   "ev-qa-15",
+   "ev-qa-16"
+  ],
+  "phase_analysis": [
+   {
+    "phase": "baseline",
+    "summary": "A white SUV is parked in a parking lot, and a person is seen getting out of the vehicle. Another red SUV is also visible in the foreground.",
+    "evidence": [
+     "ev-cap-01",
+     "ev-qa-01",
+     "ev-qa-02",
+     "ev-qa-05",
+     "ev-qa-06",
+     "ev-qa-09",
+     "ev-qa-10",
+     "ev-qa-13",
+     "ev-qa-14",
+     "ev-fr-01",
+     "ev-fr-02"
+    ]
+   },
+   {
+    "phase": "precursor",
+    "summary": "A person in a blue jumpsuit is seen standing next to a white SUV, and another person in a black shirt is walking towards the SUV. A red SUV is parked nearby.",
+    "evidence": [
+     "ev-cap-02",
+     "ev-qa-01",
+     "ev-qa-02",
+     "ev-qa-05",
+     "ev-qa-06",
+     "ev-qa-09",
+     "ev-qa-10",
+     "ev-qa-13",
+     "ev-qa-14",
+     "ev-fr-03",
+     "ev-fr-04"
+    ]
+   },
+   {
+    "phase": "action",
+    "summary": "People are standing near a barrier, with one person carrying a large object, and others are observing the scene.",
+    "evidence": [
+     "ev-cap-03",
+     "ev-qa-01",
+     "ev-qa-02",
+     "ev-qa-05",
+     "ev-qa-06",
+     "ev-qa-09",
+     "ev-qa-10",
+     "ev-qa-13",
+     "ev-qa-14",
+     "ev-qa-15",
+     "ev-qa-16",
+     "ev-fr-05",
+     "ev-fr-06"
+    ]
+   },
+   {
+    "phase": "aftermath",
+    "summary": "People standing near a white SUV, with a red SUV in the foreground, and a grassy area and road in the background.",
+    "evidence": [
+     "ev-cap-04",
+     "ev-qa-01",
+     "ev-qa-02",
+     "ev-qa-05",
+     "ev-qa-06",
+     "ev-qa-09",
+     "ev-qa-10",
+     "ev-qa-13",
+     "ev-qa-14",
+     "ev-qa-15",
+     "ev-qa-16",
+     "ev-fr-07",
+     "ev-fr-08"
+    ]
+   }
+  ],
+  "schema_version": "incident.v1",
+  "recommended_actions": [
+   {
+    "action": "Increase security personnel presence in the restricted area to ensure compliance with protocols.",
+    "priority": "high",
+    "owner_role": "operator"
+   },
+   {
+    "action": "Implement real-time monitoring of the restricted area to detect unauthorized entries and movements.",
+    "priority": "high",
+    "owner_role": "operator"
+   },
+   {
+    "action": "Review and update security protocols to include mandatory presence of security personnel in restricted areas.",
+    "priority": "high",
+    "owner_role": "admin"
+   }
+  ],
+  "scene_understanding": {
+   "actors": [],
+   "location": "parking lot, near a white SUV with a red SUV in the foreground, a grassy area and road in the background",
+   "conditions": "not stated"
+  },
+  "contributing_factors": {
+   "primary": [
+    {
+     "text": "Security personnel were not visible, allowing unauthorized individuals to enter the restricted area.",
+     "evidence": [
+      "ev-qa-08",
+      "ev-qa-11",
+      "ev-qa-12",
+      "ev-qa-15",
+      "ev-qa-16"
+     ]
+    }
+   ],
+   "environmental": [
+    {
+     "text": "The area was not monitored closely, allowing unauthorized individuals to enter without detection.",
+     "evidence": [
+      "ev-qa-08",
+      "ev-qa-11",
+      "ev-qa-12",
+      "ev-qa-15",
+      "ev-qa-16"
+     ]
+    }
+   ],
+   "security_gaps": [
+    {
+     "text": "Security personnel were not present to monitor the area and ensure compliance with restricted area protocols.",
+     "evidence": [
+      "ev-qa-08",
+      "ev-qa-11",
+      "ev-qa-12",
+      "ev-qa-15",
+      "ev-qa-16"
+     ]
+    }
+   ]
+  }
+ }
+}

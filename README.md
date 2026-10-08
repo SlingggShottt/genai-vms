@@ -142,7 +142,7 @@ With 4 GB GPUs, perception and GenAI run best on separate machines: laptop A run
 libs/        shared contracts, Kafka/S3/LLM clients, database models
 services/    ingestion · perception · indexer · events · correlation · retrieval · reasoning · api
 frontend/    React dashboard
-ml/          annotation, datasets, fine-tuning notebooks, evaluation harnesses
+ml/          annotation, datasets, training-data builders, evaluation harnesses (fine-tuning notebooks not written yet)
 config/      model registry, rules, correlation and VQA configuration
 deploy/      Docker Compose profiles and Kubernetes manifests
 tools/       camera simulator, seed data
@@ -178,8 +178,14 @@ The system adapts these ideas from short benchmark clips to continuous, multi-ca
 Retrieval accuracy (Recall@K, mAP, temporal IoU with ablations), phase reasoning (mIoU, captioning metrics, VQA accuracy), response quality (faithfulness, citation precision, report rubric), latency (ingest-to-index, event-to-alert, search, report generation) and usability (SUS, task time). Harnesses live in `ml/evaluation/`; results are published per phase in [`ml/evaluation/results/`](ml/evaluation/results/):
 perception on 4 GB, local-model latency and VRAM, **end-to-end latency of the running stack**
 ([`p7-latency.md`](ml/evaluation/results/p7-latency.md): fast search p95 0.25 s, reason search p50 15.6 s) and
-**restarting workers mid-stream** ([`p7-resilience.md`](ml/evaluation/results/p7-resilience.md)). Retrieval accuracy and
-phase-reasoning metrics need human-labelled data and are not yet measured.
+**restarting workers mid-stream** ([`p7-resilience.md`](ml/evaluation/results/p7-resilience.md)),
+**the rules and the verification gate on real footage** ([`meva-detection-run.md`](ml/evaluation/results/meva-detection-run.md): the labelled
+abandoned package found, theft not covered by any rule, waiting-room loitering verified but useless) and **retrieval on real labels**
+([`meva-retrieval-benchmark.md`](ml/evaluation/results/meva-retrieval-benchmark.md): a relevant window in the top 10 for 56 % of 36 activity
+queries in fast mode and 67 % in reason mode, against 24 % for picking windows at random; motion queries never hit). The planned
+150-query human-labelled retrieval benchmark and the phase-reasoning metrics (TG mIoU, PhaVR captions and VQA) need human annotations: their
+dataset builders and evaluation harnesses exist ([`ml/training/`](ml/training/), [`ml/evaluation/reasoning/`](ml/evaluation/reasoning/)) and
+have only been run on synthetic clips, so there is no phase-reasoning result yet.
 
 ## Roadmap
 

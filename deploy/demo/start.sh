@@ -9,9 +9,17 @@
 # .demo/logs/<name>.log and records its process group in .demo/pids/<name>. Re-running starts only
 # what is not already up. Stop everything with deploy/demo/stop.sh.
 #
+# Where systemd is available each one also gets its own systemd scope with OOMPolicy=continue.
+# Without that, a process started from a VS Code terminal belongs to VS Code's scope, and when the
+# kernel's out-of-memory killer takes one of them (Ollama's model runner is the usual one: 6 GB or
+# more on the CPU), systemd stops the whole scope - VS Code and everything in it - with "Failed with
+# result 'oom-kill'". In its own scope only the process that was killed is lost.
+#
 # Environment:
 #   VMS_RETRIEVAL_ARCHIVE_SINCE   ISO time; footage older than this is not searched (recordings
 #                                 the retention policy has removed). Unset = search everything.
+#   VMS_OLLAMA_MEMORY_MAX         memory cap for Ollama's scope (default 8G; 0 = no cap). Its runner uses
+#                                 6-7 GB on the CPU: a 6G cap killed it three times in 16 minutes
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -23,9 +31,16 @@ up() { # port -> 0 if something listens on it
   (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
 }
 
-start() { # name port command...
-  local name="$1" port="$2"
+ISOLATE=()
+if command -v systemd-run >/dev/null 2>&1 && systemd-run --user --scope --quiet true 2>/dev/null; then
+  ISOLATE=(systemd-run --user --scope --quiet -p OOMPolicy=continue)
+fi
+
+start() { # name port command...   (MEMORY_MAX=6G start ... caps the scope)
+  local name="$1" port="$2" cap=()
   shift 2
+  [ -n "${MEMORY_MAX:-}" ] && [ "${MEMORY_MAX}" != 0 ] && [ "${#ISOLATE[@]}" -gt 0 ] \
+    && cap=(-p "MemoryMax=${MEMORY_MAX}")
   if [ -n "$port" ] && up "$port"; then
     echo "  $name already up on :$port"
     return
@@ -35,7 +50,8 @@ start() { # name port command...
     echo "  $name already running (pid $(cat "$RUN/pids/$name"))"
     return
   fi
-  setsid nohup "$@" >"$RUN/logs/$name.log" 2>&1 </dev/null &
+  setsid nohup ${ISOLATE[@]+"${ISOLATE[@]}"} ${cap[@]+"${cap[@]}"} "$@" \
+    >"$RUN/logs/$name.log" 2>&1 </dev/null &
   echo $! >"$RUN/pids/$name"
   echo "  started $name (log: .demo/logs/$name.log)"
 }
@@ -54,7 +70,11 @@ OLLAMA_BIN="${OLLAMA_BIN:-$HOME/.local/ollama/bin/ollama}"
 [ -x "$OLLAMA_BIN" ] || OLLAMA_BIN="$(command -v ollama || true)"
 if [ -n "$OLLAMA_BIN" ]; then
   # 0.0.0.0 so the containers (events) can reach it; one model resident (4 GB GPU).
-  OLLAMA_HOST=0.0.0.0:11434 OLLAMA_MAX_LOADED_MODELS=1 start ollama 11434 "$OLLAMA_BIN" serve
+  # The runner it spawns is the first thing the kernel should give up under memory pressure, so
+  # raise its OOM score (allowed without privileges) and cap the scope.
+  OLLAMA_HOST=0.0.0.0:11434 OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_NUM_PARALLEL=1 \
+    MEMORY_MAX="${VMS_OLLAMA_MEMORY_MAX:-8G}" start ollama 11434 \
+    bash -c 'echo 500 >/proc/self/oom_score_adj; exec "$@"' _ "$OLLAMA_BIN" serve
 else
   echo "  ollama not found - the language-model steps will degrade (set OLLAMA_BIN)" >&2
 fi

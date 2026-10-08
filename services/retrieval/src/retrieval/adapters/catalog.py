@@ -42,10 +42,12 @@ class Catalog:
             return sorted(r[0] for r in rows if r[0])
 
     async def camera_codes(self) -> list[str]:
+        """Every camera, switched off or not: the assistant reads this to know which words in a
+        question are camera names, and a camera that was turned off still has events and
+        recordings to ask about. (Left out, a question about its day was answered for all cameras:
+        measured, 34 of 34 questions about two switched-off cameras.)"""
         async with self._sessions() as s:
-            rows = await s.execute(
-                text("SELECT code FROM core.cameras WHERE enabled ORDER BY code")
-            )
+            rows = await s.execute(text("SELECT code FROM core.cameras ORDER BY code"))
             return [r[0] for r in rows]
 
     async def incident_brief(self, incident_id: str) -> dict | None:

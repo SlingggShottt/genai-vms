@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI
 from qdrant_client import AsyncQdrantClient
+from vms_common.http_metrics import HttpMetricsMiddleware
 from vms_common.llm import LLMGateway
 from vms_common.logging import configure_logging, get_logger
 from vms_common.storage.s3 import S3Client
@@ -112,6 +113,7 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
             await engine.dispose()
 
     app = FastAPI(title="GenAI-VMS retrieval", version="0.1.0", lifespan=lifespan)
+    app.add_middleware(HttpMetricsMiddleware, service="retrieval")
     app.include_router(router)
     app.include_router(assistant_router)
     return app

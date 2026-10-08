@@ -2,9 +2,12 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { SeverityBadge } from '@/components/SeverityBadge';
+import { PdfButton } from '@/components/PdfButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useCurrentUser } from '@/features/auth/api';
+import { useCameras } from '@/features/cameras/api';
+import { SyncedPlayer } from '@/features/playback/components/SyncedPlayer';
 import { AddToCaseDialog } from '@/features/cases/components/AddToCaseDialog';
 import { ApiError } from '@/lib/apiClient';
 import { eventTypeLabel } from '@/lib/eventTypes';
@@ -51,6 +54,7 @@ export function IncidentPage() {
   const canEdit = user?.role === 'admin' || user?.role === 'operator';
   const { data: incident, isLoading, isError, error } = useIncident(incidentId);
   const update = useUpdateIncident(incidentId);
+  const { data: cameras } = useCameras();
   const similar = useSimilarIncidents(incident?.status === 'generating' ? null : incidentId);
   const [activeEvidence, setActiveEvidence] = useState(null);
   const [activePhase, setActivePhase] = useState(null);
@@ -115,6 +119,7 @@ export function IncidentPage() {
                 Save to case
               </Button>
             )}
+            <PdfButton path={`/incidents/${incident.id}/pdf`} available={incident.has_pdf} />
             <Button size="sm" variant="outline" onClick={() => window.print()}>
               <Printer size={14} aria-hidden="true" />
               Print or save as PDF
@@ -153,6 +158,19 @@ export function IncidentPage() {
               activePhase={activePhase}
               onSelect={(p) => setActivePhase((prev) => (prev === p ? null : p))}
             />
+            <div className="print:hidden">
+              <SyncedPlayer
+                views={incident.camera_ids.map((code) => ({
+                  camera: code,
+                  label: cameras?.items.find((c) => c.code === code)?.name ?? code,
+                }))}
+                startIso={incident.window_start}
+                endIso={incident.window_end}
+                timeline={evidence?.phase_timeline}
+                activePhase={activePhase}
+                onSelectPhase={(p) => setActivePhase((prev) => (prev === p ? null : p))}
+              />
+            </div>
             <div className="grid gap-3 lg:grid-cols-2">
               {report.phase_analysis.map((p) => {
                 const phaseEvidence = evidence?.phases.find((x) => x.phase === p.phase);
