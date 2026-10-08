@@ -16,9 +16,15 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import torch
 from perception.adapters.embedder import SiglipEmbedder
 
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    # A CI runner has no GPU: this one runs on the dev laptop (it failed there on the first run of
+    # the integration job: "Found no NVIDIA driver").
+    pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a CUDA GPU"),
+]
 
 
 def _solid_crop(rgb: tuple[int, int, int], *, h: int = 224, w: int = 224) -> np.ndarray:
