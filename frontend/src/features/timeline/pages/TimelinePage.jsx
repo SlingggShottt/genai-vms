@@ -9,8 +9,12 @@ import { useCurrentUser } from '@/features/auth/api';
 import { eventTypeLabel } from '@/lib/eventTypes';
 import { formatClock, formatDateTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
+import { SyncedPlayer } from '@/features/playback/components/SyncedPlayer';
 import { useTimeline } from '../api';
 import { PRESETS, pct, selectionRange, span, ticks } from '../lib';
+
+// Playing cameras together asks the recorder for one playlist per camera: keep the period short.
+const TOGETHER_MAX_MS = 30 * 60e3;
 
 const SEV_FILL = {
   low: 'bg-sev-low',
@@ -119,6 +123,7 @@ export function TimelinePage() {
   const [selection, setSelection] = useState(null);
   const [picked, setPicked] = useState(null);
   const [saving, setSaving] = useState(null);
+  const [together, setTogether] = useState(false);
 
   const view = useMemo(() => {
     if (custom) return custom;
@@ -266,6 +271,22 @@ export function TimelinePage() {
               <Link to={playbackHref}>Open recording</Link>
             </Button>
           )}
+          {data && data.cameras.length > 1 && (
+            <Button
+              size="sm"
+              variant={together ? 'default' : 'outline'}
+              aria-pressed={together}
+              disabled={selection.end - selection.start > TOGETHER_MAX_MS}
+              title={
+                selection.end - selection.start > TOGETHER_MAX_MS
+                  ? 'Select 30 minutes or less to play the cameras together.'
+                  : undefined
+              }
+              onClick={() => setTogether((prev) => !prev)}
+            >
+              Play {Math.min(data.cameras.length, 4)} cameras together
+            </Button>
+          )}
           {canSave && (
             <Button
               size="sm"
@@ -286,6 +307,19 @@ export function TimelinePage() {
             Clear
           </Button>
         </div>
+      )}
+
+      {together && selection && !selection.dragging && data && (
+        <section
+          aria-label="Cameras together"
+          className="flex flex-col gap-2 rounded-panel border border-rule bg-surface p-3"
+        >
+          <SyncedPlayer
+            views={data.cameras.map((camera) => ({ camera, label: camera }))}
+            startIso={new Date(selection.start).toISOString()}
+            endIso={new Date(selection.end).toISOString()}
+          />
+        </section>
       )}
 
       {picked && (

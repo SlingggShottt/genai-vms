@@ -72,3 +72,15 @@ export function wallClockToPlayerTime(fragments, wallClockMs) {
   if (!located) return null;
   return located.frag.start + located.offsetMs / 1000;
 }
+
+/** True when some fragment covers `wallClockMs`: there is footage at that moment. (Unlike
+ * `wallClockToPlayerTime`, which snaps across a gap to the next footage, this says there is none.)
+ */
+export function coversWallClock(fragments, wallClockMs) {
+  return (fragments ?? []).some(
+    (f) =>
+      f.programDateTime != null &&
+      wallClockMs >= f.programDateTime &&
+      wallClockMs < f.programDateTime + f.duration * 1000,
+  );
+}

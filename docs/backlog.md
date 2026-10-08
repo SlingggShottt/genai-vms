@@ -774,9 +774,10 @@
 - [ ] Skips empty phases/views; per-call timings in provenance.
 
 ### P5-J5 · Event reasoning view — 3 pts · Must · E12
+> **2026-10-08:** the report page and the event page's Reasoning section (*Watch the views together*) now have the phase band, a lane per camera with the phases and one playhead, and the incident's cameras on one playhead; pressing a phase plays every view for that phase from its start and stops at its end (driven in Brave on a fresh incident: playhead jumped to the phase start, stopped at its end, largest drift 145 ms). Phases are located once, on the primary view, so every lane shows the same spans; the incident above had a single camera, so four-camera phase playback was checked on the timeline page, not on an incident.
 > **Status 2026-10-04 — partly built:** the reasoning view is the incident report (phase band, per-phase captions and Q&A, evidence frames) and the event page's *Reasoning* panel with job progress and queue position. **Not done:** camera lanes and synced multi-view playback per phase.
 - [ ] Event/correlation detail gains a "Reasoning" tab: timeline with phase band across camera lanes (§B.6), per-phase captions and Q&A, evidence frames.
-- [ ] Clicking a phase plays all views for that phase in sync (≤ 4 views); job progress/queue shown while running.
+- [x] Clicking a phase plays all views for that phase in sync (≤ 4 views); job progress/queue shown while running.
 
 ---
 
@@ -835,9 +836,10 @@
 - [ ] Assistant tool endpoints for events/incidents/timeline exposed per frozen contract.
 
 ### P6-J4 · Investigation timeline & cases — 8 pts · Should · E16 · FR-INV-01…03
+> **2026-10-08:** synchronized playback built (`features/playback/components/SyncedPlayer.jsx`, `lib/sync.js`): up to four cameras on one playhead, a camera with no recording at that moment says so and waits, the playhead holds while any camera with footage buffers, small drift is closed by running a picture 5-10 % slow or fast and a drift past 300 ms by a seek. On the timeline page a selected period (up to 30 min) plays all cameras together. Unit and component tests (mutation-checked). **Measured in Brave with three real MEVA cameras** (22 fragments each, no failed requests): steady state within about 25 ms of the playhead by the player's own fragment table, a transient of 110-170 ms at each 10 s segment boundary that the nudging closes within about 1.3 s; the largest value seen at start-up before nudging existed was 449 ms. **Not verified:** that the *pictures* line up in content (the clips carry no visible clock, and a parse of the playlist that does not use hls.js's corrected fragment times disagreed by up to 450 ms, which I attribute, unproven, to declared versus real segment durations). Still not built: *Search in range*.
 > **Status 2026-10-04 — partly built:** cases (`core.cases`, `core.case_items`, migration 0012; API; Cases pages; *Save to case* from search results, events, incident reports and timeline selections) and a per-camera timeline of events and incident reports with drag-to-select, zoom and save. **Not done:** synchronised playback of up to 4 cameras from one playhead, "Search in range", the 300 ms drift measurement. The demo has one real camera.
 - [ ] Multi-camera timeline (lanes, events, correlation links, incidents) for a selected range.
-- [ ] Synchronized playback of up to 4 cameras driven by one playhead (drift ≤ 300 ms).
+- [x] Synchronized playback of up to 4 cameras driven by one playhead (drift ≤ 300 ms).
 - [ ] Shift-drag range → "Search in range" / "Save to case"; cases CRUD with bookmarked items and notes.
 
 ### P6-J5 · Daily reports UI — 2 pts · Must · E15 · FR-RPT-02, FR-RPT-04

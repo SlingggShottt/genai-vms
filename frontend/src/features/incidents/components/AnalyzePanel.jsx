@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SeverityBadge } from '@/components/SeverityBadge';
 import { errorMessage } from '@/lib/errorMessage';
 import { useAnalyzeEvent, useEventReasoning } from '../api';
+import { IncidentViews } from './IncidentViews';
 
 /** "Reasoning" section of the event page: ask for a phase-aware analysis of the incident this event
  * belongs to, follow it while it runs, and link to the finished report. Operators and admins.
@@ -10,6 +12,7 @@ import { useAnalyzeEvent, useEventReasoning } from '../api';
 export function AnalyzePanel({ eventId, canAnalyze }) {
   const { data, isLoading } = useEventReasoning(eventId);
   const analyze = useAnalyzeEvent(eventId);
+  const [watch, setWatch] = useState(false);
   const job = data?.job;
   const incident = data?.incident;
   const live = job?.status === 'queued' || job?.status === 'running';
@@ -53,8 +56,19 @@ export function AnalyzePanel({ eventId, canAnalyze }) {
             </Link>
           </div>
           {incident.summary && <p className="text-sm text-text">{incident.summary}</p>}
+          <Button
+            size="sm"
+            variant={watch ? 'default' : 'outline'}
+            aria-pressed={watch}
+            onClick={() => setWatch((prev) => !prev)}
+            className="self-start"
+          >
+            Watch the views together
+          </Button>
         </div>
       )}
+
+      {incident && watch && <IncidentViews incidentId={incident.id} />}
 
       {!incident && !live && job?.status !== 'failed' && (
         <p className="text-sm text-text-muted">No report has been written for this incident yet.</p>
