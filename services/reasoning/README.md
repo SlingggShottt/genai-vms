@@ -45,8 +45,24 @@ job ─▶ events + group ─▶ keyframes from the twins of the window (±15 s)
 `reasoning.daily_reports` and queues yesterday's report itself after `VMS_REASONING_DAILY_REPORT_HOUR`.
 `python -m reasoning.reports.daily --date yesterday` queues one by hand.
 
+## PDF reports
+
+Once an incident report is `generated`, or a daily report `ready`, the worker renders its PDF
+(`reports/pdf.py`: Jinja2 templates in `reports/templates/` -> HTML -> WeasyPrint; A4, light theme,
+header with the site and period, footer with the profile, time and page numbers, evidence frames in a
+two-column grid, severity as a shape and a word) and stores it at `s3://vms-reports/incidents/<id>.pdf`
+or `.../daily/<id>.pdf`, noting the address in `pdf_uri` (migration 0014). The api hands out a link
+that works for 15 minutes (`GET /incidents/{id}/pdf`, `GET /reports/daily/{id}/pdf`; `has_pdf` on the
+summaries) and the pages have a *Download PDF* button. A PDF that cannot be made (a missing system
+library, a frame that is gone) is logged and leaves a report without one; it never fails the report.
+`VMS_REASONING_PDF_ENABLED=false` switches it off; `VMS_REASONING_SITE_NAME` is the name in the page
+header. For reports made before this existed: `python -m reasoning.reports.backfill`.
+
+The image installs Pango and DejaVu fonts (see the Dockerfile); Barlow and Source Serif 4, which
+the style guide names, are used where installed and otherwise fall back to DejaVu. Not done: the daily
+PDF is not indexed into the `knowledge` collection.
+
 ## Not built
 
-The `hf_local` provider for the LoRA adapters (P5-D5), the synced multi-view playback, server-side PDF
-(the UI offers print-to-PDF), `incident.ready` / `job.progress` pushes on the WebSocket (the UI
-polls) and similar-incident search.
+`incident.ready` / `job.progress` pushes on the WebSocket (the UI polls). (The `hf_local` provider is
+built: `libs/vms_common/.../llm/hf_local.py`; the synced multi-view playback is in the frontend.)

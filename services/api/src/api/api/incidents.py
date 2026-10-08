@@ -40,6 +40,16 @@ class IncidentSummary(BaseModel):
     window_end: datetime
     confidence: float | None
     created_at: datetime
+    has_pdf: bool = False
+
+
+class PdfLink(BaseModel):
+    """A short-lived link to a stored PDF (never stored itself: presigned per request)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: str
+    expires_in: int = 900
 
 
 class IncidentDetail(IncidentSummary):
@@ -103,6 +113,7 @@ def _summary(row: Incident) -> IncidentSummary:
         window_end=row.window_end,
         confidence=report.get("confidence"),
         created_at=row.created_at,
+        has_pdf=bool(row.pdf_uri),
     )
 
 
@@ -165,6 +176,25 @@ async def list_incidents(
         stmt = stmt.where(Incident.event_type == event_type)
     rows = (await session.execute(stmt)).scalars().all()
     return IncidentsPage(items=[_summary(r) for r in rows])
+
+
+@router.get("/incidents/{incident_id}/pdf", response_model=PdfLink)
+async def get_incident_pdf(
+    incident_id: str,
+    request: Request,
+    session: SessionDep,
+    _user: Annotated[User, Depends(get_current_user)],
+) -> PdfLink:
+    row = await session.get(Incident, _uuid(incident_id, "incident"))
+    if row is None:
+        raise APIError("NOT_FOUND", "Incident not found.", status_code=status.HTTP_404_NOT_FOUND)
+    if not row.pdf_uri:
+        raise APIError(
+            "NOT_FOUND",
+            "This report has no PDF yet.",
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return PdfLink(url=await request.app.state.s3.presign_get(row.pdf_uri))
 
 
 @router.get("/incidents/{incident_id}", response_model=IncidentDetail)

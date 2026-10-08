@@ -10,7 +10,7 @@ from datetime import date, datetime
 from typing import Annotated, Any
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from vms_common.ids import uuid7_str
@@ -46,6 +46,16 @@ class ReportSummary(BaseModel):
     error: str | None
     created_at: datetime
     finished_at: datetime | None
+    has_pdf: bool = False
+
+
+class PdfLink(BaseModel):
+    """A short-lived link to the stored PDF (presigned per request, never stored)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    url: str
+    expires_in: int = 900
 
 
 class ReportDetail(ReportSummary):
@@ -63,6 +73,7 @@ def _summary(row: DailyReport) -> ReportSummary:
         error=row.error,
         created_at=row.created_at,
         finished_at=row.finished_at,
+        has_pdf=bool(row.pdf_uri),
     )
 
 
@@ -138,3 +149,26 @@ async def get_report(
     if row is None:
         raise APIError("NOT_FOUND", "Report not found.", status_code=status.HTTP_404_NOT_FOUND)
     return ReportDetail(**_summary(row).model_dump(), narrative=row.narrative, facts=row.facts)
+
+
+@router.get("/{report_id}/pdf", response_model=PdfLink)
+async def get_report_pdf(
+    report_id: str,
+    request: Request,
+    session: SessionDep,
+    _user: Annotated[User, Depends(get_current_user)],
+) -> PdfLink:
+    try:
+        rid = uuid.UUID(report_id)
+    except ValueError as exc:
+        raise APIError(
+            "VALIDATION_ERROR", "Malformed report id.", status_code=status.HTTP_400_BAD_REQUEST
+        ) from exc
+    row = await session.get(DailyReport, rid)
+    if row is None:
+        raise APIError("NOT_FOUND", "Report not found.", status_code=status.HTTP_404_NOT_FOUND)
+    if not row.pdf_uri:
+        raise APIError(
+            "NOT_FOUND", "This report has no PDF yet.", status_code=status.HTTP_404_NOT_FOUND
+        )
+    return PdfLink(url=await request.app.state.s3.presign_get(row.pdf_uri))

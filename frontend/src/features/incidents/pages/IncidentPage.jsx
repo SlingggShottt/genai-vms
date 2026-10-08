@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { SeverityBadge } from '@/components/SeverityBadge';
+import { PdfButton } from '@/components/PdfButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useCurrentUser } from '@/features/auth/api';
@@ -118,6 +119,7 @@ export function IncidentPage() {
                 Save to case
               </Button>
             )}
+            <PdfButton path={`/incidents/${incident.id}/pdf`} available={incident.has_pdf} />
             <Button size="sm" variant="outline" onClick={() => window.print()}>
               <Printer size={14} aria-hidden="true" />
               Print or save as PDF

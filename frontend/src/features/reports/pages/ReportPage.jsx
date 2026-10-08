@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { SeverityBadge } from '@/components/SeverityBadge';
+import { PdfButton } from '@/components/PdfButton';
 import { Button } from '@/components/ui/button';
 import { ApiError } from '@/lib/apiClient';
 import { eventTypeLabel } from '@/lib/eventTypes';
@@ -63,15 +64,13 @@ export function ReportPage() {
           Daily security report · {periodLabel(report)}
         </h1>
         {report.status === 'ready' && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="ml-auto print:hidden"
-            onClick={() => window.print()}
-          >
-            <Printer size={14} aria-hidden="true" />
-            Print or save as PDF
-          </Button>
+          <div className="ml-auto flex gap-2 print:hidden">
+            <PdfButton path={`/reports/daily/${report.id}/pdf`} available={report.has_pdf} />
+            <Button size="sm" variant="outline" onClick={() => window.print()}>
+              <Printer size={14} aria-hidden="true" />
+              Print or save as PDF
+            </Button>
+          </div>
         )}
       </header>
 

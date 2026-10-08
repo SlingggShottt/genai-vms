@@ -822,16 +822,18 @@
 ## Jatin — 23 pts
 
 ### P6-J1 · Daily security report job — 5 pts · Must · E15 · FR-RPT-01…04
+> **2026-10-08:** server-side PDF built (`reasoning/reports/pdf.py`, WeasyPrint, §B.11), stored in `vms-reports`, `pdf_uri` on the row (migration 0014), *Download PDF* on the report page; verified in Brave (the button opens a presigned MinIO link that delivers the file) and for a report made by the running worker. **Still not done:** the PDF is not indexed into `knowledge`; `supercronic` in Compose is replaced by the worker's own 06:00 schedule.
 > **Status 2026-10-04 — partly built** (`services/reasoning/src/reasoning/reports`): `DailyFacts` from fixed SQL, narrative from `daily_narrative/1.0` with every number checked against the figures (one retry, then a template text; `narrative_source` says which), `reasoning.daily_reports` (migration 0011), the worker queues yesterday's report after 06:00 IST, `POST /reports/daily` (≤ 7 days) and `python -m reasoning.reports.daily`. **Not done:** server-side charts and PDF (WeasyPrint; the UI draws the charts and the browser prints to PDF), indexing into `knowledge`, supercronic in Compose (the worker schedules it).
-- [ ] `DailyFacts` aggregation SQL; charts (events by hour/type/camera, alert response times).
+- [x] `DailyFacts` aggregation SQL; charts (events by hour/type/camera, alert response times).
 - [x] Narrative via gateway with numeric post-check (numbers must exist in facts) → regenerate once → template fallback.
 - [ ] Jinja2 + WeasyPrint PDF per §B.11 → `vms-reports`; row in `reasoning.daily_reports`; indexed into `knowledge`.
 - [ ] Entry point `python -m reasoning.reports.daily`; supercronic in Compose; `POST /reports/daily` on demand (≤ 7-day range).
 
 ### P6-J2 · Incident UI & PDF export — 5 pts · Must · E13 · FR-INC-04, FR-INC-06
+> **2026-10-08:** the incident PDF is built on the same pipeline (see P6-J1): A4, phase table, evidence grid, causal chain, factors, actions, limitations and the provenance sentence; written by the worker when a report is generated; *Download PDF* on the report page. Barlow / Source Serif 4 are used only where installed (the container has DejaVu).
 > **Status 2026-10-04 — partly built:** incidents list (severity filter) and report view with evidence chips, provenance note, notes and reviewed/closed. **Not done:** server-side PDF (the page offers print-to-PDF).
 - [x] Incidents list (filters, severity, status) and report view per §B.7 with EvidenceChips and ProvenanceNote.
-- [ ] Status/notes editing (operator+); incident PDF via the same PDF pipeline.
+- [x] Status/notes editing (operator+); incident PDF via the same PDF pipeline.
 
 ### P6-J3 · Incident indexing & similar incidents — 3 pts · Should · E13 · FR-INC-05
 > **Status 2026-10-04 — partly built:** the indexer writes event captions and incident-report sections to `knowledge` (dense bge-small + BM25, `vms_common.qdrant.knowledge`), search fuses them, and `GET /incidents/{id}/similar` returns up to 5 other reports (same event type boosted) shown on the report page. **Not done:** the assistant tool endpoints exposed per the frozen contract as a separate service API.
@@ -847,8 +849,9 @@
 - [ ] Shift-drag range → "Search in range" / "Save to case"; cases CRUD with bookmarked items and notes.
 
 ### P6-J5 · Daily reports UI — 2 pts · Must · E15 · FR-RPT-02, FR-RPT-04
+> **2026-10-08:** the report page has *Download PDF* beside print-to-PDF.
 > **Status 2026-10-04 — built, driven in a real browser:** reports list with live status, *Generate report* dialog (date range, ≤ 7 days), report page with the narrative, tiles, hourly chart, breakdowns, response times and the incident list, print-to-PDF.
-- [ ] Reports list, "Generate report" dialog (date range), status while generating, preview + download PDF.
+- [x] Reports list, "Generate report" dialog (date range), status while generating, preview + download PDF.
 
 ---
 

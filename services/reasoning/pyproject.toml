@@ -8,6 +8,7 @@ dependencies = [
     "tzdata>=2024.1",
     "vms-common[llm]",
     "vms-db",
+    "weasyprint>=62",
 ]
 
 [project.scripts]

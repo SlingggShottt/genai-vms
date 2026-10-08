@@ -39,6 +39,7 @@ async def _amain() -> None:
         region=settings.storage.region,
     )
     await s3.ensure_bucket(settings.evidence_bucket)
+    await s3.ensure_bucket(settings.reports_bucket)
     gateway = LLMGateway.from_settings(redis_settings=settings.redis)
     producer = KafkaProducerClient(bootstrap_servers=settings.kafka.bootstrap_servers)
     await producer.start()
