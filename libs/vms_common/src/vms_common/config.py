@@ -157,6 +157,19 @@ class LLMSettings(LLMProfileSettings):
         validation_alias=AliasChoices("VMS_LLM_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"),
     )
 
+    # hf_local (P5-D5): fine-tuned adapters served in-process.
+    hf_adapters_dir: str = Field(
+        default="~/.cache/vms/adapters", description="Where fetched LoRA adapters are cached"
+    )
+    hf_load_4bit: bool = Field(
+        default=True, description="Load the base model in 4-bit (bitsandbytes)"
+    )
+    hf_oom_retries: int = Field(
+        default=2,
+        ge=0,
+        description="On a CUDA out-of-memory, retry with half the frames this often",
+    )
+
     # GPU lease (design_architecture.md §11.3): one lease per GPU node.
     lease_node: str = Field(default="local", description="Names the GPU this process leases")
     lease_ttl_seconds: float = Field(

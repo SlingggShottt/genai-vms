@@ -31,6 +31,15 @@ llm = [
     "pyyaml>=6.0",
 ]
 
+# hf_local (P5-D5): fine-tuned LoRA adapters served in-process on the GPU. torch and transformers
+# are not listed: the GPU services pin them (torch 2.6.0 from the cu124 index), and a second pin here
+# would fight theirs. `uv sync --all-packages --extra hf` adds these three to that environment.
+hf = [
+    "peft>=0.13",
+    "bitsandbytes>=0.44",
+    "accelerate>=1.0",
+]
+
 # Text embeddings for the `knowledge` collection (bge-small dense + BM25 sparse), CPU/ONNX.
 knowledge = [
     "fastembed>=0.3,<0.6",

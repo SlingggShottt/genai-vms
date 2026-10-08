@@ -736,8 +736,9 @@
 - [ ] Fallback chain: TG adapter → zero-shot base → cloud profile, recorded in provenance.
 
 ### P5-D5 · Adapter serving (`hf_local`) — 3 pts · Must · E12
-- [ ] Gateway provider loads 4-bit base once and hot-swaps `tg` / `phavr` LoRA adapters via PEFT under the GPU lease.
-- [ ] Pixel/frame caps configurable; OOM caught → retry with fewer frames.
+> **2026-10-08 — backend built, verified on a tiny model only:** `llm/hf_local.py` (see design §8.3): base loaded once, adapters fetched and hot-swapped, frame back-off on out-of-memory, error translation, wired into the gateway when a profile uses `hf_local`. 22 unit tests with a fake runtime (mutation-checked) and a real run with a 10 M-parameter random Qwen2.5-VL through the real transformers, PEFT and bitsandbytes code in fp16 and 4-bit (base loaded once; plain, `tg` and `phavr` outputs differ and repeat; VRAM released on unload). **Not measured:** VRAM and latency of the real 3B model (download too slow here) and quality of any adapter (none trained).
+- [x] Gateway provider loads 4-bit base once and hot-swaps `tg` / `phavr` LoRA adapters via PEFT under the GPU lease.
+- [x] Pixel/frame caps configurable; OOM caught → retry with fewer frames.
 - [ ] Measured VRAM and latency per call documented.
 
 ## Jatin — 22 pts

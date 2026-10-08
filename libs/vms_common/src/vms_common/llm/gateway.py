@@ -133,9 +133,14 @@ class LLMGateway:
         registry = ModelRegistry.from_file(settings.models_path, profile=settings.profile)
         client = redis or get_redis_client(redis_settings)
         backend = LiteLLMBackend(settings)
+        backends: dict[str, Backend] = dict.fromkeys(LiteLLMBackend.PROVIDERS, backend)
+        if registry.uses_provider("hf_local"):  # only then: it pulls in torch on first use
+            from vms_common.llm.hf_local import HfLocalBackend  # noqa: PLC0415
+
+            backends["hf_local"] = HfLocalBackend(settings)
         return cls(
             registry,
-            dict.fromkeys(LiteLLMBackend.PROVIDERS, backend),
+            backends,
             lease=GPULease(client, node=settings.lease_node, ttl_s=settings.lease_ttl_seconds),
             cache=ResponseCache(client),
             lease_wait_s=settings.lease_wait_seconds,
