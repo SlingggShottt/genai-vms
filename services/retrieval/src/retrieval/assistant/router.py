@@ -13,7 +13,9 @@ from typing import Any
 from retrieval.domain.plan import categories_in, event_hints_in, find_date
 
 _COUNT = re.compile(r"\bhow many\b|\bnumber of\b|\bcount\b|\bpeak\b|\bbusiest\b|\bcrowded\b")
-_DAILY = re.compile(r"\bdaily report\b|\breport for\b|\bsummary of (the |yesterday|today)")
+_DAILY = re.compile(
+    r"\bdaily (?:\w+ )?report\b|\breport for\b|\bsummary of (the |yesterday|today)"
+)  # "daily security report" too
 _INCIDENT = re.compile(r"\bincidents?\b|\bincident reports?\b")
 _EVENT = re.compile(
     r"\bevents?\b|\balerts?\b|\bwhat happened\b|\bhappen(ed)?\b|\bserious\b|\bsuspicious\b|"
