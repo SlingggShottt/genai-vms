@@ -69,11 +69,12 @@
 - [x] `CODEOWNERS` created from `design_architecture.md §3`.
 
 ### P1-D2 · Shared runtime library v1 — 5 pts · Must · E01 · NFR-REL-01, NFR-OBS-01
+> **2026-10-08:** the integration test had never passed: its DLQ assertion looked headers up by `bytes` keys, but aiokafka returns `(str, bytes)` pairs, so the poison-message test raised `KeyError`. Fixed; both tests (consumed and committed; poison message to the DLQ with its origin topic and one attempt) pass, run against the dev broker with the same body because a second Kafka container did not fit in memory alongside the stack. The testcontainers fixture itself was not run.
 - [x] `vms_common.config` (pydantic-settings), `logging` (structlog JSON with context binding), `ids` (uuid7), `metrics` helpers.
 - [x] `vms_common.kafka`: async producer, consumer base class with validate → handle → commit, retry backoff, DLQ publish.
 - [x] `vms_common.storage`: S3 client (put/get/stream/presign), URI parse/build helpers.
 - [x] `contracts/segment.py` (`SegmentV1`) + fixture + round-trip test.
-- [ ] Integration test with testcontainers Kafka: message produced → consumed → committed; poison message → DLQ.
+- [x] Integration test with testcontainers Kafka: message produced → consumed → committed; poison message → DLQ.
       **Written** (`libs/vms_common/tests/integration/test_kafka_consumer.py`), **not executed** — no Docker daemon in
       the environment this was built in. Run `make test-int` (needs Docker) before trusting it fully.
 
@@ -499,7 +500,7 @@
       series (design §15). 320 unit tests; a 66-variant mutation check (break the gateway/lease/registry/cache/parser/
       adapter on purpose) kills all 66. Its first pass had 7 survivors: five were real test gaps (now covered), one was
       a redundant cache-key input (removed), one an equivalent mutant (dropped).
-- [ ] Benchmark note: latency + VRAM for `qwen2.5vl:3b` and `qwen2.5:3b` on 4 GB; model tags verified.
+- [x] Benchmark note: latency + VRAM for `qwen2.5vl:3b` and `qwen2.5:3b` on 4 GB; model tags verified.
       **Benchmark done, tag verification half done.** `ml/evaluation/results/p3-d3-llm-benchmark.md` (harness:
       `ml/evaluation/llm_benchmark.py`): the text model is 100 % on the GPU (2.4 GB, 0.25 s warm); the vision model
       is only ~53 % on the GPU (rest on CPU; 18–31 % beside perception) — 1 / 2 / 4 images ≈ 3 / 5 / 11 s warm,
