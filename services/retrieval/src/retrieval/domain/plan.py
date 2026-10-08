@@ -58,12 +58,20 @@ COLOR_WORDS: dict[str, str] = {
 }  # fmt: skip
 
 # event type hints from action words
+# Whole words (a plural "s"/"es" is allowed): "ran" must not be found inside "entrance" or "orange".
 EVENT_HINTS: dict[str, tuple[str, ...]] = {
-    "intrusion": ("intrusion", "intruder", "trespass", "restricted", "enter", "entered", "breach"),
+    "intrusion": (
+        "intrusion", "intruder", "trespass", "trespassing", "trespasser", "restricted", "enter",
+        "entered", "entering", "breach", "breached",
+    ),
     "loitering": ("loiter", "loitering", "lingering", "waiting", "standing around", "stationary"),
-    "crowding": ("crowd", "crowding", "gathering", "gathered", "many people", "group"),
-    "running": ("run", "running", "ran", "rushing", "sprinting", "chasing"),
+    "crowding": ("crowd", "crowding", "crowded", "gathering", "gathered", "many people", "group"),
+    "running": ("run", "running", "ran", "runner", "rushing", "sprinting", "chasing"),
     "abandoned_object": ("abandoned", "unattended", "left behind", "left a bag", "left bag"),
+}  # fmt: skip
+_HINT_RE = {
+    t: re.compile("|".join(rf"(?<![a-z]){re.escape(k)}(?:e?s)?(?![a-z])" for k in kws))
+    for t, kws in EVENT_HINTS.items()
 }
 
 _WORD = re.compile(r"[a-z]+")
@@ -90,23 +98,38 @@ def categories_in(text: str) -> list[str]:
     return [cat for cat, syn in CATEGORY_WORDS.items() if words.intersection(syn)]
 
 
+_NOT_A_COLOUR_AFTER_DARK = frozenset({"hours", "night", "outside", "conditions", "time"})
+
+
 def colors_in(text: str) -> list[str]:
+    """Colour words in `text`. "dark" means black clothing ("a dark jacket") but not the time of
+    day ("after dark", "in the dark"): it counts only when a describing word follows it."""
     seen: list[str] = []
-    for w in _words(text):
+    words = _words(text)
+    for i, w in enumerate(words):
         c = COLOR_WORDS.get(w)
+        if w == "dark":
+            following = words[i + 1] if i + 1 < len(words) else None
+            if following is None or following in _NOT_A_COLOUR_AFTER_DARK:
+                continue
         if c and c not in seen:
             seen.append(c)
     return seen
 
 
 def zones_in(text: str, known_zones: list[str]) -> list[str]:
+    """Areas the text names, as whole words ("gate" is not in "investigate")."""
     low = text.lower().replace("-", " ")
-    return [z for z in known_zones if z.lower().replace("-", " ") in low]
+    return [
+        z
+        for z in known_zones
+        if re.search(rf"(?<![a-z0-9]){re.escape(z.lower().replace('-', ' '))}(?![a-z0-9])", low)
+    ]
 
 
 def event_hints_in(text: str) -> list[str]:
     low = text.lower()
-    return [t for t, kws in EVENT_HINTS.items() if any(k in low for k in kws)]
+    return [t for t, rx in _HINT_RE.items() if rx.search(low)]
 
 
 _AGO = re.compile(r"\b(?:last|past)\s+(\d+)\s*(second|sec|minute|min|hour|hr|day)s?\b")
@@ -251,7 +274,14 @@ def finalize_plan(
     if text_colors and entities and not any("color" in e.attributes for e in entities):
         entities[0] = entities[0].model_copy(update={"attributes": {"color": text_colors[0]}})
 
-    zones = [z for z in {*plan.spatial.zones, *zones_in(query, known_zones)} if z in known_zones]
+    # An area the text names is the area. Only when it names none is the model's choice used (it may
+    # read "by the door" as the service door), and a small model answers "which areas?" by listing
+    # every area it was shown (recorded: four of five on a query naming one), so more than two
+    # is no choice at all.
+    zones = zones_in(query, known_zones)
+    if not zones:
+        chosen = [z for z in plan.spatial.zones if z in known_zones]
+        zones = chosen if len(chosen) <= 2 else []
     from_text = resolve_time(query, now, tz)
     if from_text:
         temporal = QueryTemporal(start=from_text[0], end=from_text[1])
