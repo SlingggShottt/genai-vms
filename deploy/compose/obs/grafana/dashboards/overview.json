@@ -6,7 +6,7 @@
  ],
  "timezone": "browser",
  "schemaVersion": 39,
- "version": 1,
+ "version": 2,
  "refresh": "30s",
  "time": {
   "from": "now-3h",
@@ -49,7 +49,7 @@
   {
    "id": 2,
    "type": "timeseries",
-   "title": "Segment \u2192 searchable, p95",
+   "title": "Segment → searchable, p95",
    "description": "Seconds from a segment's end to its twin being indexed: the pipeline's end-to-end lag",
    "datasource": {
     "type": "prometheus",
@@ -499,6 +499,279 @@
      "expr": "sum by (narrative) (increase(vms_reasoning_daily_reports_total[24h]))",
      "legendFormat": "daily reports {{narrative}} (24 h)",
      "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 15,
+   "type": "timeseries",
+   "title": "Consumer lag",
+   "description": "Messages a consumer group has not committed yet (design §15). Should return to ~0 after a burst.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 45,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (group, topic) (vms_kafka_consumer_lag)",
+     "legendFormat": "{{group}} / {{topic}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 16,
+   "type": "timeseries",
+   "title": "Messages dead-lettered, per hour",
+   "description": "Messages a consumer gave up on after three tries. Replay with python -m vms_common.kafka.dlq_replay.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 45,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (group, topic) (increase(vms_kafka_dlq_total[1h]))",
+     "legendFormat": "{{group}} / {{topic}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 17,
+   "type": "timeseries",
+   "title": "GPU memory",
+   "description": "The whole card (nvidia-smi), not one process. Reported by perception on the GPU host.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 45,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "max by (node, gpu) (vms_gpu_memory_bytes{kind=\"used\"})",
+     "legendFormat": "used {{node}}/{{gpu}}",
+     "refId": "A"
+    },
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "max by (node, gpu) (vms_gpu_memory_bytes{kind=\"total\"})",
+     "legendFormat": "total {{node}}/{{gpu}}",
+     "refId": "B"
+    }
+   ]
+  },
+  {
+   "id": 18,
+   "type": "timeseries",
+   "title": "Segments ingested per minute, by camera",
+   "description": "Zero for a camera that should be recording means its stream is down.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 53,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (camera) (rate(vms_ingest_segments_total[5m]))*60",
+     "legendFormat": "{{camera}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 19,
+   "type": "timeseries",
+   "title": "HTTP requests per second",
+   "description": "api and retrieval; /health, /ready and /metrics are not counted.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 53,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "reqps"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (service) (rate(vms_http_request_seconds_count[5m]))",
+     "legendFormat": "{{service}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 20,
+   "type": "timeseries",
+   "title": "Share of requests ending in a 5xx",
+   "description": "From vms_http_request_seconds; the ApiServerErrors alert fires above 5 %.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 53,
+    "w": 8,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (service) (rate(vms_http_request_seconds_count{status=\"5xx\"}[5m])) / sum by (service) (rate(vms_http_request_seconds_count[5m]))",
+     "legendFormat": "{{service}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 21,
+   "type": "timeseries",
+   "title": "Request time by route, p95 (slowest 8)",
+   "description": "Streamed answers (assistant, search) count until their last byte, so they are long by design.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 61,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "topk(8, histogram_quantile(0.95, sum by (le, service, route) (rate(vms_http_request_seconds_bucket[5m]))))",
+     "legendFormat": "{{service}} {{route}}",
+     "refId": "A"
+    }
+   ]
+  },
+  {
+   "id": 22,
+   "type": "stat",
+   "title": "Alerts firing",
+   "description": "From the rules in deploy/compose/obs/alerts.yml; empty is good.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "vms-prometheus"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 61,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short"
+    },
+    "overrides": []
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "prometheus",
+      "uid": "vms-prometheus"
+     },
+     "expr": "sum by (alertname, severity) (ALERTS{alertstate=\"firing\"})",
+     "legendFormat": "{{alertname}} ({{severity}})",
+     "refId": "A"
     }
    ]
   }

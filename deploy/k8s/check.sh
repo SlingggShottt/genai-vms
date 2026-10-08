@@ -61,4 +61,18 @@ for overlay in minikube gpu host-gpu; do
       ;;
   esac
 done
+# The observability layer (PodMonitors, PrometheusRule, dashboard). Its custom resources are checked
+# against the community CRD schemas, fetched from the network.
+echo "== obs"
+check "the PrometheusRule is in sync with deploy/compose/obs/alerts.yml" \
+  python3 deploy/k8s/obs/render_rules.py --check
+obs="$tmp/obs.yaml"
+kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/k8s/obs >"$obs"
+kubeconform -strict -summary -kubernetes-version "$K8S_VERSION" -schema-location default \
+  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+  "$obs" | tail -1
+check "two PodMonitors (workers, api+retrieval)" bash -c "[ \"\$(grep -c '^kind: PodMonitor' '$obs')\" = 2 ]"
+check "the dashboard is labelled for Grafana's sidecar" grep -q 'grafana_dashboard: "1"' "$obs"
+check "service is set from the pod's name label" grep -q 'targetLabel: service' "$obs"
+
 [ "$fail" -eq 0 ] && echo "all overlays render and check out" || { echo "some checks failed" >&2; exit 1; }

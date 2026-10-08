@@ -1,0 +1,40 @@
+# helm install kps prometheus-community/kube-prometheus-stack -n monitoring --create-namespace \
+#   -f deploy/k8s/obs/kube-prometheus-stack-values.yaml
+# Sized for one minikube node. Not rendered or installed anywhere yet (README.md).
+prometheus:
+  prometheusSpec:
+    # Pick up PodMonitors and PrometheusRules from every namespace, whatever their labels: the
+    # defaults only select objects labelled with this Helm release, which ours are not.
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    retention: 7d
+    resources:
+      requests: { cpu: 100m, memory: 400Mi }
+      limits: { memory: 1Gi }
+grafana:
+  # Create the secret first:
+  #   kubectl -n monitoring create secret generic grafana-admin \
+  #     --from-literal=admin-user=admin --from-literal=admin-password=<choose one>
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+    datasources:
+      # The dashboard's panels name their datasource by this uid (the Compose Grafana uses it too).
+      uid: vms-prometheus
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 384Mi }
+# Nothing in the minikube overlay needs these; they only add pods.
+alertmanager:
+  enabled: false
+kubeEtcd: { enabled: false }
+kubeScheduler: { enabled: false }
+kubeControllerManager: { enabled: false }

@@ -1,0 +1,86 @@
+# Alert rules (P7-D3). Prometheus loads this file (`rule_files` in prometheus.yml); the Kubernetes
+# PrometheusRule in deploy/k8s/obs/ is generated from it (`deploy/k8s/obs/render_rules.py`), so
+# edit here. Thresholds come from docs/SRS.md NFR-PERF-0x where one exists and are otherwise a
+# first guess to adjust after watching a real day. Tested with `promtool test rules` (alerts_test.yml).
+groups:
+  - name: vms-pipeline
+    rules:
+      - alert: ServiceDown
+        # A service has two scrape targets (containers and host); it is down when neither answers.
+        expr: max by (service) (up) == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.service }} is not answering its metrics endpoint"
+
+      - alert: NoSegmentsIngested
+        expr: sum by (camera) (increase(vms_ingest_segments_total[10m])) == 0
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "No new segments from {{ $labels.camera }} for 15 minutes"
+          description: "Check the camera stream and the ingestion service."
+
+      - alert: ConsumerLagHigh
+        expr: sum by (group, topic) (vms_kafka_consumer_lag) > 200
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.group }} is {{ $value }} messages behind on {{ $labels.topic }}"
+
+      - alert: IndexerSlow
+        # NFR-PERF-02: ingest -> indexed p95 <= 30 s.
+        expr: histogram_quantile(0.95, sum by (le) (rate(vms_indexer_lag_seconds_bucket[10m]))) > 30
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Footage takes {{ $value | humanizeDuration }} (p95) to become searchable; the target is 30 s"
+
+      - alert: MessagesDeadLettered
+        expr: sum by (group, topic) (increase(vms_kafka_dlq_total[15m])) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.group }} gave up on {{ $value }} message(s) from {{ $labels.topic }}"
+          description: "List them with `python -m vms_common.kafka.dlq_replay --list`, fix the cause, replay."
+
+  - name: vms-genai
+    rules:
+      - alert: ModelCallsFailing
+        # More than a fifth of model calls over ten minutes did not succeed (timeouts, unavailable).
+        expr: |
+          sum by (provider) (rate(vms_llm_request_seconds_count{status!="ok"}[10m]))
+            / sum by (provider) (rate(vms_llm_request_seconds_count[10m])) > 0.2
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $value | humanizePercentage }} of {{ $labels.provider }} model calls are failing"
+
+      - alert: ReasoningQueueBacklog
+        expr: vms_reasoning_queue_depth_jobs > 10
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $value }} reasoning jobs are waiting"
+
+      - alert: GpuMemoryNearlyFull
+        expr: |
+          max by (node, gpu) (vms_gpu_memory_bytes{kind="used"})
+            / max by (node, gpu) (vms_gpu_memory_bytes{kind="total"}) > 0.95
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "GPU {{ $labels.gpu }} on {{ $labels.node }} is {{ $value | humanizePercentage }} full"
+          description: "Two models are probably resident at once; check the GPU lease."
+
+  - name: vms-api
+    rules:
+      - alert: ApiServerErrors
+        # Needs some traffic, so a single failed request on a quiet system does not page anyone.
+        expr: |
+          sum by (service) (rate(vms_http_request_seconds_count{status="5xx"}[5m]))
+            / sum by (service) (rate(vms_http_request_seconds_count[5m])) > 0.05
+          and sum by (service) (rate(vms_http_request_seconds_count[5m])) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.service }}: {{ $value | humanizePercentage }} of requests end in a 5xx"

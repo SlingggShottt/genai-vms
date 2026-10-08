@@ -39,6 +39,7 @@ jobs:
       camera_sim: ${{ steps.filter.outputs.camera_sim }}
       annotation_kit: ${{ steps.filter.outputs.annotation_kit }}
       ml_tooling: ${{ steps.filter.outputs.ml_tooling }}
+      obs: ${{ steps.filter.outputs.obs }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
@@ -85,6 +86,10 @@ jobs:
               - 'ml/training/**'
               - 'services/reasoning/**'  # the dataset builder's tests check its prompt against the service's
               - 'tools/annotation_kit/**'
+            obs:
+              - 'deploy/compose/obs/**'
+              - 'deploy/k8s/obs/**'
+              - '.github/workflows/ci.yml'
             frontend:
               - 'frontend/**'
 
@@ -332,6 +337,18 @@ jobs:
       - run: uv run ruff format --check ml/evaluation ml/training
       - run: uv run pytest ml/evaluation ml/training -m "not integration"
 
+  # --- Alert rules ------------------------------------------------------------
+  obs-rules:
+    needs: changes
+    if: needs.changes.outputs.obs == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # promtool ships in the Prometheus image. The rules are tested against synthetic series, and
+      # every dashboard expression is parsed, with the same Prometheus version the Compose file runs.
+      - name: Check and test the alert rules
+        run: make obs-test
+
   # --- Frontend --------------------------------------------------------------
 
   frontend:
@@ -455,6 +472,7 @@ jobs:
       - lint-test-camera-sim
       - lint-test-annotation-kit
       - lint-test-ml-tooling
+      - obs-rules
       - frontend
       - docker-build-api
       - docker-build-ingestion

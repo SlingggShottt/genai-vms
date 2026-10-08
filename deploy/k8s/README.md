@@ -92,6 +92,26 @@ metrics-server (`minikube addons enable metrics-server`); without it the autosca
 yesterday's report itself after `daily_report_hour` (06:00 site time, `daily_report_auto`) and skips a
 day that is already scheduled, so a CronJob would only duplicate it.
 
+## Observability
+
+`deploy/k8s/obs/` is the monitoring layer: two `PodMonitor`s (the workers on their `metrics` port, the
+api and retrieval on `/metrics`; `service` is taken from the pod's name label), a `PrometheusRule` generated
+from `deploy/compose/obs/alerts.yml` (`python deploy/k8s/obs/render_rules.py`; `make k8s-check` fails when
+it is stale), the Grafana dashboard as a ConfigMap for the chart's sidecar, and values for
+[kube-prometheus-stack](https://github.com/prometheus-community/helm-charts).
+
+```bash
+kubectl create namespace monitoring
+kubectl -n monitoring create secret generic grafana-admin --from-literal=admin-user=admin --from-literal=admin-password=<choose one>
+helm install kps prometheus-community/kube-prometheus-stack -n monitoring -f deploy/k8s/obs/kube-prometheus-stack-values.yaml
+kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/k8s/obs | kubectl apply -f -
+```
+
+Checked: the values render with the real chart (`helm template`: the selectors are empty so every
+PodMonitor and rule is picked up, the Prometheus datasource has the uid the dashboard uses, the Grafana
+admin comes from the secret) and the custom resources pass `kubeconform` against the CRD schemas.
+**Not checked:** an install on a cluster, i.e. that Prometheus actually scrapes the pods.
+
 ## Not verified
 
 - No cluster was available while writing this: the **manifests have never been applied**.
