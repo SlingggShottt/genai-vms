@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from vms_common.http_metrics import HttpMetricsMiddleware
 from vms_common.logging import configure_logging, get_logger
 from vms_common.redis import get_redis_client
 from vms_common.storage.s3 import S3Client
@@ -181,6 +182,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     )
     app.add_middleware(RequestIDMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(HttpMetricsMiddleware, service="api")
 
     register_exception_handlers(app)
     app.include_router(health_router)

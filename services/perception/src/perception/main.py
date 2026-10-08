@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import asyncio
 
+from vms_common.config import LLMSettings
 from vms_common.contracts.segment import SegmentV1
+from vms_common.gpu_metrics import start_gpu_metrics
 from vms_common.kafka.producer import KafkaProducerClient
 from vms_common.logging import configure_logging, get_logger
 from vms_common.metrics import serve as serve_metrics
@@ -32,6 +34,7 @@ async def _amain() -> None:
     configure_logging()
     serve_metrics(9102)  # Prometheus scrape port, design §15
     settings = PerceptionSettings()
+    gpu_reporter = start_gpu_metrics(LLMSettings().lease_node)  # vms_gpu_memory_bytes
 
     s3 = S3Client(
         endpoint_url=settings.storage.endpoint_url,
@@ -93,6 +96,8 @@ async def _amain() -> None:
             await consumer.run()
     finally:
         refresh_task.cancel()
+        if gpu_reporter is not None:
+            gpu_reporter.cancel()
         await producer.stop()
         await redis_client.aclose()
 
