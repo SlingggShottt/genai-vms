@@ -617,10 +617,11 @@
 ## Divyansh — 23 pts
 
 ### P4-D1 · Retrieval service & query decomposition — 5 pts · Must · E11 · FR-SRC-01, FR-SRC-02
+> **2026-10-08:** 30 golden queries (20 vocabulary, 10 replaying what `qwen2.5:3b` really answered; `services/retrieval/tests/unit/test_golden_queries.py`). They found three planner bugs, fixed: a model that lists every area it was shown became a zone filter, event words matched inside other words (`ran` in *entrance* and *orange*), and *after dark* became the colour black.
 > **Status 2026-10-04 — partly built** (`services/retrieval`): `POST /search` with `fast`/`reason`, plan from the keyword vocabulary or `query_decompose/1.0` (categories mapped to the detector's, times from the text), search log. **Not done:** the 30 golden query → plan tests with `FakeGateway` recordings.
 - [x] `services/retrieval` FastAPI app; `POST /search` accepts query, filters, `mode=fast|reason`.
 - [x] Prompt `query_decompose/1.0` → `QueryPlan` validated; relative times resolved with site timezone; filters from request override plan.
-- [ ] 30 golden query → plan tests (with `FakeGateway` recordings) covering attributes, time, zones, implicit actions.
+- [x] 30 golden query → plan tests (with `FakeGateway` recordings) covering attributes, time, zones, implicit actions.
 
 ### P4-D2 · Coarse hybrid retrieval — 8 pts · Must · E11 · FR-SRC-03, FR-SRC-10
 > **Status 2026-10-04 — partly built:** SigLIP 2 text encoder on CPU, `frames` + `tracks` search with plan filters, RRF, 10 s windows, per-stage timings. `knowledge` (dense + BM25) is searched and fused with Postgres full-text on captions. `mode=fast` measured at p95 0.25 s (30 fresh queries, `ml/evaluation/results/p7-latency.md`). The `mode=fast` p95 ≤ 1 s criterion is met.
@@ -788,22 +789,25 @@
 ## Divyansh — 23 pts
 
 ### P6-D1 · Incident report synthesis — 8 pts · Must · E13 · FR-INC-01…03
+> **2026-10-08:** golden tests on five real evidence bundles (`services/reasoning/tests/unit/test_incident_synthesis.py`, fixtures from stored incidents): schema-valid, citations valid, an invented id quoted back and corrected, an uncited claim dropped, a model that is down failing with its reason. Mutation-checked.
 > **Status 2026-10-04 — partly built:** two schema-validated steps (stage summaries; causal chain, factors, actions) with citation checks, ≤ 2 retries quoting the problems, uncited claims dropped (never patched), `failed` with the raw output kept; `reasoning.incidents` + `incidentready.v1`. **Not done:** golden tests on 5 fixture bundles, S3 copy of the report, WS `incident.ready`.
 - [x] Hierarchical prompts: phase summaries → causal chain & contributing factors → final report, each schema-validated.
 - [x] Citation validator (every evidence id exists; each causal step and factor has ≥ 1); retry with error text ≤ 2; `failed` status with raw output.
 - [ ] Persists `reasoning.incidents` (JSONB + S3 copy), publishes `incidentready.v1`, WS `incident.ready`.
-- [ ] Golden tests on 5 fixture evidence bundles (schema-valid, citations valid).
+- [x] Golden tests on 5 fixture evidence bundles (schema-valid, citations valid).
 
 ### P6-D2 · RAG assistant agent & streaming — 8 pts · Must · E14 · FR-AST-02…04, FR-AST-06
+> **2026-10-08:** 25+ scripted conversations (`tests/unit/test_assistant.py`): the lookup each question gets, whole turns with a scripted model, citations resolved server-side, unknown tags reported, a repeated lookup stopped. They found that *daily security report* was not routed (fixed).
 > **Status 2026-10-04 — partly built** (`services/retrieval/src/retrieval/assistant`): seven parameterised tools (`search_footage`, `list_events`, `list_incidents`, `get_incident`, `get_timeline`, `count_objects` over `vision.minute_counts`, `get_daily_report`); SSE `tool_call`, `tool_result`, `token`, `citation`, `done`, `error`; citation tags resolved server-side. The local model has no native tool calling, so clear questions are routed by keywords and only the rest go to a JSON-action planner (≤ 4 calls). **Not done:** the 25 scripted `FakeGateway` conversations, `zone` in `count_objects` (counts are per camera), a rate/size cap on tool results beyond truncation.
 - [x] Tools per design §10.3 with JSON schemas; `count_objects` uses pre-defined parameterized SQL only.
 - [ ] Agent loop (≤ 5 tool rounds), citation format enforcement, "nothing found" behaviour.
 - [x] `POST /assistant/sessions/{id}/messages` streams SSE events `token`, `tool_call`, `tool_result`, `citation`, `done`, `error`.
-- [ ] 25 scripted conversations pass tool-selection and citation checks with `FakeGateway` recordings.
+- [x] 25 scripted conversations pass tool-selection and citation checks with `FakeGateway` recordings.
 
 ### P6-D3 · Conversation memory — 2 pts · Should · E14 · FR-AST-01, FR-AST-05
+> **2026-10-08:** memory is now unit-tested (`tests/unit/test_assistant.py`): the 12-message window, the rolling summary, tool output cut to its budget.
 > **Status 2026-10-04 — built, not unit-tested end to end:** sessions and messages in `retrieval.chat_sessions` / `chat_messages` (migration 0010), last 12 messages verbatim plus a rolling summary updated in the background, tool output truncated.
-- [ ] Sessions/messages persisted; last 12 messages + rolling summary; tool results truncated to budget.
+- [x] Sessions/messages persisted; last 12 messages + rolling summary; tool results truncated to budget.
 
 ### P6-D4 · Assistant UI — 5 pts · Must · E14 · FR-AST-01, FR-AST-03
 > **Status 2026-10-04 — built, driven in a real browser:** conversation list, streaming chat, tool activity with what each lookup found, citation chips (event → its alert page, incident → report, footage → playback at the moment), starter questions from the last 24 h, stop button, retry. Records the model did not cite are shown as "Records consulted", never as its citations.
@@ -876,8 +880,9 @@
 
 ### P7-D5 · Resilience tests — 3 pts · Must · E17 · NFR-REL-01…04
 > **Status 2026-10-04 — partly built, run on the stack:** `python -m vms_common.kafka.dlq_replay` (list, filter by topic, dry run, limit; unit-tested planning); `ml/evaluation/resilience/chaos.py` restarted the indexer, events and correlation five times in 7 minutes while footage flowed — 42 segments, 839/839 frame points and 1,403/1,403 track points in Qdrant, no sequence gap, no missing twin, no event in two groups (`ml/evaluation/results/p7-resilience.md`); `llm_down.py` shows every GenAI feature degrading with Ollama stopped — fast search unaffected, reason search falls back with a note, the assistant says the model is unavailable, the daily report uses its template, an analysis job fails with a reason, the gate holds candidates with back-off and drops none (`p7-degradation.md`). The harness also found a real bug: ingestion's ffmpeg segmenter had no input timeout, so a publisher that stopped sending without closing its connection left it blocked forever and recording stopped silently; fixed (socket timeout + no-progress watchdog, verified with a frozen publisher: reconnects in 13 s, recording resumes in 26 s). **Not done:** restarting the recorder and perception under load, pod-kill runs on Kubernetes.
+> **2026-10-08:** the degradation is now also pinned by unit tests (phase location falls back to the detector's timing, an unreadable view is left out, a report step with the model down fails with its reason; golden synthesis tests on five real evidence bundles). The chaos script restarts the three consumers only; ingestion, reasoning, retrieval and the api are not restarted by it, so the first item stays open.
 - [ ] Chaos script restarts each worker mid-stream; verifies zero missing segments/events and no duplicates.
-- [ ] DLQ replay tool; GPU/LLM-down scenario shows graceful degradation.
+- [x] DLQ replay tool; GPU/LLM-down scenario shows graceful degradation.
 
 ## Jatin — 23 pts
 
