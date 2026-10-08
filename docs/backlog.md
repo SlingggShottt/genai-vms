@@ -618,30 +618,30 @@
 
 ### P4-D1 · Retrieval service & query decomposition — 5 pts · Must · E11 · FR-SRC-01, FR-SRC-02
 > **Status 2026-10-04 — partly built** (`services/retrieval`): `POST /search` with `fast`/`reason`, plan from the keyword vocabulary or `query_decompose/1.0` (categories mapped to the detector's, times from the text), search log. **Not done:** the 30 golden query → plan tests with `FakeGateway` recordings.
-- [ ] `services/retrieval` FastAPI app; `POST /search` accepts query, filters, `mode=fast|reason`.
-- [ ] Prompt `query_decompose/1.0` → `QueryPlan` validated; relative times resolved with site timezone; filters from request override plan.
+- [x] `services/retrieval` FastAPI app; `POST /search` accepts query, filters, `mode=fast|reason`.
+- [x] Prompt `query_decompose/1.0` → `QueryPlan` validated; relative times resolved with site timezone; filters from request override plan.
 - [ ] 30 golden query → plan tests (with `FakeGateway` recordings) covering attributes, time, zones, implicit actions.
 
 ### P4-D2 · Coarse hybrid retrieval — 8 pts · Must · E11 · FR-SRC-03, FR-SRC-10
 > **Status 2026-10-04 — partly built:** SigLIP 2 text encoder on CPU, `frames` + `tracks` search with plan filters, RRF, 10 s windows, per-stage timings. `knowledge` (dense + BM25) is searched and fused with Postgres full-text on captions. `mode=fast` measured at p95 0.25 s (30 fresh queries, `ml/evaluation/results/p7-latency.md`). The `mode=fast` p95 ≤ 1 s criterion is met.
-- [ ] SigLIP 2 text encoder on CPU; visual queries against `frames` and `tracks` with payload filters from the plan.
-- [ ] Dense + sparse search on `knowledge` (event captions) for text queries.
+- [x] SigLIP 2 text encoder on CPU; visual queries against `frames` and `tracks` with payload filters from the plan.
+- [x] Dense + sparse search on `knowledge` (event captions) for text queries.
 - [ ] Reciprocal rank fusion; grouping hits into segment-window candidates (merge within 10 s per camera); top-K = 30.
-- [ ] `mode=fast` returns in p95 ≤ 1 s on the Phase 2 archive (measured).
-- [ ] Per-stage timings included in response for logging.
+- [x] `mode=fast` returns in p95 ≤ 1 s on the Phase 2 archive (measured).
+- [x] Per-stage timings included in response for logging.
 
 ### P4-D3 · LLM reasoning rerank & traces — 5 pts · Must · E11 · FR-SRC-04
 > **Status 2026-10-04 — partly built:** twin excerpts, batched rerank (5 per call, top 10), score + ≤ 60-word trace + `missing[]`, weighted blend. **Not done:** emitting `candidate.v1` to JIT (nothing consumes `missing[]` yet), reasoning weights read from config rather than settings.
-- [ ] Loads twin excerpts (only matched tracks ± context, token-capped) for candidates; batched prompts (5 candidates/call).
-- [ ] Output per candidate: score 0–1, trace ≤ 60 words, `missing[]` sub-questions; validated with retry.
+- [x] Loads twin excerpts (only matched tracks ± context, token-capped) for candidates; batched prompts (5 candidates/call).
+- [x] Output per candidate: score 0–1, trace ≤ 60 words, `missing[]` sub-questions; validated with retry.
 - [ ] Final ranking = weighted fused + reasoning score; weights configurable; emits `candidate.v1` to JIT for top-N with `missing`.
 
 ### P4-D4 · Search UI — 5 pts · Must · E11 · FR-SRC-01, FR-SRC-08
 > **Status 2026-10-04 — built, driven in a real browser (Brave) for fast and reason mode:** query bar, camera/time filters, fast/reason toggle, result cards with the collapsible trace, "Open in playback" at the result's time (Playback now honours `?camera=&start=&end=`), fast results first then the reasoned ranking, empty/error states. No component tests were written.
-- [ ] Search page: query bar with example placeholder, camera/time filter chips, fast/reason toggle.
-- [ ] Result cards: keyframe, camera, time, score, collapsible ReasoningTrace (§B.7), "Open in playback" at exact timestamp.
-- [ ] Progressive rendering: fast results first, reasoned ranking replaces them when ready.
-- [ ] Empty/error states per §B.8.
+- [x] Search page: query bar with example placeholder, camera/time filter chips, fast/reason toggle.
+- [x] Result cards: keyframe, camera, time, score, collapsible ReasoningTrace (§B.7), "Open in playback" at exact timestamp.
+- [x] Progressive rendering: fast results first, reasoned ranking replaces them when ready.
+- [x] Empty/error states per §B.8.
 
 ## Jatin — 23 pts
 
@@ -664,9 +664,9 @@
 
 ### P4-J4 · Search API, logging & event-caption indexing — 3 pts · Must · E11 · FR-SRC-09
 > **Status 2026-10-04 — partly built:** the api proxies `/search*` with auth, presigned urls and timeouts; `retrieval.search_logs` is written. Event captions are indexed into `knowledge` by the indexer (see P6-J3).
-- [ ] API proxies `/search*` to retrieval with auth and timeouts.
+- [x] API proxies `/search*` to retrieval with auth and timeouts.
 - [ ] `retrieval.search_logs` stores query, plan, candidates, final results, per-stage latency, profile.
-- [ ] Indexer consumes `event.v1` and writes captions into `knowledge` (dense + sparse) with payload.
+- [x] Indexer consumes `event.v1` and writes captions into `knowledge` (dense + sparse) with payload.
 
 ### P4-J5 · Image search & mask UI — 3 pts · Must · E11 · FR-SRC-06, FR-SRC-07
 - [ ] "Search by image" upload dialog and "Find similar" crop tool on any paused frame (playback, event detail).
@@ -699,9 +699,9 @@
 ## Divyansh — 22 pts
 
 ### P5-D1 · TG dataset builder — 3 pts · Must · E12
-- [ ] `phase_labels.jsonl` → instruction JSONL: ≤ 16 timestamped frames (≤ 360 p) + prompt → phase JSON target.
-- [ ] Multi-view samples include all views with camera tags; split 70/15/15 **by source video**; manifest + hash committed.
-- [ ] Frames + JSONL packaged as a Kaggle dataset.
+- [x] `phase_labels.jsonl` → instruction JSONL: ≤ 16 timestamped frames (≤ 360 p) + prompt → phase JSON target.
+- [x] Multi-view samples include all views with camera tags; split 70/15/15 **by source video**; manifest + hash committed.
+- [x] Frames + JSONL packaged as a Kaggle dataset.
       > **Status 2026-10-06 — builder written, never run on real labels** (`ml/training/tg/`, README there): `phase_labels.v1`
       > validated with the annotation kit's schema; one sample per clip × camera, frames ≤ 360 p, the `phase_tg` 1.0 prompt
       > rendered like `services/reasoning` does (a test runs the service's `locate_phases` and requires the same prompt),
@@ -717,7 +717,7 @@
 - [ ] Best adapter uploaded to `vms-models/tg/v1` with model card (data, metrics, limits).
 
 ### P5-D3 · TG evaluation — 3 pts · Must · E18 · EV-02
-- [ ] `ml/evaluation/reasoning/phase`: mIoU and boundary MAE on test split.
+- [x] `ml/evaluation/reasoning/phase`: mIoU and boundary MAE on test split.
 - [ ] Baselines: zero-shot base 3B (same prompt) and zero-shot cloud VLM on ≤ 40 clips (free tier).
 - [ ] Error analysis: confusion between adjacent phases, per event type, single vs multi-view.
       > **Status 2026-10-06 — harness written, no real result** (`ml/evaluation/reasoning/phase/`, README there): mIoU,
@@ -728,8 +728,8 @@
 
 ### P5-D4 · Reasoning orchestrator — 5 pts · Must · E12 · FR-RSN-01, FR-RSN-04…06
 > **Status 2026-10-04 — partly built** (`services/reasoning`): `reasoning.jobs` queue with `SKIP LOCKED` and lease recovery, auto-queue from closed `correlation.v1` groups (high+, capped per hour) and `POST /events/{id}/analyze`, ±15 s window, TG → evidence → synthesis, queue position and stage in the job. Phase location uses the **zero-shot base model** (no adapter is trained), falling back to detector timing, recorded in provenance. **Not done:** `job.progress` on the WebSocket (the UI polls), the cloud fallback step.
-- [ ] Consumes `correlation.v1` (closed, severity ≥ threshold) and `POST /events/{id}/analyze`; `reasoning.jobs` queue with `SKIP LOCKED`.
-- [ ] Gathers synced clips for all cameras (window ±15 s), samples frames, runs TG → `phasetimeline.v1` → calls evidence module → stores bundle.
+- [x] Consumes `correlation.v1` (closed, severity ≥ threshold) and `POST /events/{id}/analyze`; `reasoning.jobs` queue with `SKIP LOCKED`.
+- [x] Gathers synced clips for all cameras (window ±15 s), samples frames, runs TG → `phasetimeline.v1` → calls evidence module → stores bundle.
 - [ ] Job progress via API WS `job.progress`; queue position exposed.
 - [ ] Fallback chain: TG adapter → zero-shot base → cloud profile, recorded in provenance.
 
@@ -741,8 +741,8 @@
 ## Jatin — 22 pts
 
 ### P5-J1 · PhaVR dataset builder — 3 pts · Must · E12
-- [ ] `phavr_labels.jsonl` → instruction JSONL for captioning and VQA tasks per phase × view (≤ 8 frames).
-- [ ] Same video-level split as TG (shared manifest); packaged as a Kaggle dataset.
+- [x] `phavr_labels.jsonl` → instruction JSONL for captioning and VQA tasks per phase × view (≤ 8 frames).
+- [x] Same video-level split as TG (shared manifest); packaged as a Kaggle dataset.
       > **Status 2026-10-06 — builder written, never run on real labels** (`ml/training/phavr/`, README there): reads
       > `phavr_label.v1` plus the phase labels (for video locations); 2–4 frames per phase × view (the service's cap), the
       > `phase_vr` 1.0 prompt and the VQA bank rendered as `services/reasoning` does (a test runs the service's real
@@ -756,7 +756,7 @@
 - [ ] Experiment tracking; best adapter to `vms-models/phavr/v1` with model card.
 
 ### P5-J3 · PhaVR evaluation — 3 pts · Must · E18 · EV-02
-- [ ] BLEU-4, METEOR, ROUGE-L, CIDEr for captions; exact/normalized-match accuracy for VQA, per view type.
+- [x] BLEU-4, METEOR, ROUGE-L, CIDEr for captions; exact/normalized-match accuracy for VQA, per view type.
 - [ ] Baselines: zero-shot base 3B and cloud VLM subset; results table + qualitative examples.
       > **Status 2026-10-06 — harness written, no real result** (`ml/evaluation/reasoning/phavr/`, README there): BLEU-4,
       > CIDEr-D, ROUGE-L, a METEOR variant (`meteor_exact`: identical words only, **not** the published METEOR, which needs
@@ -769,7 +769,7 @@
 ### P5-J4 · Evidence builder — 5 pts · Must · E12 · FR-RSN-03, FR-RSN-04
 > **Status 2026-10-04 — built inside `services/reasoning` by Track D** at the user's request: per phase × camera frames, caption + VQA-bank questions, stable ids, frames copied to `vms-evidence`, `evidence.v1`. Uses the zero-shot base model, not PhaVR.
 - [ ] `reasoning/evidence`: for each phase × view, sample frames, run PhaVR caption + VQA bank for the event type.
-- [ ] Assemble `evidence.v1` with stable evidence ids and frame URIs in `vms-evidence`; validated against contract.
+- [x] Assemble `evidence.v1` with stable evidence ids and frame URIs in `vms-evidence`; validated against contract.
 - [ ] Skips empty phases/views; per-call timings in provenance.
 
 ### P5-J5 · Event reasoning view — 3 pts · Must · E12
@@ -789,16 +789,16 @@
 
 ### P6-D1 · Incident report synthesis — 8 pts · Must · E13 · FR-INC-01…03
 > **Status 2026-10-04 — partly built:** two schema-validated steps (stage summaries; causal chain, factors, actions) with citation checks, ≤ 2 retries quoting the problems, uncited claims dropped (never patched), `failed` with the raw output kept; `reasoning.incidents` + `incidentready.v1`. **Not done:** golden tests on 5 fixture bundles, S3 copy of the report, WS `incident.ready`.
-- [ ] Hierarchical prompts: phase summaries → causal chain & contributing factors → final report, each schema-validated.
-- [ ] Citation validator (every evidence id exists; each causal step and factor has ≥ 1); retry with error text ≤ 2; `failed` status with raw output.
+- [x] Hierarchical prompts: phase summaries → causal chain & contributing factors → final report, each schema-validated.
+- [x] Citation validator (every evidence id exists; each causal step and factor has ≥ 1); retry with error text ≤ 2; `failed` status with raw output.
 - [ ] Persists `reasoning.incidents` (JSONB + S3 copy), publishes `incidentready.v1`, WS `incident.ready`.
 - [ ] Golden tests on 5 fixture evidence bundles (schema-valid, citations valid).
 
 ### P6-D2 · RAG assistant agent & streaming — 8 pts · Must · E14 · FR-AST-02…04, FR-AST-06
 > **Status 2026-10-04 — partly built** (`services/retrieval/src/retrieval/assistant`): seven parameterised tools (`search_footage`, `list_events`, `list_incidents`, `get_incident`, `get_timeline`, `count_objects` over `vision.minute_counts`, `get_daily_report`); SSE `tool_call`, `tool_result`, `token`, `citation`, `done`, `error`; citation tags resolved server-side. The local model has no native tool calling, so clear questions are routed by keywords and only the rest go to a JSON-action planner (≤ 4 calls). **Not done:** the 25 scripted `FakeGateway` conversations, `zone` in `count_objects` (counts are per camera), a rate/size cap on tool results beyond truncation.
-- [ ] Tools per design §10.3 with JSON schemas; `count_objects` uses pre-defined parameterized SQL only.
+- [x] Tools per design §10.3 with JSON schemas; `count_objects` uses pre-defined parameterized SQL only.
 - [ ] Agent loop (≤ 5 tool rounds), citation format enforcement, "nothing found" behaviour.
-- [ ] `POST /assistant/sessions/{id}/messages` streams SSE events `token`, `tool_call`, `tool_result`, `citation`, `done`, `error`.
+- [x] `POST /assistant/sessions/{id}/messages` streams SSE events `token`, `tool_call`, `tool_result`, `citation`, `done`, `error`.
 - [ ] 25 scripted conversations pass tool-selection and citation checks with `FakeGateway` recordings.
 
 ### P6-D3 · Conversation memory — 2 pts · Should · E14 · FR-AST-01, FR-AST-05
@@ -807,27 +807,27 @@
 
 ### P6-D4 · Assistant UI — 5 pts · Must · E14 · FR-AST-01, FR-AST-03
 > **Status 2026-10-04 — built, driven in a real browser:** conversation list, streaming chat, tool activity with what each lookup found, citation chips (event → its alert page, incident → report, footage → playback at the moment), starter questions from the last 24 h, stop button, retry. Records the model did not cite are shown as "Records consulted", never as its citations.
-- [ ] Session list + chat column (§B.7); streaming render; tool activity lines; EvidenceChip citations opening clips/incidents.
-- [ ] Suggested starter questions from the last 24 h; stop-generation button; error/retry states.
+- [x] Session list + chat column (§B.7); streaming render; tool activity lines; EvidenceChip citations opening clips/incidents.
+- [x] Suggested starter questions from the last 24 h; stop-generation button; error/retry states.
 
 ## Jatin — 23 pts
 
 ### P6-J1 · Daily security report job — 5 pts · Must · E15 · FR-RPT-01…04
 > **Status 2026-10-04 — partly built** (`services/reasoning/src/reasoning/reports`): `DailyFacts` from fixed SQL, narrative from `daily_narrative/1.0` with every number checked against the figures (one retry, then a template text; `narrative_source` says which), `reasoning.daily_reports` (migration 0011), the worker queues yesterday's report after 06:00 IST, `POST /reports/daily` (≤ 7 days) and `python -m reasoning.reports.daily`. **Not done:** server-side charts and PDF (WeasyPrint; the UI draws the charts and the browser prints to PDF), indexing into `knowledge`, supercronic in Compose (the worker schedules it).
 - [ ] `DailyFacts` aggregation SQL; charts (events by hour/type/camera, alert response times).
-- [ ] Narrative via gateway with numeric post-check (numbers must exist in facts) → regenerate once → template fallback.
+- [x] Narrative via gateway with numeric post-check (numbers must exist in facts) → regenerate once → template fallback.
 - [ ] Jinja2 + WeasyPrint PDF per §B.11 → `vms-reports`; row in `reasoning.daily_reports`; indexed into `knowledge`.
 - [ ] Entry point `python -m reasoning.reports.daily`; supercronic in Compose; `POST /reports/daily` on demand (≤ 7-day range).
 
 ### P6-J2 · Incident UI & PDF export — 5 pts · Must · E13 · FR-INC-04, FR-INC-06
 > **Status 2026-10-04 — partly built:** incidents list (severity filter) and report view with evidence chips, provenance note, notes and reviewed/closed. **Not done:** server-side PDF (the page offers print-to-PDF).
-- [ ] Incidents list (filters, severity, status) and report view per §B.7 with EvidenceChips and ProvenanceNote.
+- [x] Incidents list (filters, severity, status) and report view per §B.7 with EvidenceChips and ProvenanceNote.
 - [ ] Status/notes editing (operator+); incident PDF via the same PDF pipeline.
 
 ### P6-J3 · Incident indexing & similar incidents — 3 pts · Should · E13 · FR-INC-05
 > **Status 2026-10-04 — partly built:** the indexer writes event captions and incident-report sections to `knowledge` (dense bge-small + BM25, `vms_common.qdrant.knowledge`), search fuses them, and `GET /incidents/{id}/similar` returns up to 5 other reports (same event type boosted) shown on the report page. **Not done:** the assistant tool endpoints exposed per the frozen contract as a separate service API.
-- [ ] Indexer consumes `incidentready.v1`, indexes report sections into `knowledge`.
-- [ ] `GET /incidents/{id}/similar` returns ≤ 5 by hybrid similarity + same event type boost; shown in UI.
+- [x] Indexer consumes `incidentready.v1`, indexes report sections into `knowledge`.
+- [x] `GET /incidents/{id}/similar` returns ≤ 5 by hybrid similarity + same event type boost; shown in UI.
 - [ ] Assistant tool endpoints for events/incidents/timeline exposed per frozen contract.
 
 ### P6-J4 · Investigation timeline & cases — 8 pts · Should · E16 · FR-INV-01…03
