@@ -714,6 +714,7 @@
       > Nothing has been uploaded to Kaggle: there are no phase annotations yet.
 
 ### P5-D2 · TG adapter fine-tuning — 8 pts · Must · E12
+> **2026-10-08 — trainer and notebook written, not run on real data:** `ml/training/train_adapter.py` (QLoRA, design hyperparameters, answer-only loss, checkpoint/resume that reproduces an uninterrupted run, best-adapter + model card, upload) and `train_adapter_kaggle.ipynb`. Verified on a 10 M-parameter random model and the synthetic dataset (see `ml/training/README.md`); **not** on the 3B model, a T4, Kaggle or any real annotation. Uses Transformers + PEFT, not Unsloth. Experiment tracking is `metrics.jsonl` (loss, validation loss and token accuracy); mIoU per epoch is not computed in the loop (the evaluation harness scores the finished adapter). Nothing is ticked: each item needs the real run.
 - [ ] Unsloth QLoRA notebook on Qwen2.5-VL-3B with hyperparameters from design §8.3; runs within one Kaggle session (checkpointing to resume).
 - [ ] Experiment tracking (config, loss curves, val mIoU per epoch).
 - [ ] Best adapter uploaded to `vms-models/tg/v1` with model card (data, metrics, limits).
@@ -755,6 +756,7 @@
       > or uploaded: there are no labels yet.
 
 ### P5-J2 · PhaVR adapter fine-tuning — 8 pts · Must · E12
+> **2026-10-08:** the same trainer and notebook serve PhaVR (see P5-D2). Nothing is ticked: the real run needs verified captions and VQA answers, which do not exist.
 - [ ] Unsloth QLoRA notebook (same base/hyperparameters), mixed caption + VQA batches.
 - [ ] Experiment tracking; best adapter to `vms-models/phavr/v1` with model card.
 
