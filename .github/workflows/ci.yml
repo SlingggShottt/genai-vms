@@ -337,6 +337,31 @@ jobs:
       - run: uv run ruff format --check ml/evaluation ml/training
       - run: uv run pytest ml/evaluation ml/training -m "not integration"
 
+  # --- Integration tests (testcontainers) -----------------------------------------
+  # 428 tests against real Postgres, Redis, Qdrant and Kafka containers (`make test-int`). They are
+  # not part of ci-success yet: `continue-on-error` until a first run on GitHub's runners has shown
+  # they are stable there. Run by hand on 2026-10-08 they found two tests that had never passed.
+  integration:
+    needs: changes
+    if: >-
+      needs.changes.outputs.shared == 'true' || needs.changes.outputs.api == 'true' ||
+      needs.changes.outputs.events == 'true' || needs.changes.outputs.correlation == 'true' ||
+      needs.changes.outputs.indexer == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: uv sync --all-packages
+      - run: uv run pytest -m integration -q
+
   # --- Alert rules ------------------------------------------------------------
   obs-rules:
     needs: changes

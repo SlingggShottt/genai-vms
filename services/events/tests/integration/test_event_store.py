@@ -147,6 +147,15 @@ class TestClaiming:
     ) -> None:
         c = update(status="open")
         await add(session_factory, c)
+        # "How long it has been a candidate" is the row's created_at, which the database stamps
+        # with the real clock; the test's clock is NOW, so line them up (else the test passes only
+        # when it runs within five seconds of being imported, and a cold container takes longer).
+        await sql(
+            session_factory,
+            "UPDATE events.candidates SET created_at = :at WHERE id = :id",
+            at=NOW,
+            id=c.id,
+        )
         store = PostgresEventStore(session_factory)
         assert await store.claim(**claim_args(now=NOW)) == [], "it only just became a candidate"
         assert await store.claim(**claim_args(now=NOW + timedelta(seconds=OPEN_AFTER_S - 5))) == []
