@@ -43,6 +43,7 @@ class TestATask:
     def test_the_primary_view_comes_first_and_the_rest_in_camera_order(self) -> None:
         data = phase_task(candidate(), clip_prefix=PREFIX)["data"]
         assert data["views"] == ["G419", "G420", "G424"]
+        assert data["view_choices"] == [{"value": c} for c in ("G419", "G420", "G424")]
         assert [c["camera"] for c in data["clips"]] == ["G419", "G420", "G424"]
 
     def test_the_players_videos_are_the_cut_clips_in_that_order(self) -> None:

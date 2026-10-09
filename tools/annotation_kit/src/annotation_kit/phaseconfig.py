@@ -20,7 +20,6 @@ import xml.etree.ElementTree as ET
 from collections.abc import Sequence
 from pathlib import Path
 
-from annotation_kit.candidates import FPS
 from annotation_kit.labelconfig import USABLE, USABLE_NO, USABLE_YES
 from annotation_kit.phases import PHASE_DEFINITIONS, PHASES
 
@@ -29,7 +28,18 @@ PHASE = "phase"
 PRIMARY_VIEW = "primary_view"
 EVENT_TYPE = "event_type"
 MAX_VIEWS = 4
-FRAMERATE = FPS  # clips are cut at a constant rate, so a frame number is unambiguous
+# The rate phases are marked at, not the clips' own (they are cut at 30 fps). Label Studio's
+# timeline cannot be zoomed out: it draws every frame 16 px wide (the zoom menu next to the frame
+# counter zooms the picture, not the timeline). At 30 fps a 25 s clip is 12,000 px, and a laptop
+# screen shows about 600 of them; at 2 fps about 20 s of it; drawing on a scrolled timeline was not
+# reliable when tried. At 1 fps a clip of up to about 40 s fits a 1366 px screen with no scrolling.
+# The price is a one-second grid: boundaries snap to whole seconds, so on a 2 s action one frame of
+# disagreement is an IoU of 0.5. Agreement is measured on this grid too.
+FRAMERATE = 1
+# The longest clip whose timeline fits a 1366 px laptop screen (650 px of 16 px frames) unscrolled.
+FITS_ON_SCREEN_S = int(650 / 16 / FRAMERATE)
+# A phase row is 24 px and the ruler takes about 30: five rows need 150 or the last is cut off.
+TIMELINE_HEIGHT = 160
 
 # Neutral, distinguishable, and deliberately not the severity colours: a phase is structure.
 _PHASE_COLOURS = {
@@ -62,7 +72,7 @@ def build_phase_config(event_types: Sequence[str], views: int = 1) -> str:
             name=video_name(index),
             value=f"${video_name(index)}",
             framerate=str(FRAMERATE),
-            **({"timelineHeight": "110"} if index == 0 else {}),
+            **({"timelineHeight": str(TIMELINE_HEIGHT)} if index == 0 else {}),
         )
     if views > 1:
         ET.SubElement(
@@ -76,8 +86,9 @@ def build_phase_config(event_types: Sequence[str], views: int = 1) -> str:
     ET.SubElement(
         root,
         "Header",
-        value="Drag out each phase on the first video's timeline. Phases go in order, do not "
-        "overlap, and may be left out. Leave a stretch unmarked if no phase fits it.",
+        value="Click a phase, then click and drag slowly along its row on the first video's "
+        "timeline (each step is one second). Phases go in order, do not overlap, and may be "
+        "left out. Leave a stretch unmarked if no phase fits it.",
     )
     labels = ET.SubElement(root, "TimelineLabels", name=PHASE, toName=VIDEO)
     for number, phase in enumerate(PHASES, start=1):
@@ -101,7 +112,7 @@ def build_phase_config(event_types: Sequence[str], views: int = 1) -> str:
         choice="single",
         showInline="true",
         required="true",
-        value="$views",
+        value="$view_choices",
     )
 
     ET.SubElement(root, "Header", value="What kind of incident is this?")

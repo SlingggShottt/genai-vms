@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 from annotation_kit.candidates import PhaseCandidate, ViewSpec
+from annotation_kit.phaseconfig import FRAMERATE
 from annotation_kit.phaseconvert import (
     SKIP_REASONS,
     SNAP_FRAMES,
@@ -33,7 +34,14 @@ def candidate() -> PhaseCandidate:
 
 
 def ranges(*spans: tuple[str, int, int]) -> list[dict[str, Any]]:
-    """Timeline results the way Label Studio exports them: frames at 30 fps."""
+    """Timeline results the way Label Studio exports them. A span is (phase, from, to) in frames at
+    30 fps from the start of the clip, 0 being its first instant and `to` excluded; Label Studio
+    counts from 1 and includes the last frame, so it is exported as the range [from + 1, to]."""
+    return raw_ranges(*((phase, s + 1, e) for phase, s, e in spans))
+
+
+def raw_ranges(*spans: tuple[str, int, int]) -> list[dict[str, Any]]:
+    """Ranges exactly as given: Label Studio's own frame numbers."""
     return [
         {
             "from_name": "phase",
@@ -54,6 +62,7 @@ def choices(**picked: str) -> list[dict[str, Any]]:
 
 def item(result=None, *, annotations=None, **data_over):  # noqa: ANN001, ANN003, ANN201
     data = phase_task(candidate(), clip_prefix="s3://vms/clips")["data"]
+    data["timeline_fps"] = 30  # most tests count frames at 30 fps; see TestTheRateMarkedAt
     data.update(data_over)
     if annotations is None:
         annotations = [
@@ -137,7 +146,7 @@ class TestAnAnnotatedClip:
                 "to_name": "video",
                 "type": "timelinelabels",
                 "value": {
-                    "ranges": [{"start": 0, "end": 90}, {"start": 300, "end": 390}],
+                    "ranges": [{"start": 1, "end": 90}, {"start": 301, "end": 390}],
                     "timelinelabels": ["action"],
                 },
             }
@@ -275,7 +284,7 @@ class TestTheClipsLength:
                 {"id": 1, "was_cancelled": False, "result": ranges(("action", 0, 9000))}
             ],
         }
-        assert convert_phases([raw]).clips[0].phases[0].end_s == 300.0
+        assert convert_phases([raw], fps=30).clips[0].phases[0].end_s == 300.0
 
 
 class TestTheContractWithTheCaptionVqaKit:
@@ -336,3 +345,87 @@ class TestAPhaseStartingAtTheEndOfTheClip:
         # a 40 s clip, a phase starting exactly at 40 s: nothing of it is inside the clip
         clip = one(ranges(("baseline", 0, 90), ("action", 1200, 1500)), duration_s=40.0).clips[0]
         assert [p.phase for p in clip.phases] == ["baseline"]
+
+
+class TestHowLabelStudioCountsFrames:
+    """Frames count from 1 and a range includes its last frame: [s, e] is seconds
+    (s - 1) / fps to e / fps."""
+
+    def spans(self, result, **kw) -> list[tuple[str, float, float]]:  # noqa: ANN003
+        phases = one(result, **kw).clips[0].phases
+        return [(p.phase, p.start_s, p.end_s) for p in phases]
+
+    def test_frame_one_is_the_first_instant_of_the_clip(self) -> None:
+        assert self.spans(raw_ranges(("baseline", 1, 30))) == [("baseline", 0.0, 1.0)]
+
+    def test_a_range_ends_at_the_end_of_its_last_frame(self) -> None:
+        assert self.spans(raw_ranges(("action", 31, 60))) == [("action", 1.0, 2.0)]
+
+    def test_back_to_back_phases_touch_exactly_and_are_not_snapped(self) -> None:
+        converted = one(raw_ranges(("baseline", 1, 30), ("precursor", 31, 60)))
+        a, b = converted.clips[0].phases
+        assert a.end_s == b.start_s == 1.0 and converted.snapped == 0
+
+    def test_a_frame_is_a_range_of_its_own_length(self) -> None:
+        assert self.spans(raw_ranges(("action", 4, 6)), timeline_fps=2) == [("action", 1.5, 3.0)]
+
+
+class TestTheRateMarkedAt:
+    """Phases are marked at the task's `timeline_fps` (coarser than the clips' 30 fps)."""
+
+    def spans(self, result, **kw) -> list[tuple[str, float, float]]:  # noqa: ANN003
+        phases = one(result, **kw).clips[0].phases
+        return [(p.phase, p.start_s, p.end_s) for p in phases]
+
+    def test_the_rate_in_the_task_is_the_one_used(self) -> None:
+        result = raw_ranges(("baseline", 1, 10), ("action", 21, 30))
+        assert self.spans(result, timeline_fps=2) == [
+            ("baseline", 0.0, 5.0),
+            ("action", 10.0, 15.0),
+        ]
+        assert self.spans(result, timeline_fps=5) == [("baseline", 0.0, 2.0), ("action", 4.0, 6.0)]
+
+    def test_a_task_made_by_this_kit_carries_the_labelling_rate(self) -> None:
+        data = phase_task(candidate(), clip_prefix="p")["data"]
+        assert data["timeline_fps"] == FRAMERATE
+
+    def test_a_rate_given_to_the_converter_overrides_the_task(self) -> None:
+        converted = convert_phases([item(raw_ranges(("action", 1, 50)), timeline_fps=2)], fps=25)
+        assert converted.clips[0].phases[0].end_s == 2.0
+
+    def test_with_no_rate_anywhere_the_labelling_rate_is_assumed(self) -> None:
+        data = phase_task(candidate(), clip_prefix="p")["data"]
+        del data["timeline_fps"]
+        annotation = {"id": 1, "was_cancelled": False, "result": raw_ranges(("action", 1, 4))}
+        converted = convert_phases([{"data": data, "annotations": [annotation]}])
+        assert converted.clips[0].phases[0].end_s == 4 / FRAMERATE
+
+    def test_a_single_frame_is_a_phase_at_a_coarse_rate_and_a_stray_click_at_a_fine_one(
+        self,
+    ) -> None:
+        assert self.spans(raw_ranges(("action", 5, 5)), timeline_fps=2) == [("action", 2.0, 2.5)]
+        converted = convert_phases([item(raw_ranges(("action", 5, 5)), timeline_fps=30)])
+        assert converted.skipped["bad_range"] and converted.clips == []
+
+    def test_a_phase_has_to_last_at_least_a_tenth_of_a_second(self) -> None:
+        assert self.spans(raw_ranges(("action", 1, 3)), timeline_fps=30) == [("action", 0.0, 0.1)]
+        converted = convert_phases([item(raw_ranges(("action", 1, 2)), timeline_fps=30)])
+        assert converted.skipped["bad_range"]
+
+    def test_one_labelling_frame_of_overlap_is_snapped_and_two_are_not(self) -> None:
+        shares_a_frame = raw_ranges(("baseline", 1, 4), ("precursor", 4, 8))
+        converted = one(shares_a_frame, timeline_fps=2)
+        a, b = converted.clips[0].phases
+        assert a.end_s == b.start_s == 2.0 and converted.snapped == 1
+        two_frames = raw_ranges(("baseline", 1, 4), ("precursor", 3, 8))
+        assert convert_phases([item(two_frames, timeline_fps=2)]).skipped["overlap"]
+
+    def test_frames_are_counted_at_the_rate_for_the_clip_length_too(self) -> None:
+        # a 40 s clip: frames 79-90 at 2 fps are 39 s to 45 s, cut to the end of the clip
+        result = raw_ranges(("action", 79, 90))
+        assert self.spans(result, timeline_fps=2, duration_s=40.0) == [("action", 39.0, 40.0)]
+
+
+def test_frame_zero_does_not_exist_so_a_range_starting_there_is_refused() -> None:
+    converted = convert_phases([item(raw_ranges(("action", 0, 60)))])
+    assert converted.skipped["bad_range"] and converted.clips == []

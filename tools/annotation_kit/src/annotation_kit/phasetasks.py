@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from annotation_kit.candidates import PhaseCandidate, clip_relpath, clip_uri, cut_command
-from annotation_kit.phaseconfig import video_name
+from annotation_kit.phaseconfig import FRAMERATE, video_name
 
 UriResolver = Callable[[str], str]
 
@@ -36,7 +36,11 @@ def phase_task(
         "activity": candidate.activity or "",
         "primary_view": candidate.primary_view,
         "duration_s": round(candidate.duration_s, 3),
+        "timeline_fps": FRAMERATE,  # the rate the ranges in an export are counted at
         "views": [v.camera for v in views],
+        # Label Studio builds dynamic choices from {"value": ...} objects; bare strings give
+        # checkboxes with no names, and the annotator cannot tell the cameras apart.
+        "view_choices": [{"value": v.camera} for v in views],
         "clips": [
             {"camera": v.camera, "video_uri": clip_uri(clip_prefix, candidate, v)} for v in views
         ],

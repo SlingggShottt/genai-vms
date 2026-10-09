@@ -10,3 +10,6 @@ Two kits, one after the other. Both live in the `tools/annotation_kit` package (
 `phase_labels.jsonl` is what step 2 reads; its shape is frozen (`phase_export_example.json`). The Label Studio
 configs here are generated (`phase/`, `caption_vqa/`): change the phases or the question bank, regenerate, and a
 test fails if a committed config is out of date.
+
+Running a round (batch, cut, package, collect, measure): [RUNBOOK.md](RUNBOOK.md). What annotators read:
+[ANNOTATOR_QUICKSTART.md](ANNOTATOR_QUICKSTART.md) and [phase_guideline.md](phase_guideline.md).

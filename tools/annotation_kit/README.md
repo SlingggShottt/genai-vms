@@ -29,6 +29,9 @@ uv run annotation-kit phase-config --out ml/annotation/phase
 uv run annotation-kit phase-tasks candidates.json --clip-prefix s3://b/clips/ --out-dir tasks
 uv run annotation-kit phase-convert export.json --out phase_labels.jsonl
 uv run annotation-kit phase-agreement k.jsonl p.jsonl
+uv run annotation-kit phase-batch candidates.json --out-dir batch --annotator kuldeep --annotator pankaj
+uv run annotation-kit phase-package batch/kuldeep.json --annotator kuldeep --clips-dir clips --out-dir packages
+uv run annotation-kit ls-setup --annotator kuldeep --tasks-dir tasks --media-root clips   # needs Label Studio running
 ```
 
 | Module | Does |
@@ -38,6 +41,8 @@ uv run annotation-kit phase-agreement k.jsonl p.jsonl
 | `ucf.py` | UCF-Crime candidates (**not verified against the real files**) |
 | `phaseconfig.py`, `phasetasks.py` | the timeline labelling config; candidates -> tasks and cut scripts |
 | `phaseconvert.py`, `agreement.py` | export -> `phase_labels.jsonl`; inter-annotator agreement |
+| `batch.py`, `phasepackage.py` | a varied batch split between annotators; one self-contained folder per annotator |
+| `labelstudio.py` | creates an annotator's projects in Label Studio, signs in, exports their work (standalone: shipped as `ls_setup.py`) |
 
 The model call itself runs in `ml/annotation/caption_vqa/prelabel_kaggle.ipynb` (it needs a GPU); everything
 else, including the notebook's pipeline with a placeholder model, is covered by `tests/unit`.

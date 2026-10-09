@@ -25,8 +25,13 @@ def parse(xml: str) -> ET.Element:
     return ET.fromstring(xml)  # noqa: S314 - the config this module generated
 
 
-def test_the_frame_rate_is_the_one_clips_are_cut_at() -> None:
-    assert FRAMERATE == FPS == 30
+def test_phases_are_marked_at_a_rate_coarse_enough_for_a_clip_to_fit_a_laptop_screen() -> None:
+    """Label Studio draws a frame 16 px wide and cannot zoom the timeline out; a 1366 px laptop
+    shows about 620 px of it. A 40 s clip must fit without scrolling (drawing on a scrolled
+    timeline was unreliable), and a one-second grid is as coarse as it is worth going."""
+    assert FRAMERATE < FPS
+    assert 40 * FRAMERATE * 16 <= 650
+    assert FRAMERATE >= 1
 
 
 def test_video_names_are_video_then_video_2_and_so_on() -> None:
@@ -39,11 +44,13 @@ class TestVideos:
         videos = parse(build_phase_config(TYPES, views)).findall("Video")
         assert [v.attrib["name"] for v in videos] == [video_name(i) for i in range(views)]
         assert [v.attrib["value"] for v in videos] == [f"${video_name(i)}" for i in range(views)]
-        assert all(v.attrib["framerate"] == "30" for v in videos)
+        assert all(v.attrib["framerate"] == str(FRAMERATE) for v in videos)
 
     def test_only_the_first_has_a_timeline_to_mark(self) -> None:
         videos = parse(build_phase_config(TYPES, 3)).findall("Video")
-        assert "timelineHeight" in videos[0].attrib
+        assert int(videos[0].attrib["timelineHeight"]) >= 30 + 24 * len(
+            PHASES
+        )  # no phase row cut off
         assert all("timelineHeight" not in v.attrib for v in videos[1:])
 
     def test_several_views_say_the_others_are_for_looking(self) -> None:
@@ -96,7 +103,7 @@ class TestTheOtherQuestions:
             for c in parse(build_phase_config(TYPES)).iter("Choices")
             if c.attrib["name"] == PRIMARY_VIEW
         )
-        assert choices.attrib["value"] == "$views" and choices.attrib["required"] == "true"
+        assert choices.attrib["value"] == "$view_choices" and choices.attrib["required"] == "true"
         assert choices.findall("Choice") == []  # the options come from the task
 
     def test_the_event_type_is_one_of_the_given_in_the_given_order(self) -> None:

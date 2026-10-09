@@ -29,11 +29,12 @@ from pathlib import Path
 from vms_common.vqa_bank import DEFAULT_EVENT_TYPE, load_vqa_bank
 
 from annotation_kit import agreement as agreement_mod
-from annotation_kit import meva, phaseconvert, ucf
+from annotation_kit import batch as batch_mod
+from annotation_kit import labelstudio, meva, phaseconvert, phasepackage, ucf
 from annotation_kit.candidates import PhaseCandidate, read_candidates, write_candidates
 from annotation_kit.convert import convert, read_export, write_jsonl
 from annotation_kit.labelconfig import write_label_configs
-from annotation_kit.phaseconfig import config_filename, write_phase_configs
+from annotation_kit.phaseconfig import FITS_ON_SCREEN_S, config_filename, write_phase_configs
 from annotation_kit.phasetasks import cut_plan, cut_script, phase_tasks, run_cuts
 from annotation_kit.report import edit_report, render_markdown
 from annotation_kit.tasks import (
@@ -159,6 +160,64 @@ def _ucf_candidates(args: argparse.Namespace) -> int:
     return 0
 
 
+def _phase_batch(args: argparse.Namespace) -> int:
+    candidates = read_candidates(args.candidates)
+    limit = args.max_duration or None  # 0: no limit
+    chosen = batch_mod.pick_batch(candidates, args.size, seed=args.seed, max_duration_s=limit)
+    assignment = batch_mod.split_batch(chosen, args.annotator, overlap=args.overlap, seed=args.seed)
+    out = Path(args.out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    write_candidates(chosen, out / "all.json")
+    for name in args.annotator:
+        write_candidates(assignment.for_annotator(name), out / f"{name}.json")
+    print(batch_mod.summarise(chosen, assignment))
+    if limit:
+        print(
+            f"\n{batch_mod.too_long(candidates, limit)} of {len(candidates)} candidates were "
+            f"left out for being longer than {limit:g} s (they do not fit the timeline)."
+        )
+    print(f"\nwritten to {out}: all.json (to cut) and one file per annotator (to make tasks from)")
+    return 0
+
+
+def _ls_setup(args: argparse.Namespace) -> int:
+    return labelstudio.run(
+        args.url,
+        args.annotator,
+        Path(args.config_dir),
+        Path(args.tasks_dir) if args.tasks_dir else None,
+        Path(args.media_root) if args.media_root else None,
+        export_to=Path(args.export) if args.export else None,
+        token_file=Path(args.token_file) if args.token_file else None,
+    )
+
+
+def _phase_package(args: argparse.Namespace) -> int:
+    docs_dir = Path(args.docs_dir)
+    try:
+        report = phasepackage.build_package(
+            args.annotator,
+            read_candidates(args.candidates),
+            clips_dir=Path(args.clips_dir),
+            config_dir=Path(args.config_dir),
+            ls_setup=Path(labelstudio.__file__),
+            docs={
+                "QUICKSTART.md": docs_dir / "ANNOTATOR_QUICKSTART.md",
+                "GUIDELINE.md": docs_dir / "phase_guideline.md",
+            },
+            out_dir=Path(args.out_dir),
+            port=args.port,
+            link=args.link,
+            replace=args.replace,
+        )
+    except phasepackage.PackageError as exc:
+        print(f"package: {exc}", file=sys.stderr)
+        return 1
+    tasks = ", ".join(f"{n} with {v} views" for v, n in report.tasks.items())
+    print(f"{report.folder}: {report.clips} clips ({tasks}), {report.files} files")
+    return 0
+
+
 def _phase_tasks(args: argparse.Namespace) -> int:
     candidates = read_candidates(args.candidates)
     grouped = phase_tasks(
@@ -264,6 +323,39 @@ def main(argv: Sequence[str] | None = None) -> int:
     uc.add_argument("--probe", action="store_true", help="read each video's length with ffprobe")
     uc.set_defaults(handler=_ucf_candidates)
 
+    pb = sub.add_parser("phase-batch", help="pick a varied batch and split it between annotators")
+    pb.add_argument("candidates")
+    pb.add_argument("--out-dir", required=True)
+    pb.add_argument("--size", type=int, default=60, help="clips in the batch")
+    pb.add_argument("--overlap", type=int, default=20, help="clips that everyone labels")
+    pb.add_argument("--annotator", action="append", required=True, help="a name (repeatable)")
+    pb.add_argument("--seed", type=int, default=0)
+    pb.add_argument(
+        "--max-duration",
+        type=float,
+        default=FITS_ON_SCREEN_S,
+        help="leave out clips longer than this many seconds (default: what fits a laptop "
+        "screen at the labelling rate; 0 for no limit)",
+    )
+    pb.set_defaults(handler=_phase_batch)
+
+    ls = sub.add_parser("ls-setup", help="create an annotator's projects in a running Label Studio")
+    labelstudio.add_arguments(ls)
+    ls.set_defaults(config_dir="ml/annotation/phase")
+    ls.set_defaults(handler=_ls_setup)
+
+    pk = sub.add_parser("phase-package", help="one annotator's self-contained package")
+    pk.add_argument("candidates", help="the annotator's file from phase-batch")
+    pk.add_argument("--annotator", required=True)
+    pk.add_argument("--clips-dir", required=True, help="where `cut` wrote the clips")
+    pk.add_argument("--out-dir", required=True)
+    pk.add_argument("--config-dir", default="ml/annotation/phase")
+    pk.add_argument("--docs-dir", default="ml/annotation")
+    pk.add_argument("--port", type=int, default=phasepackage.DEFAULT_PORT)
+    pk.add_argument("--link", action="store_true", help="hard-link the clips instead of copying")
+    pk.add_argument("--replace", action="store_true", help="rebuild a package that exists")
+    pk.set_defaults(handler=_phase_package)
+
     pt = sub.add_parser("phase-tasks", help="candidates -> Label Studio tasks, by number of views")
     pt.add_argument("candidates")
     pt.add_argument("--clip-prefix", required=True, help="where the cut clips are stored")
@@ -282,7 +374,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     pc = sub.add_parser("phase-convert", help="phase export -> phase_labels.jsonl")
     pc.add_argument("export")
     pc.add_argument("--out", required=True)
-    pc.add_argument("--fps", type=int, default=30)
+    pc.add_argument(
+        "--fps",
+        type=int,
+        help="frames per second the export was marked at (default: as in each task)",
+    )
     pc.set_defaults(handler=_phase_convert)
 
     pa = sub.add_parser("phase-agreement", help="inter-annotator agreement on phase_labels files")

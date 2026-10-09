@@ -253,12 +253,16 @@ class TestFromAnExportToLabelsToAgreement:
             ]
         )
         (task,) = json.loads((tasks_dir / "tasks_2views.json").read_text())
-        results = [
+        rate = task["data"]["timeline_fps"]  # `spans` are frames at 30 fps; Label Studio counts
+        results = [  # frames at this rate, from 1, the last one included
             {
                 "from_name": "phase",
                 "to_name": "video",
                 "type": "timelinelabels",
-                "value": {"ranges": [{"start": s, "end": e}], "timelinelabels": [p]},
+                "value": {
+                    "ranges": [{"start": round(s / 30 * rate) + 1, "end": round(e / 30 * rate)}],
+                    "timelinelabels": [p],
+                },
             }
             for p, s, e in spans
         ]

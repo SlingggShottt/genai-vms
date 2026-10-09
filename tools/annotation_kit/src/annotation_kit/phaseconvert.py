@@ -9,6 +9,12 @@ least one phase, and the phases are valid: in the canonical order, each at most 
 overlapping. Everything else is skipped and counted by reason, so a lost clip is visible. Annotators
 drag boundaries by hand, so a phase that starts up to three frames before the previous one ends is
 snapped to touch it rather than thrown away; more than that is a real overlap.
+
+Frames are Label Studio's: counted from 1 (frame 1 is the first instant of the clip) and a range's
+`end` is its last frame, included. A range `[s, e]` at `fps` frames per second therefore covers
+`(s - 1) / fps` to `e / fps` seconds. The rate is the one in the task (`timeline_fps`: phases are
+marked at a coarser rate than the clips' 30 fps so that a clip fits the timeline on screen), unless
+one is given.
 """
 
 from __future__ import annotations
@@ -25,7 +31,9 @@ from annotation_kit.phaseconfig import EVENT_TYPE, FRAMERATE, PHASE, PRIMARY_VIE
 from annotation_kit.phases import PHASES
 from annotation_kit.schema import ClipView, PhaseLabelClip, PhaseSpan
 
-SNAP_FRAMES = 3
+SNAP_FRAMES = 3  # at 30 fps; at a coarser rate, one labelling frame
+CLIP_FPS = 30
+MIN_PHASE_S = 0.1  # shorter is a stray click, not a phase
 SKIP_REASONS = (
     "no_annotation",
     "cancelled",
@@ -36,6 +44,7 @@ SKIP_REASONS = (
     "out_of_order",
     "overlap",
 )
+_EPS = 1e-9
 _REQUIRED = ("candidate_id", "source_video", "event_type", "primary_view", "clips")
 
 
@@ -80,7 +89,10 @@ def _spans(
 ) -> tuple[list[PhaseSpan], int]:
     if not marked:
         raise _Skip("no_phases")
-    if any(end <= start or start < 0 for _p, start, end in marked):
+    if any(
+        start < 1 or end < start or (end - start + 1) / fps < MIN_PHASE_S
+        for _p, start, end in marked
+    ):
         raise _Skip("bad_range")
     if len({phase for phase, _s, _e in marked}) != len(marked):
         raise _Skip("repeated_phase")
@@ -90,17 +102,17 @@ def _spans(
     ):
         raise _Skip("out_of_order")
     snapped = 0
-    fixed: list[list[Any]] = [[p, s, e] for p, s, e in ordered]
+    tolerance = max(SNAP_FRAMES / CLIP_FPS, 1 / fps) + _EPS
+    fixed: list[list[Any]] = [[p, (s - 1) / fps, e / fps] for p, s, e in ordered]  # seconds
     for before, after in zip(fixed, fixed[1:], strict=False):
         overlap = before[2] - after[1]
-        if overlap > SNAP_FRAMES:
+        if overlap > tolerance:
             raise _Skip("overlap")
-        if overlap > 0:
+        if overlap > _EPS:
             after[1] = before[2]
             snapped += 1
     spans: list[PhaseSpan] = []
-    for phase, start, end in fixed:
-        start_s, end_s = start / fps, end / fps
+    for phase, start_s, end_s in fixed:
         if duration is not None:
             if start_s >= duration:
                 continue  # marked past the end of the clip
@@ -111,7 +123,9 @@ def _spans(
     return spans, snapped
 
 
-def convert_phases(export: Sequence[Mapping[str, Any]], *, fps: int = FRAMERATE) -> PhaseConverted:
+def convert_phases(
+    export: Sequence[Mapping[str, Any]], *, fps: int | None = None
+) -> PhaseConverted:
     out = PhaseConverted()
     for item in export:
         data = item.get("data") or {}
@@ -134,7 +148,8 @@ def convert_phases(export: Sequence[Mapping[str, Any]], *, fps: int = FRAMERATE)
             marked, choices = _read_result(latest["result"])
             if choices.get(USABLE) == USABLE_NO:
                 raise _Skip("unusable")
-            spans, snapped = _spans(marked, fps, data.get("duration_s"))
+            rate = fps or int(data.get("timeline_fps") or FRAMERATE)
+            spans, snapped = _spans(marked, rate, data.get("duration_s"))
         except _Skip as skip:
             out.skipped[skip.reason].append(key)
             continue

@@ -31,13 +31,14 @@ overlap, and any of them can be missing.
 
 1. **Mark what you can see, not what you know.** If the incident is only obvious in hindsight, the phases that
    come before it still start where a behaviour first becomes visible, not where you worked out why.
-2. **Boundaries go at the first frame where the change is visible.** A phase starts at the first frame showing
-   it, and the previous one ends at the same frame. Do not agonise over a frame or two: the tools tolerate a
-   few frames of overlap, and agreement is measured on seconds, not frames.
+2. **Boundaries go at the first second where the change is visible.** You mark on a grid of whole seconds (each
+   step on the timeline is one second): a phase starts at the first second showing it, and the previous one
+   ends at the same instant. Do not agonise over a second either way: two phases that share a second at their
+   boundary are snapped to touch, and agreement is measured on seconds.
 3. **Leave a phase out if it is not there.** A clip that starts in the middle of the action has no baseline or
    precursor. Do not stretch a neighbour to cover the gap, and do not mark a phase just because it is expected.
 4. **Gaps are fine, overlaps are not.** If nothing fits a stretch, leave it unmarked. If you mark an overlap
-   larger than three frames the clip is rejected and comes back to you.
+   of more than one second the clip is rejected and comes back to you.
 5. **One person's incident, many people's scene.** Phases follow the incident, not every person in view.
    Background activity does not start a phase.
 6. **Phases are for the whole clip, all views.** The views are cut to the same moment, so one set of marks applies
@@ -269,7 +270,14 @@ uv run annotation-kit phase-convert export.json --out phase_labels.jsonl
 
 In Label Studio, create a project per number of views (`tasks_<n>view(s).json` with
 `phase_labelling_<n>view(s).xml`), paste the config under *Labeling Setup > Custom template*, and import the tasks.
-Clips are cut at a constant 30 fps so that Label Studio's frame numbers convert to seconds exactly.
+Phases are marked on a **one-second grid** (`FRAMERATE` in `phaseconfig.py`), although the clips are cut at
+30 fps: Label Studio's timeline cannot be zoomed out and draws every frame 16 px wide, so at 30 fps a laptop
+screen shows about 20 seconds of a clip, and drawing on a scrolled timeline was unreliable when tried. The
+price is that boundaries snap to whole seconds (on a 2 s action, one second of disagreement is an IoU of 0.5).
+Each task carries the rate it was marked at (`timeline_fps`) and `phase-convert` uses it. Clips longer than
+about 40 s do not fit the timeline and are left out of a batch by default (`phase-batch --max-duration`).
+The step-by-step for the person running an annotation round is [RUNBOOK.md](RUNBOOK.md); what annotators are
+given is [ANNOTATOR_QUICKSTART.md](ANNOTATOR_QUICKSTART.md).
 
 ## Agreement
 
