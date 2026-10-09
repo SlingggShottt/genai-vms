@@ -16,6 +16,8 @@ WORK=~/vms-annotation   # anywhere with room: the cut clips are ~15 MB per view
 git clone --depth 1 https://gitlab.kitware.com/meva/meva-data-repo.git $WORK/meva-data-repo   # ~7 GB
 
 uv run annotation-kit meva-candidates --repo $WORK/meva-data-repo --out $WORK/candidates.json
+# the clone is only needed for this step: keep candidates.json and the clone can be deleted
+# (re-cloning takes about 20 minutes)
 uv run annotation-kit phase-batch $WORK/candidates.json --out-dir $WORK/batch --size 60 --overlap 20 \
     --annotator kuldeep --annotator pankaj
 ```
