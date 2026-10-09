@@ -24,7 +24,8 @@ uv run annotation-kit phase-batch $WORK/candidates.json --out-dir $WORK/batch --
 clip per five-minute slot while there are others), leaves out clips too long for the timeline (over
 40 s at the one-second grid; `--max-duration 0` for no limit), and splits it: `--overlap` clips go to
 **both** annotators (the agreement figure needs them), the rest are dealt out. Same inputs and
-`--seed`, same batch.
+`--seed`, same batch. A clip found unusable after it was cut is dropped with `--exclude <candidate id>`
+(repeatable) and the batch is rebuilt; only the clips that are new then need cutting.
 
 ## 2. Cut the clips
 
@@ -33,15 +34,18 @@ uv run annotation-kit cut $WORK/batch/all.json --out-dir $WORK/clips \
     --source-prefix s3://mevadata-public-01/=https://mevadata-public-01.s3.amazonaws.com/ \
     --script $WORK/cut_clips.sh
 ml/annotation/scripts/cut_parallel.sh $WORK/cut_clips.sh 5     # five at a time, skips what exists
-ml/annotation/scripts/check_clips.sh $WORK/clips                # lists any clip ffprobe cannot read
+ml/annotation/scripts/check_clips.sh $WORK/clips                # BAD / SHORT clips; silence is good
 ```
 
 `cut` reads the sources over HTTP, so nothing is downloaded whole. Each view is re-encoded at
 30 fps from the same instant, so the views of a clip stay in sync (checked: both views of a clip
 come out with the same frame count). On this machine five in parallel make about 3 views a minute: a 60-clip batch, about
 140 views, takes around 45 minutes.
-Delete a clip `check_clips.sh` names and run the cut again: a killed ffmpeg leaves a file with no
-index, and the cut skips files that exist.
+`check_clips.sh` prints `BAD <file>` for a file ffprobe cannot read (a killed ffmpeg leaves one with no
+index, and the cut skips files that exist: delete it and cut again) and `SHORT <clip> cam=frames ...`
+for a clip whose views differ in length: a source video ended before the window did, so the views no
+longer show the same span. This happened to 3 of 219 clips on the first run (a MEVA bus camera whose
+recording is shorter than its neighbour's); `--exclude` them from the batch.
 
 ## 3. Package, one per annotator
 
@@ -59,7 +63,9 @@ the folder anywhere else). Send each person their own zip and nobody else's. The
 
 ## 4. Collect and measure
 
-Each annotator sends `export-<name>.json` (after 5 clips, then at the end).
+Each annotator sends `export-<name>.json` (after 5 clips, then at the end). The `video_uri`s in what
+`phase-convert` writes say `local://clips/...`: when the clips are uploaded for the next step, rewrite
+them with `annotation-kit tasks ... --url-prefix local://clips/=<where they are>`.
 
 ```bash
 uv run annotation-kit phase-convert export-kuldeep.json --out k.jsonl     # what was skipped, and why

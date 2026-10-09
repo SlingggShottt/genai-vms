@@ -16,7 +16,7 @@ from __future__ import annotations
 import random
 import re
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 
 from annotation_kit.candidates import PhaseCandidate
@@ -53,13 +53,17 @@ def pick_batch(
     *,
     seed: int = 0,
     max_duration_s: float | None = None,
+    exclude: Collection[str] = (),
 ) -> list[PhaseCandidate]:
     """At most `size` candidates, varied across activities, in an order that mixes them. Clips
-    longer than `max_duration_s` are never chosen (they would not fit the labelling timeline)."""
+    longer than `max_duration_s` are never chosen (they would not fit the labelling timeline), nor
+    are the `exclude`d ids (a clip found unusable after it was cut)."""
     if size < 1:
         raise ValueError("a batch needs at least one clip")
     if max_duration_s is not None:
         candidates = [c for c in candidates if c.duration_s <= max_duration_s]
+    if exclude:
+        candidates = [c for c in candidates if c.candidate_id not in set(exclude)]
     rng = random.Random(seed)  # noqa: S311 - sampling, not security
     pool: dict[str, list[PhaseCandidate]] = defaultdict(list)
     for candidate in sorted(candidates, key=lambda c: c.candidate_id):

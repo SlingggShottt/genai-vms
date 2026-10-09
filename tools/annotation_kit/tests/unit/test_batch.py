@@ -271,3 +271,49 @@ class TestDurationLimitFromTheCommand:
     def test_zero_means_no_limit(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         assert len(self.run(tmp_path, "--max-duration", "0").split()) == 16
         assert "left out" not in capsys.readouterr().out
+
+
+class TestExclude:
+    def test_an_excluded_clip_is_never_chosen_and_another_takes_its_place(self) -> None:
+        pool = [long_cand(i, 30.0) for i in range(12)]
+        first = batch.pick_batch(pool, 8)
+        victim = first[0].candidate_id
+        again = batch.pick_batch(pool, 8, exclude=[victim])
+        assert victim not in {c.candidate_id for c in again} and len(again) == 8
+
+    def test_excluding_a_rare_clip_removes_it_too(self) -> None:
+        pool = [
+            cand(1, "person_steals_object"),
+            *[cand(i, "person_embraces_person") for i in range(5, 12)],
+        ]
+        chosen = batch.pick_batch(pool, 4, exclude=[pool[0].candidate_id])
+        assert "person_steals_object" not in kinds(chosen)
+
+    def test_an_id_that_is_not_there_changes_nothing(self) -> None:
+        pool = [long_cand(i, 30.0) for i in range(12)]
+        assert batch.pick_batch(pool, 8, exclude=["nope"]) == batch.pick_batch(pool, 8)
+
+    def test_from_the_command(self, tmp_path: Path) -> None:
+        source = tmp_path / "candidates.json"
+        pool = [long_cand(i, 30.0) for i in range(12)]
+        write_candidates(pool, source)
+        main(
+            [
+                "phase-batch",
+                str(source),
+                "--out-dir",
+                str(tmp_path / "b"),
+                "--size",
+                "8",
+                "--overlap",
+                "0",
+                "--annotator",
+                "a",
+                "--exclude",
+                pool[3].candidate_id,
+                "--exclude",
+                pool[4].candidate_id,
+            ]
+        )
+        ids = {c.candidate_id for c in read_candidates(tmp_path / "b" / "a.json")}
+        assert len(ids) == 8 and not ids & {pool[3].candidate_id, pool[4].candidate_id}

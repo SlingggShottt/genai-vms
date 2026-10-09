@@ -163,7 +163,9 @@ def _ucf_candidates(args: argparse.Namespace) -> int:
 def _phase_batch(args: argparse.Namespace) -> int:
     candidates = read_candidates(args.candidates)
     limit = args.max_duration or None  # 0: no limit
-    chosen = batch_mod.pick_batch(candidates, args.size, seed=args.seed, max_duration_s=limit)
+    chosen = batch_mod.pick_batch(
+        candidates, args.size, seed=args.seed, max_duration_s=limit, exclude=args.exclude
+    )
     assignment = batch_mod.split_batch(chosen, args.annotator, overlap=args.overlap, seed=args.seed)
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -330,6 +332,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     pb.add_argument("--overlap", type=int, default=20, help="clips that everyone labels")
     pb.add_argument("--annotator", action="append", required=True, help="a name (repeatable)")
     pb.add_argument("--seed", type=int, default=0)
+    pb.add_argument(
+        "--exclude", action="append", default=[], metavar="ID", help="a candidate id to leave out"
+    )
     pb.add_argument(
         "--max-duration",
         type=float,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -129,6 +130,8 @@ class TestTheScripts:
         assert 'LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT="$HERE"' in text
         assert "LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true" in text
         assert "LABEL_STUDIO_COLLECT_ANALYTICS=false" in text
+        assert 'LABEL_STUDIO_SENTRY_DSN=""' in text
+        assert 'LABEL_STUDIO_FRONTEND_SENTRY_DSN=""' in text
         assert "LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK=true" in text
         assert '--media-root "$HERE/clips"' in text and "--token-file .token" in text
 
@@ -138,6 +141,20 @@ class TestTheScripts:
         assert '--annotator "kuldeep"' in start and 'PORT="${PORT:-8123}"' in start
         assert "export-kuldeep.json" in export and '--annotator "kuldeep"' in export
         assert "__" not in start and "__" not in export
+
+    def test_the_password_is_passed_in_a_form_that_survives_a_leading_dash(self, world) -> None:
+        """token_urlsafe can start with '-', which Label Studio's parser reads as an option."""
+        text = (build(world).folder / "start.sh").read_text()
+        assert '--password="$PASSWORD"' in text and '--username="$EMAIL"' in text
+        assert '--password "$PASSWORD"' not in text
+
+    def test_the_account_email_has_a_dotted_domain_or_the_sign_in_form_refuses_it(
+        self, world
+    ) -> None:
+        """Seen for real: Label Studio's sign-in form rejects an address like `annotator@local`."""
+        text = (build(world).folder / "start.sh").read_text()
+        (email,) = re.findall(r"printf '([^\\']+)\\n%s", text)
+        assert re.fullmatch(r"[\w.+-]+@[\w-]+\.[\w.-]+", email), email
 
     def test_the_account_is_made_once_and_kept_private(self, world) -> None:
         text = (build(world).folder / "start.sh").read_text()

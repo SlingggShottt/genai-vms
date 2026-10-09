@@ -70,7 +70,7 @@ fi
 
 if [ ! -f .account ]; then
   SECRET="$("$PY" -c 'import secrets; print(secrets.token_urlsafe(9))')"
-  printf 'annotator@local\\n%s\\n' "$SECRET" > .account
+  printf 'annotator@annotation.local\\n%s\\n' "$SECRET" > .account
   chmod 600 .account
 fi
 EMAIL="$(sed -n 1p .account)"
@@ -81,9 +81,12 @@ export LABEL_STUDIO_LOCAL_FILES_SERVING_ENABLED=true
 export LABEL_STUDIO_LOCAL_FILES_DOCUMENT_ROOT="$HERE"
 export LABEL_STUDIO_DISABLE_SIGNUP_WITHOUT_LINK=true
 export LABEL_STUDIO_COLLECT_ANALYTICS=false
+export LABEL_STUDIO_SENTRY_DSN=""            # no error reports to the vendor, from the server
+export LABEL_STUDIO_FRONTEND_SENTRY_DSN=""   # or from the page
 export DJANGO_DB=sqlite
 
-"$LS_BIN" start --port "$PORT" --no-browser --username "$EMAIL" --password "$PASSWORD" \\
+# --name=value, because a generated password can begin with "-", which is read as an option
+"$LS_BIN" start --port "$PORT" --no-browser --username="$EMAIL" --password="$PASSWORD" \\
   > label-studio.log 2>&1 &
 LS_PID=$!
 trap 'kill "$LS_PID" 2>/dev/null || true' EXIT INT TERM
