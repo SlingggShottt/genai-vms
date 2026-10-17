@@ -102,6 +102,24 @@ Read the first 5 clips of each person before anything else: a misunderstanding c
 it is found late. Agreement targets are in `phase_guideline.md`; they are starting points, not
 results.
 
+## If one person annotates everything
+
+With one annotator there is no overlap set, so **no agreement figure** can be measured, and that figure is
+what tells you whether the phase definitions are clear. Build one batch for them and package it:
+
+```bash
+uv run annotation-kit phase-batch $WORK/combined/candidates.json --out-dir $WORK/batch-me \
+    --size 119 --overlap 0 --annotator <name>
+uv run annotation-kit phase-package $WORK/batch-me/<name>.json --annotator <name> \
+    --clips-dir $WORK/clips --out-dir $WORK/me --link
+```
+
+then run `start.sh` in that package (with `LS_BIN`/`PYTHON` set to an installed Label Studio to skip the
+`pip install`). To get an honest consistency figure later: re-label about 20 of the clips after a few days
+without looking at the first answers (`phase-agreement` on the two files measures how stable one person is),
+and have a second person label the same 20 (measures whether the definitions travel). Neither is a
+substitute for two people from the start.
+
 ## Running Label Studio yourself
 
 To try the annotation screen, or to annotate yourself, from the same inputs:

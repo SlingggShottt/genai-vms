@@ -54,8 +54,9 @@ worked examples are in `GUIDELINE.md`; this page is only about what to click.
   the boundary at the second where the change first shows.
 - Do not mark a phase shorter than about a second unless that is how long it really is.
 - You can come back to a clip: open it from the list and press **Update** after changing it.
-- **Do not talk to the other annotator about specific clips.** About 20 clips are given to both of
-  you on purpose, to measure how well two careful people agree; discussing them spoils that.
+- If you were told that some clips are also given to someone else, **do not compare notes on
+  specific clips**: that is on purpose, to measure how well two careful people agree, and
+  discussing them spoils it.
 - If a video does not play, or drawing a bar does nothing, note the clip's id and move on; tell
   the person who sent you the package.
 
