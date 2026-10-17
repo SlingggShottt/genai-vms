@@ -30,7 +30,15 @@ from vms_common.vqa_bank import DEFAULT_EVENT_TYPE, load_vqa_bank
 
 from annotation_kit import agreement as agreement_mod
 from annotation_kit import batch as batch_mod
-from annotation_kit import labelstudio, meva, phaseconvert, phasepackage, ucf, ucffetch
+from annotation_kit import (
+    labelstudio,
+    meva,
+    phaseconvert,
+    phasepackage,
+    ucf,
+    ucffetch,
+    weaklabels,
+)
 from annotation_kit.candidates import PhaseCandidate, read_candidates, write_candidates
 from annotation_kit.convert import convert, read_export, write_jsonl
 from annotation_kit.labelconfig import write_label_configs
@@ -136,6 +144,48 @@ def _meva_candidates(args: argparse.Namespace) -> int:
     print(f"{len(selection.candidates)} candidates -> {args.out}\n")
     print(meva.summarise(selection))
     return 0
+
+
+def _span_labels(args: argparse.Namespace) -> int:
+    wanted = set(args.only)
+    if args.skipped_in:
+        wanted |= weaklabels.skipped_in(phaseconvert.read_export(args.skipped_in))
+    wanted -= set(args.exclude)
+    if not wanted:
+        print("span-labels: nothing selected (give --skipped-in or --only)", file=sys.stderr)
+        return 2
+    by_id = {c.candidate_id: c for c in read_candidates(args.candidates)}
+    spans = ucf.read_temporal_annotations(args.annotations)
+    made, problems = [], []
+    for clip_id in sorted(wanted):
+        candidate = by_id.get(clip_id)
+        entry = spans.get(weaklabels.video_file(candidate)) if candidate else None
+        if candidate is None:
+            problems.append(f"{clip_id}: not in the candidates file")
+        elif not entry or not entry[1]:
+            problems.append(f"{clip_id}: the annotation file has no crime span for it")
+        else:
+            try:
+                label = weaklabels.weak_label(candidate, entry[1], clip_prefix=args.clip_prefix)
+            except weaklabels.WeakLabelError as exc:
+                problems.append(str(exc))
+                continue
+            if label is None:
+                problems.append(f"{clip_id}: the crime is not inside the clip")
+            else:
+                made.append(label)
+    weaklabels.write_weak_labels(made, args.out)
+    print("| clip | stages (seconds into the clip) |\n|---|---|")
+    for label in made:
+        stages = ", ".join(f"{p.phase} {p.start_s:g}-{p.end_s:g}" for p in label.phases)
+        print(f"| {label.clip_id} | {stages} |")
+    print(
+        f"\n{len(made)} labels from the dataset's spans -> {args.out} "
+        f"(annotator: {weaklabels.WEAK_ANNOTATOR})"
+    )
+    for problem in problems:
+        print(f"not made: {problem}", file=sys.stderr)
+    return 1 if problems else 0
 
 
 def _ucf_fetch(args: argparse.Namespace) -> int:
@@ -346,6 +396,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     mv.add_argument("--seed", type=int, default=0)
     mv.add_argument("--s3-prefix", default=meva.MevaConfig().s3_prefix)
     mv.set_defaults(handler=_meva_candidates)
+
+    sl = sub.add_parser(
+        "span-labels",
+        help="weak phase labels (baseline/action/aftermath) from UCF-Crime's own crime spans",
+    )
+    sl.add_argument("candidates", help="the candidates file the clips were cut from")
+    sl.add_argument("--annotations", required=True, help="Temporal_Anomaly_Annotation...txt")
+    sl.add_argument("--out", required=True, help="a separate file: never mix with hand labels")
+    sl.add_argument("--skipped-in", help="a Label Studio export: take the clips left unmarked")
+    sl.add_argument("--only", action="append", default=[], metavar="ID", help="a candidate id")
+    sl.add_argument("--exclude", action="append", default=[], metavar="ID")
+    sl.add_argument("--clip-prefix", default="local://clips")
+    sl.set_defaults(handler=_span_labels)
 
     uf = sub.add_parser(
         "ucf-fetch", help="download the UCF-Crime videos that have a labelled crime window"

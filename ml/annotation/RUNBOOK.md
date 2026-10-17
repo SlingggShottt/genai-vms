@@ -120,6 +120,25 @@ without looking at the first answers (`phase-agreement` on the two files measure
 and have a second person label the same 20 (measures whether the definitions travel). Neither is a
 substitute for two people from the start.
 
+## Clips nobody marked: labels from the dataset's own span
+
+For a UCF-Crime clip that was skipped, the dataset's crime span can stand in, as `baseline` (before the span),
+`action` (the span) and `aftermath` (after it):
+
+```bash
+uv run annotation-kit span-labels $WORK/batch-me/<name>.json \
+    --annotations $WORK/ucf/Temporal_Anomaly_Annotation_for_Testing_Videos.txt \
+    --skipped-in <the Label Studio export> --out phase_labels_dataset_spans.jsonl
+# or name clips: --only <candidate id> (repeatable); --exclude <id> to leave one out
+```
+
+These are **weak labels and must stay apart from the hand labels**: they are a separate file, every line has
+`annotator: dataset-span:ucf-crime`, they have at most three stages (never `precursor` or `escalation`), and the
+spans are rough (two of the first five compared with a person's marks were off: one covered title cards, one
+was much shorter than the visible act). Do not count them in the number of hand-labelled clips and do not
+score a model against them as if they were human labels. A person's `escalation` (forcing the door) is
+inside the dataset's `action` span, so the two do not mean quite the same thing.
+
 ## Running Label Studio yourself
 
 To try the annotation screen, or to annotate yourself, from the same inputs:
