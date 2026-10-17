@@ -107,11 +107,15 @@ def cut_command(
     out_path: str | Path,
     *,
     resolve_source=None,  # type: ignore[no-untyped-def]
+    min_height: int | None = None,
 ) -> list[str]:
     """The ffmpeg argv that cuts one view: re-encoded, so the start is frame-accurate, at a constant
-    30 fps with a keyframe every second so the labelling player can seek.
+    30 fps with a keyframe every second so the labelling player can seek. With `min_height`, a
+    source shorter than that is scaled up to it (one already that tall is left alone): the
+    labelling player shows a video at its own size, and a 320x240 clip is a postage stamp.
     """
     source = resolve_source(view.source_uri) if resolve_source else view.source_uri
+    scale = ["-vf", f"scale=-2:max(ih\\,{int(min_height)})"] if min_height else []
     return [
         "ffmpeg",
         "-nostdin",
@@ -125,6 +129,7 @@ def cut_command(
         "-t",
         f"{view.duration_s:.3f}",
         "-an",
+        *scale,
         "-r",
         str(FPS),
         "-c:v",

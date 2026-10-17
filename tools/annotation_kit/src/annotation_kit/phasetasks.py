@@ -66,13 +66,16 @@ def cut_plan(
     out_dir: str | Path,
     *,
     resolve_source: UriResolver | None = None,
+    min_height: int | None = None,
 ) -> list[tuple[Path, list[str]]]:
     """`(output path, ffmpeg argv)` for every view of every candidate."""
     plan: list[tuple[Path, list[str]]] = []
     for candidate in candidates:
         for view in candidate.views:
             out = Path(out_dir) / clip_relpath(candidate, view)
-            plan.append((out, cut_command(view, out, resolve_source=resolve_source)))
+            plan.append(
+                (out, cut_command(view, out, resolve_source=resolve_source, min_height=min_height))
+            )
     return plan
 
 

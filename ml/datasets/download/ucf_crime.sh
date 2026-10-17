@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
+# FOR PHASE ANNOTATION USE `uv run annotation-kit ucf-fetch --out <dir>` INSTEAD: it fetches only the
+# videos that have a labelled crime window (~1.7 GB for the eight classes, from a Hugging Face mirror).
+# This script downloads the WHOLE official archive (over a hundred gigabytes), and on 2026-10-17 the
+# official host (www.crcv.ucf.edu) failed its TLS certificate check from here.
+#
 # Downloads UCF-Crime (13 anomaly classes, untrimmed single-view
 # surveillance video) from UCF's Center for Research in Computer Vision.
 # No registration required.

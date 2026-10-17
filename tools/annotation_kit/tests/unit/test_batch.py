@@ -317,3 +317,25 @@ class TestExclude:
         )
         ids = {c.candidate_id for c in read_candidates(tmp_path / "b" / "a.json")}
         assert len(ids) == 8 and not ids & {pool[3].candidate_id, pool[4].candidate_id}
+
+
+def test_a_single_view_is_called_a_view_in_the_summary(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = tmp_path / "candidates.json"
+    write_candidates([cand(i, "Robbery", views=1) for i in range(4)], source)
+    main(
+        [
+            "phase-batch",
+            str(source),
+            "--out-dir",
+            str(tmp_path / "b"),
+            "--size",
+            "4",
+            "--overlap",
+            "0",
+            "--annotator",
+            "a",
+        ]
+    )
+    assert "| a | 4 | 4 with 1 view |" in capsys.readouterr().out

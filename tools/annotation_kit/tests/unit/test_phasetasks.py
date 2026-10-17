@@ -101,6 +101,11 @@ class TestCutting:
         )
         assert plan[0][1][plan[0][1].index("-i") + 1] == "/data/G420.avi"
 
+    def test_the_minimum_height_reaches_every_view(self, tmp_path: Path) -> None:
+        plan = cut_plan([candidate()], tmp_path, min_height=720)
+        assert all("-vf" in argv for _p, argv in plan) and len(plan) == 3
+        assert all("-vf" not in argv for _p, argv in cut_plan([candidate()], tmp_path))
+
     def test_each_view_is_cut_at_its_own_start(self, tmp_path: Path) -> None:
         starts = [argv[argv.index("-ss") + 1] for _p, argv in cut_plan([candidate()], tmp_path)]
         assert starts == ["10.000", "11.000", "12.000"]

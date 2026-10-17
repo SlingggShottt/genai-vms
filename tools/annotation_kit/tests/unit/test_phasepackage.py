@@ -115,6 +115,35 @@ class TestWhatIsInIt:
         assert "annotation-kuldeep" in text and "__" not in text  # every placeholder filled
 
 
+class TestTheContentNote:
+    def build_with(self, world, datasets: list[str]):  # noqa: ANN001, ANN202
+        candidates = []
+        for n, dataset in enumerate(datasets, start=1):
+            candidate = cand(n)
+            candidates.append(candidate.model_copy(update={"dataset": dataset}))
+        return phasepackage.build_package(
+            "kuldeep", candidates, clips_dir=world["clips"], config_dir=world["config"],
+            ls_setup=Path(labelstudio.__file__), docs={}, out_dir=world["out"],
+        )  # fmt: skip
+
+    def test_a_package_with_crime_clips_warns_that_some_are_disturbing_and_how_to_leave_one(
+        self, world
+    ) -> None:
+        text = (self.build_with(world, ["ucf_crime", "meva"]).folder / "README.md").read_text()
+        assert "Real surveillance footage of crimes" in text and "disturbing" in text
+        assert "leave it unlabelled" in text and "Everyday activity" in text
+
+    def test_a_meva_only_package_does_not_claim_there_are_crimes_in_it(self, world) -> None:
+        text = (self.build_with(world, ["meva", "meva"]).folder / "README.md").read_text()
+        assert "Everyday activity" in text and "disturbing" not in text
+        assert text.count("Everyday activity") == 1  # said once, not once per clip
+
+    def test_the_crime_note_comes_first_and_both_say_keep_the_clips_private(self, world) -> None:
+        text = (self.build_with(world, ["meva", "ucf_crime"]).folder / "README.md").read_text()
+        assert text.index("Real surveillance") < text.index("Everyday activity")
+        assert "do not post or forward them" in text and "__" not in text
+
+
 class TestTheScripts:
     def test_they_are_valid_shell_and_executable(self, world) -> None:
         folder = build(world).folder
@@ -238,3 +267,22 @@ class TestTheCommand:
             ]
         )  # fmt: skip
         assert code == 1 and capsys.readouterr().err.startswith("package: 1 of ")
+
+
+def test_a_one_view_project_is_summarised_as_one_view(
+    world, capsys: pytest.CaptureFixture[str]
+) -> None:
+    single = world["out"].parent / "single.json"
+    write_candidates([cand(1, views=1), cand(2, views=1)], single)
+    for candidate in (cand(1, views=1), cand(2, views=1)):
+        path = world["clips"] / clip_relpath(candidate, candidate.views[0])
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"x")
+    code = main(
+        ["phase-package", str(single), "--annotator", "a", "--clips-dir", str(world["clips"]),
+         "--out-dir", str(world["out"]), "--config-dir", str(world["config"]),
+         "--docs-dir", str(world["docs"])]
+    )  # fmt: skip
+    assert code == 0 and "2 clips (2 with 1 view)" in capsys.readouterr().out
+    assert (world["out"] / "annotation-a/tasks/tasks_1view.json").exists()
+    assert (world["out"] / "annotation-a/config" / config_filename(1)).exists()

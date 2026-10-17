@@ -129,6 +129,10 @@ README = """# Phase annotation package for __NAME__
 
 __CLIPS__ clips (__VIEWS__ video files, __SIZE__) to label with the phases of what happens in them.
 
+## About the clips
+
+__ABOUT__
+
 ## What you need
 
 - Linux, macOS or Windows with WSL2 (Ubuntu), with `python3` (3.10 to 3.12) and `python3-venv`
@@ -171,6 +175,35 @@ problems show early) and again when you are done.
   `PORT=8091 ./start.sh` (and `PORT=8091 ./export.sh`).
 - Videos do not play: use Chrome, Edge or Brave.
 """
+
+
+ABOUT = {
+    "meva": (
+        "- **Everyday activity** (people hugging, getting out of cars, carrying things), filmed "
+        "at a school and a bus stop by several cameras at once. Nothing criminal happens in most "
+        "of them, and that is expected: they are here to practise the stages on several camera "
+        "views at once."
+    ),
+    "ucf_crime": (
+        "- **Real surveillance footage of crimes** (abuse, arrest, assault, burglary, fighting, "
+        "robbery, shoplifting, vandalism), one camera each, often low resolution. **Some of it is "
+        "disturbing.** If a clip is too much, leave it unlabelled, go on to the next one and tell "
+        "whoever sent you this: nobody will mind."
+    ),
+}
+ABOUT_FOOTER = (
+    "Both are public research video collections. Keep the clips to yourself: do not post or "
+    "forward them."
+)
+
+
+def _about(candidates: Sequence[PhaseCandidate]) -> str:
+    kinds = []
+    for candidate in candidates:
+        if candidate.dataset in ABOUT and candidate.dataset not in kinds:
+            kinds.append(candidate.dataset)
+    lines = [ABOUT[k] for k in ("ucf_crime", "meva") if k in kinds]
+    return "\n".join([*lines, "", ABOUT_FOOTER]) if lines else ABOUT_FOOTER
 
 
 def _size(n: float) -> str:
@@ -255,6 +288,7 @@ def build_package(
         "__CLIPS__": str(len(candidates)),
         "__VIEWS__": str(len(wanted)),
         "__SIZE__": _size(total),
+        "__ABOUT__": _about(candidates),
     }.items():
         readme = readme.replace(key, value)
     (folder / "README.md").write_text(readme, encoding="utf-8")

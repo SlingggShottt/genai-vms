@@ -124,6 +124,19 @@ class TestCutting:
         )
         assert argv[argv.index("-i") + 1] == "/data/x.avi"
 
+    def test_without_a_minimum_height_the_picture_is_not_rescaled(self) -> None:
+        assert "-vf" not in cut_command(view(), "o.mp4")
+
+    def test_a_minimum_height_scales_smaller_sources_up_and_leaves_taller_ones_alone(self) -> None:
+        argv = cut_command(view(), "o.mp4", min_height=720)
+        filter_ = argv[argv.index("-vf") + 1]
+        assert filter_ == "scale=-2:max(ih\\,720)"  # the comma is escaped for ffmpeg's parser
+        assert argv.index("-i") < argv.index("-vf") < argv.index("-c:v")
+
+    def test_the_minimum_height_is_a_number_not_a_command(self) -> None:
+        argv = cut_command(view(), "o.mp4", min_height=int("360"))
+        assert argv[argv.index("-vf") + 1].endswith(",360)")
+
     def test_overwrites_and_does_not_read_the_terminal(self) -> None:
         argv = cut_command(view(), "o.mp4")
         assert "-y" in argv and "-nostdin" in argv

@@ -29,17 +29,39 @@ clip per five-minute slot while there are others), leaves out clips too long for
 `--seed`, same batch. A clip found unusable after it was cut is dropped with `--exclude <candidate id>`
 (repeatable) and the batch is rebuilt; only the clips that are new then need cutting.
 
+### The crime clips (UCF-Crime)
+
+MEVA is everyday activity: it is the multi-camera part. The crime part comes from UCF-Crime, single
+camera, and only its 140 *test* videos have start and end times for the crime.
+
+```bash
+uv run annotation-kit ucf-fetch --out $WORK/ucf            # the eight classes: 59 videos, ~1.7 GB, ~5 minutes
+uv run annotation-kit ucf-fetch --out $WORK/ucf --dry-run  # what it would fetch, nothing downloaded
+uv run annotation-kit ucf-candidates --videos $WORK/ucf/Videos \
+    --annotations $WORK/ucf/Temporal_Anomaly_Annotation_for_Testing_Videos.txt \
+    --out $WORK/ucf/candidates.json --probe --max-window 40 --uri-prefix ucf://
+```
+
+`ucf-fetch` takes the videos from a Hugging Face mirror (`AllenXeon/ucf_crime`): the official host
+failed its certificate check. `--classes Shooting Stealing ...` adds others (see the guideline's open
+question). `--max-window 40` keeps a long crime to its first 40 s so that the clip fits the timeline.
+Put the crime candidates and the MEVA ones in one file and run `phase-batch` over it: its summary
+shows how many of each each annotator gets, and the shared set takes both kinds.
+
 ## 2. Cut the clips
 
 ```bash
 uv run annotation-kit cut $WORK/batch/all.json --out-dir $WORK/clips \
     --source-prefix s3://mevadata-public-01/=https://mevadata-public-01.s3.amazonaws.com/ \
+    --source-prefix ucf://=$WORK/ucf/Videos/ --min-height 720 \
     --script $WORK/cut_clips.sh
 ml/annotation/scripts/cut_parallel.sh $WORK/cut_clips.sh 5     # five at a time, skips what exists
 ml/annotation/scripts/check_clips.sh $WORK/clips                # BAD / SHORT clips; silence is good
 ```
 
-`cut` reads the sources over HTTP, so nothing is downloaded whole. Each view is re-encoded at
+`cut` reads the MEVA sources over HTTP, so nothing is downloaded whole. `--min-height 720` scales a source
+shorter than that up to it (a UCF-Crime video is 320x240, and the labelling player shows a video at its own
+size); a 1080p MEVA clip is left alone. Each view is re-encoded at
 30 fps from the same instant, so the views of a clip stay in sync (checked: both views of a clip
 come out with the same frame count). On this machine five in parallel make about 3 views a minute: a 60-clip batch, about
 140 views, takes around 45 minutes.
@@ -96,6 +118,12 @@ off: use a personal access token (Account & Settings), or give `LABEL_STUDIO_EMA
 `LABEL_STUDIO_PASSWORD` and the loader signs in and makes one.
 
 ## What was and was not checked
+
+UCF-Crime, checked 2026-10-17: the mirror is complete (950 anomaly videos, the official count); the
+annotation file has the format the reader assumed; every video is H.264, 320x240, 30 fps; six crime clips
+were looked at frame by frame and showed activity of the right kind (a vandalism video jumps to another
+camera partway through, which is in the original). Not checked: that every labelled span is exactly where
+the crime is, or that only 59 labelled videos is enough (see "How many clips").
 
 Checked for real, with Label Studio 1.23.2 in a headless Brave: the labelling form renders; both
 videos play from the served folder; a phase bar is drawn by a slow drag (a fast one makes a

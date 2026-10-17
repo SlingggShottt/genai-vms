@@ -4,18 +4,20 @@ UCF-Crime (Sultani, Chen, Shah, CVPR 2018) is untrimmed, single-view surveillanc
 anomaly classes; a class is the folder its videos sit in. This is the source for single-view
 incidents with a clear before, during and after.
 
-NOT VERIFIED AGAINST THE REAL FILES. The dataset host (www.crcv.ucf.edu) was not reachable when this
-was written, so the reader follows the convention the dataset publishes, as remembered and as
-documented in the repo's dataset notes, and has only been run on fixtures in that shape. The one
-file that matters is `Temporal_Anomaly_Annotation_for_Testing_Videos.txt`, one video per line:
+Checked against the real files on 2026-10-17 (96 labelled test videos fetched with
+`annotation-kit ucf-fetch`, from a Hugging Face mirror: the official host failed its certificate
+check). The file that matters is `Temporal_Anomaly_Annotation_for_Testing_Videos.txt`, one video per
+line, exactly as read here:
 
     Abuse028_x264.mp4  Abuse  165  240  -1  -1
 
-the file name, the class, then one or two frame spans (30 fps) where the anomaly happens, -1 for
-"no second span". Only the test videos have spans; a training video is an untrimmed clip with an
-anomaly somewhere in it, so it is offered whole (up to a length cap) and the annotators find it.
-Run it on the first real download and read `annotation-kit ucf-candidates`' summary before
-trusting it.
+the file name, the class, then one or two frame spans where the anomaly happens, -1 for "no second
+span". The videos are all H.264, 320x240 and exactly 30/1 fps, so the spans are frames at 30 fps.
+Only the 140 test videos have spans (59 in the eight default classes); a training video is an
+untrimmed clip with an anomaly somewhere in it, so it is offered whole (up to a length cap) and the
+annotators would have to find it. Not checked: that every labelled span is where the crime really
+is (six clips were looked at, by eye, and showed activity of the right kind); the 140 test videos
+are all there is with labels, so a larger set means annotating the training videos.
 """
 
 from __future__ import annotations

@@ -163,7 +163,7 @@ def summarise(batch: Sequence[PhaseCandidate], assignment: Assignment) -> str:
     for name in assignment.own:
         clips = assignment.for_annotator(name)
         views = ", ".join(
-            f"{n} with {v} views"
+            f"{n} with {v} view{'s' if v > 1 else ''}"
             for v, n in sorted(
                 {
                     len(c.views): sum(len(x.views) == len(c.views) for x in clips) for c in clips

@@ -210,6 +210,15 @@ class TestFromCandidatesToTasksAndCuts:
         assert code == 0 and "4 cuts" in capsys.readouterr().out  # 2 candidates x 2 views
         assert "-i /data/meva/drops-123-r13/2018-03-05/09/" in text and "s3://" not in text
 
+    def test_min_height_is_passed_to_every_cut_and_is_off_by_default(self, tmp_path: Path) -> None:
+        candidates = self.candidates(tmp_path)
+        plain, scaled = tmp_path / "plain.sh", tmp_path / "scaled.sh"
+        base = ["cut", str(candidates), "--out-dir", str(tmp_path / "clips")]
+        main([*base, "--script", str(plain)])
+        main([*base, "--script", str(scaled), "--min-height", "720"])
+        assert "scale=" not in plain.read_text()
+        assert scaled.read_text().count("scale=-2:max(ih") == 4  # 2 candidates x 2 views
+
     def test_cut_run_reports_and_fails_loudly_if_a_cut_failed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
@@ -358,3 +367,54 @@ class TestThePhaseConfigsTheCommandWrites:
         assert sorted(p.name for p in committed.glob("*.xml")) == sorted(p.name for p in generated)
         for path in generated:
             assert (committed / path.name).read_text() == path.read_text(), path.name
+
+
+class TestUcfWindowLength:
+    def make(self, tmp_path: Path) -> tuple[Path, Path]:
+        folder = tmp_path / "ucf/Videos/Fighting"
+        folder.mkdir(parents=True)
+        (folder / "Fighting001_x264.mp4").write_bytes(b"")
+        labels = tmp_path / "labels.txt"
+        labels.write_text("Fighting001_x264.mp4  Fighting  300  3300  -1  -1  \n")  # 10 s to 110 s
+        return tmp_path / "ucf/Videos", labels
+
+    def window(self, tmp_path: Path, *extra: str) -> tuple[float, float]:
+        videos, labels = self.make(tmp_path)
+        out = tmp_path / "c.json"
+        args = ["ucf-candidates", "--videos", str(videos), "--annotations", str(labels)]
+        assert main([*args, "--out", str(out), *extra]) == 0
+        (view,) = read_candidates(out)[0].views
+        return view.start_s, view.end_s
+
+    def test_a_long_crime_is_cut_to_its_start_and_the_default_is_ninety_seconds(
+        self, tmp_path: Path
+    ) -> None:
+        assert self.window(tmp_path) == (0.0, 90.0)
+
+    def test_max_window_shortens_it_to_what_the_timeline_can_show(self, tmp_path: Path) -> None:
+        assert self.window(tmp_path, "--max-window", "40") == (0.0, 40.0)
+
+    def test_a_crime_shorter_than_the_limit_keeps_all_of_it_and_its_padding(
+        self, tmp_path: Path
+    ) -> None:
+        folder = tmp_path / "ucf/Videos/Fighting"
+        folder.mkdir(parents=True)
+        (folder / "Fighting002_x264.mp4").write_bytes(b"")
+        labels = tmp_path / "labels.txt"
+        labels.write_text("Fighting002_x264.mp4  Fighting  900  1200  -1  -1  \n")  # 30 s to 40 s
+        out = tmp_path / "c.json"
+        main(
+            [
+                "ucf-candidates",
+                "--videos",
+                str(tmp_path / "ucf/Videos"),
+                "--annotations",
+                str(labels),
+                "--out",
+                str(out),
+                "--max-window",
+                "40",
+            ]
+        )
+        (view,) = read_candidates(out)[0].views
+        assert (view.start_s, view.end_s) == (20.0, 50.0)  # 10 s padding each side: 30 s, under 40

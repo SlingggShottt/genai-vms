@@ -30,7 +30,7 @@ from vms_common.vqa_bank import DEFAULT_EVENT_TYPE, load_vqa_bank
 
 from annotation_kit import agreement as agreement_mod
 from annotation_kit import batch as batch_mod
-from annotation_kit import labelstudio, meva, phaseconvert, phasepackage, ucf
+from annotation_kit import labelstudio, meva, phaseconvert, phasepackage, ucf, ucffetch
 from annotation_kit.candidates import PhaseCandidate, read_candidates, write_candidates
 from annotation_kit.convert import convert, read_export, write_jsonl
 from annotation_kit.labelconfig import write_label_configs
@@ -138,6 +138,33 @@ def _meva_candidates(args: argparse.Namespace) -> int:
     return 0
 
 
+def _ucf_fetch(args: argparse.Namespace) -> int:
+    out = Path(args.out)
+    try:
+        labels = ucffetch.fetch_annotations(out, ucffetch.http_open)
+        annotations = ucf.read_temporal_annotations(labels)
+        index = ucffetch.index_videos(ucffetch.http_json)
+    except (OSError, ucffetch.FetchError) as exc:
+        print(f"ucf-fetch: {exc}", file=sys.stderr)
+        return 1
+    plan = ucffetch.plan_downloads(annotations, index, args.classes or ucf.DEFAULT_CLASSES)
+    print(ucffetch.format_plan(plan))
+    if args.dry_run:
+        return 0
+
+    def progress(number: int, total: int, item: ucffetch.Item) -> None:
+        print(f"[{number}/{total}] {item.cls}/{item.name}", flush=True)
+
+    report = ucffetch.fetch_videos(plan, out, ucffetch.http_open, on_progress=progress)
+    print(
+        f"\n{report.downloaded} downloaded, {report.kept} already there, "
+        f"{len(report.failed)} failed"
+    )
+    for name in report.failed:
+        print(f"failed: {name}", file=sys.stderr)
+    return 1 if report.failed else 0
+
+
 def _ucf_candidates(args: argparse.Namespace) -> int:
     classes = tuple(args.classes) if args.classes else ucf.DEFAULT_CLASSES
     config = ucf.UcfConfig(
@@ -145,6 +172,7 @@ def _ucf_candidates(args: argparse.Namespace) -> int:
         per_class_cap=_cap(args.per_class_cap),
         seed=args.seed,
         uri_prefix=args.uri_prefix,
+        max_window_s=args.max_window,
     )
     videos = ucf.scan_videos(args.videos, classes)
     if args.probe:
@@ -215,7 +243,7 @@ def _phase_package(args: argparse.Namespace) -> int:
     except phasepackage.PackageError as exc:
         print(f"package: {exc}", file=sys.stderr)
         return 1
-    tasks = ", ".join(f"{n} with {v} views" for v, n in report.tasks.items())
+    tasks = ", ".join(f"{n} with {v} view{'s' if v > 1 else ''}" for v, n in report.tasks.items())
     print(f"{report.folder}: {report.clips} clips ({tasks}), {report.files} files")
     return 0
 
@@ -238,7 +266,12 @@ def _phase_tasks(args: argparse.Namespace) -> int:
 
 def _cut(args: argparse.Namespace) -> int:
     candidates: list[PhaseCandidate] = read_candidates(args.candidates)
-    plan = cut_plan(candidates, args.out_dir, resolve_source=_url_resolver(args.source_prefix))
+    plan = cut_plan(
+        candidates,
+        args.out_dir,
+        resolve_source=_url_resolver(args.source_prefix),
+        min_height=args.min_height or None,
+    )
     if args.run:
         done = run_cuts(plan)
         print(f"cut {done['cut']}, kept {done['kept']}, failed {done['failed']} of {len(plan)}")
@@ -314,6 +347,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     mv.add_argument("--s3-prefix", default=meva.MevaConfig().s3_prefix)
     mv.set_defaults(handler=_meva_candidates)
 
+    uf = sub.add_parser(
+        "ucf-fetch", help="download the UCF-Crime videos that have a labelled crime window"
+    )
+    uf.add_argument("--out", required=True, help="folder to fill (Videos/<Class>/ and the labels)")
+    uf.add_argument("--classes", nargs="+", help="default: the eight in the guideline")
+    uf.add_argument("--dry-run", action="store_true", help="say what would be fetched only")
+    uf.set_defaults(handler=_ucf_fetch)
+
     uc = sub.add_parser("ucf-candidates", help="candidate clips from UCF-Crime")
     uc.add_argument("--videos", required=True, help="folder the dataset was extracted to")
     uc.add_argument("--annotations", help="Temporal_Anomaly_Annotation_for_Testing_Videos.txt")
@@ -321,6 +362,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     uc.add_argument("--classes", nargs="+")
     uc.add_argument("--per-class-cap", type=int, default=40, help="0 for no cap")
     uc.add_argument("--seed", type=int, default=0)
+    uc.add_argument(
+        "--max-window",
+        type=float,
+        default=90.0,
+        help="longest clip in seconds; a longer crime is cut to its start (use 40 to fit the "
+        "labelling timeline)",
+    )
     uc.add_argument("--uri-prefix", default="")
     uc.add_argument("--probe", action="store_true", help="read each video's length with ffprobe")
     uc.set_defaults(handler=_ucf_candidates)
@@ -373,6 +421,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     ct.add_argument("--out-dir", required=True)
     ct.add_argument("--source-prefix", action="append", default=[], metavar="FROM=TO")
     ct.add_argument("--script", default="cut_clips.sh")
+    ct.add_argument(
+        "--min-height",
+        type=int,
+        default=0,
+        help="scale a source shorter than this up to it (720 for 320x240 UCF-Crime); 0: never",
+    )
     ct.add_argument("--run", action="store_true", help="run ffmpeg now instead of writing a script")
     ct.set_defaults(handler=_cut)
 

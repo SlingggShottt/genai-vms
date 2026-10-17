@@ -5,8 +5,9 @@ worked examples are in `GUIDELINE.md`; this page is only about what to click.
 
 ## One clip
 
-1. Open a project (`<your name> - 2 views` or `- 3 views`) and press **Label All Tasks**. Do one
-   project to the end, then the other.
+1. You have up to three projects: `<your name> - 1 view` (the **crime clips**, one camera each),
+   `- 2 views` and `- 3 views` (everyday activity filmed by several cameras at once). Start with
+   `1 view`. Open a project and press **Label All Tasks**; do one project to the end, then the next.
 2. The title is the clip's id and what the clip is suggested to be. Below it are the clip's videos:
    the **first one is the one you mark**; the others show the same moment from other cameras. Use
    the play button under each video, or drag its own bar, to look at them.
@@ -23,11 +24,27 @@ worked examples are in `GUIDELINE.md`; this page is only about what to click.
 6. Answer the three questions below the buttons:
    - **Which view shows the incident best?** The camera where it is easiest to see, not
      necessarily the first.
-   - **What kind of incident is this?** The suggestion is in the title. Change it only if it is
-     plainly wrong. Most clips here are ordinary activities, so `activity` is usually right.
+   - **What kind of incident is this?** The suggestion is in the title: the kind of crime for a
+     crime clip (`robbery`, `fighting`...), `activity` for the everyday ones. Change it only if it
+     is plainly wrong.
    - **Is this clip usable?** Choose **No** only if nothing relevant can be seen at all (blocked
      camera, nothing in frame). A hard clip is still usable.
 7. Press **Submit**. It moves on to the next clip.
+
+## The crime clips (`1 view`)
+
+- The crime happens somewhere inside the clip, and the clip starts about 10 seconds before it. The
+  video is often small and grainy: that is how the footage is.
+- Think of a shoplifting clip: a customer browsing (`baseline`), looking around and lingering
+  (`precursor`), reaching toward the item (`escalation`), taking or hiding it (`action`), walking away
+  (`aftermath`). Many clips have only some of the five; leave out what you cannot see.
+- A long crime is cut off at 40 seconds, so a clip may **end in the middle of the action**. That is
+  fine: mark what is there and leave `aftermath` out.
+- **Some of these clips show real violence.** If one is too much, leave it unlabelled, go on to the
+  next, and tell the person who sent you the package. Nobody will mind.
+- There is only one camera, so "which view shows it best" has a single answer: choose it.
+- A few of these videos **jump to a different camera partway through**: that is in the original
+  footage. Mark what you see; a jump does not end a phase by itself.
 
 ## Things to know
 

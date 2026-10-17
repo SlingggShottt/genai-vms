@@ -239,7 +239,16 @@ is the handover; aftermath is them walking apart. Precursor and escalation are u
   Chosen because each has a visible approach, build-up, act and response, and because they are the violent and
   theft incidents the event rules and incident reports are about. The other five (arson, explosion, road
   accidents, shooting, stealing) either have no scene to phase (an explosion has no approach) or are covered by a
-  class kept here. Single view. *(Not yet checked against the downloaded files.)*
+  class kept here. Single view. Only the 140 *test* videos of the release have start and end times for the
+  crime; **59 of them are in these eight classes** (shoplifting 21, burglary 13, arrest 5, fighting 5, robbery 5,
+  vandalism 5, assault 3, abuse 2). The videos are 320x240 at 30 fps, and 26 of the 59 run longer than the 40 s the
+  labelling timeline can show, so those are cut to their first 40 s (the lead-up and the start of the crime; the
+  aftermath is then absent, which is allowed). Fetched with `annotation-kit ucf-fetch` from a Hugging Face mirror
+  (checked 2026-10-17); the original licence is research use only, so the files stay inside the team. Some of the
+  footage is real violence. **Open for the guide:** two of the five classes left out are crimes in the plain sense,
+  *shooting* (23 labelled videos, 20 of them short enough to use whole) and *stealing* (5); adding them would give
+  96 labelled crime videos instead of 59. They are already downloaded, but the labelling form, this table and the
+  event types would need them added first.
 - **MEVA**: the only source of time-synchronised **multi-view** footage. MEVA is not an incident dataset: in
   the released annotations abandoned packages appear in 1 clip and thefts in 4, neither with a second
   synchronised view, and there is no intrusion, loitering, crowding or running. So the clips are everyday
@@ -254,7 +263,9 @@ is the handover; aftermath is them walking apart. Precursor and escalation are u
 ```bash
 # candidates (MEVA needs a checkout of https://gitlab.kitware.com/meva/meva-data-repo)
 uv run annotation-kit meva-candidates --repo <meva-data-repo> --out meva_candidates.json
-uv run annotation-kit ucf-candidates --videos <dir> --annotations <Temporal_Anomaly...txt> --out ucf_candidates.json
+uv run annotation-kit ucf-fetch --out <dir>     # the labelled crime videos only (~1.7 GB for the eight classes)
+uv run annotation-kit ucf-candidates --videos <dir>/Videos --annotations <dir>/Temporal_Anomaly...txt \
+    --out ucf_candidates.json --probe --max-window 40
 
 # cut every view to the same moment (a script to review, or --run)
 uv run annotation-kit cut meva_candidates.json --out-dir clips \
