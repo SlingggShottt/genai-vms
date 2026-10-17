@@ -120,6 +120,30 @@ without looking at the first answers (`phase-agreement` on the two files measure
 and have a second person label the same 20 (measures whether the definitions travel). Neither is a
 substitute for two people from the start.
 
+## A model drafts the stages, a person corrects them
+
+To save a person's time, a model can mark the stages first and the person watches and corrects. In this
+project the drafts of the first 32 clips were made by Claude from a contact sheet of each clip (one frame
+every 2 seconds) plus the dataset's crime span or the 10 s paddings as a hint: `ml/annotation/drafts/claude-draft-1.json`
+(each clip has a `confidence`: *seen*, *hint* or *prior*; read the file's `how_to_read`).
+
+```bash
+uv run annotation-kit ls-drafts ml/annotation/drafts/claude-draft-1.json --annotator <name> \
+    --url http://localhost:8090 --token-file <package>/.token
+```
+
+That loads the drafts as Label Studio predictions and points the annotator's projects at them, so that opening
+a clip shows the marks already drawn (not saved, until Submit) and a `claude-draft-1` tab. Safe to run twice.
+Checked in a real browser: the marks and the three answers appear, an edited draft submits, and the export
+links each final answer back to its draft.
+
+**Do not draw a conclusion from drafted-then-corrected labels without saying how far they were corrected.**
+`annotation-kit draft-edits <export>` lists, per clip, whether it was submitted exactly as drafted and how far
+the boundaries moved, and keeps the clips marked from scratch apart. Nearly all unchanged is flagged: it can
+mean good drafts or that nobody looked. The corrected drafts are anchored on the model's guess; when scoring
+another model against them, report the from-scratch clips on their own as well. Moving one boundary means
+moving its neighbour too: a stage that now overlaps the next one is rejected by `phase-convert`.
+
 ## Clips nobody marked: labels from the dataset's own span
 
 For a UCF-Crime clip that was skipped, the dataset's crime span can stand in, as `baseline` (before the span),

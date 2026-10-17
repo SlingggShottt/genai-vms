@@ -1,0 +1,837 @@
+{
+ "model_version": "claude-draft-1",
+ "drafted_by": "Claude (Sonnet 5.5), looking at a contact sheet of each clip (one frame every 2 s) and using the dataset's crime span (UCF-Crime clips) or the 10 s padding (multi-camera clips) as a hint",
+ "date": "2026-10-17",
+ "how_to_read": "stages are [phase, from_s, to_s] in seconds into the clip. confidence: seen = the act was visible in the frames; hint = only the dataset span fits and the frames were inconclusive; prior = too small to see, assumed to sit between the 10 s paddings. These are drafts for a person to correct, not labels; use `annotation-kit draft-edits` to say how much was changed.",
+ "clips": [
+  {
+   "candidate_id": "ucf_crime:Fighting018_x264",
+   "confidence": "seen",
+   "note": "first 2 s are a title card, left unmarked",
+   "stages": [
+    [
+     "baseline",
+     2,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     8
+    ],
+    [
+     "action",
+     8,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Fighting033_x264",
+   "confidence": "seen",
+   "note": "the struggle looks to continue to the end of the clip (the dataset says it ends at 19 s)",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Robbery106_x264",
+   "confidence": "seen",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Vandalism028_x264",
+   "confidence": "seen",
+   "note": "two separate incidents (10-14 s and about 30-38 s); only the first is marked, a stage can appear once",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     28
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Vandalism036_x264",
+   "confidence": "seen",
+   "note": "the dataset also lists 25-28 s; not clear in the frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     18
+    ],
+    [
+     "aftermath",
+     18,
+     38
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Fighting003_x264",
+   "confidence": "hint",
+   "note": "a crowded platform, the fight is hard to follow; the group already looks agitated before 10 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     24
+    ],
+    [
+     "aftermath",
+     24,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Abuse030_x264",
+   "confidence": "hint",
+   "note": "small and distant; animal-abuse clip",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     10
+    ],
+    [
+     "action",
+     10,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     19
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Arrest039_x264",
+   "confidence": "hint",
+   "note": "the restraint happens at the left edge, partly out of frame",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "escalation",
+     10,
+     12
+    ],
+    [
+     "action",
+     12,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Robbery048_x264",
+   "confidence": "seen",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "precursor",
+     8,
+     10
+    ],
+    [
+     "escalation",
+     10,
+     12
+    ],
+    [
+     "action",
+     12,
+     26
+    ],
+    [
+     "aftermath",
+     26,
+     36
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Arrest030_x264",
+   "confidence": "seen",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     10
+    ],
+    [
+     "escalation",
+     10,
+     14
+    ],
+    [
+     "action",
+     14,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Robbery137_x264",
+   "confidence": "hint",
+   "note": "a masked person enters at about 4 s; what is taken is not clear",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "escalation",
+     4,
+     8
+    ],
+    [
+     "action",
+     8,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Assault006_x264",
+   "confidence": "seen",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Robbery050_x264",
+   "confidence": "hint",
+   "note": "a vehicle scene; the sequence is hard to read",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "precursor",
+     8,
+     10
+    ],
+    [
+     "escalation",
+     10,
+     12
+    ],
+    [
+     "action",
+     12,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Assault010_x264",
+   "confidence": "seen",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Assault011_x264",
+   "confidence": "seen",
+   "note": "something that looks like fighting continues at the bottom edge at 32-38 s; check whether action should run longer",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     30
+    ],
+    [
+     "aftermath",
+     30,
+     39
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Robbery102_x264",
+   "confidence": "seen",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     18
+    ],
+    [
+     "aftermath",
+     18,
+     35
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Abuse028_x264",
+   "confidence": "hint",
+   "note": "small and distant; animal-abuse clip",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     6
+    ],
+    [
+     "action",
+     6,
+     8
+    ],
+    [
+     "aftermath",
+     8,
+     18
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-10-02.17-15-02.school.G424:person_unloads_vehicle:54",
+   "confidence": "prior",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.14-15-00.14-19-59.school.G330:person_carries_heavy_object:133",
+   "confidence": "prior",
+   "note": "a crowd; the carrying is not visible",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.16-55-06.17-00-06.school.G424:vehicle_drops_off_person:40",
+   "confidence": "prior",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     30
+    ],
+    [
+     "aftermath",
+     30,
+     39
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-35-00.17-40-00.bus.G506:vehicle_picks_up_person:35",
+   "confidence": "seen",
+   "note": "a white car arrives at about 10 s and has left by about 24 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "precursor",
+     8,
+     12
+    ],
+    [
+     "action",
+     12,
+     24
+    ],
+    [
+     "aftermath",
+     24,
+     33
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-30-00.10-35-00.school.G299:person_transfers_object:74",
+   "confidence": "prior",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.11-55-01.12-00-01.school.G424:person_loads_vehicle:4951955982119870770",
+   "confidence": "prior",
+   "note": "the trunk seems to stay open to the end",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "precursor",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-12.11-00-00.11-05-00.bus.G340:person_embraces_person:4",
+   "confidence": "seen",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "action",
+     8,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-15-00.15-20-00.school.G639:person_rides_bicycle:0",
+   "confidence": "prior",
+   "note": "a distant cyclist",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     32
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-05-00.17-10-00.bus.G340:person_loads_vehicle:11",
+   "confidence": "prior",
+   "note": "very short activity",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "action",
+     8,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.16-50-01.16-55-01.hospital.G436:person_unloads_vehicle:175",
+   "confidence": "prior",
+   "note": "the van's doors look open from about 18 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "precursor",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.16-40-01.16-45-01.school.G336:vehicle_picks_up_person:3202768683383235916",
+   "confidence": "seen",
+   "note": "an SUV arrives at about 4 s and leaves at about 24 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "action",
+     8,
+     24
+    ],
+    [
+     "aftermath",
+     24,
+     33
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-10-08.17-15-08.hospital.G436:vehicle_drops_off_person:7",
+   "confidence": "seen",
+   "note": "this camera shows an empty road until a car arrives at about 24 s; the drop-off may be in another view",
+   "stages": [
+    [
+     "baseline",
+     0,
+     24
+    ],
+    [
+     "precursor",
+     24,
+     30
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.16-10-02.16-15-02.hospital.G436:person_embraces_person:48",
+   "confidence": "prior",
+   "note": "only small groups far away",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     18
+    ],
+    [
+     "aftermath",
+     18,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.16-05-02.16-10-02.hospital.G436:person_transfers_object:23",
+   "confidence": "prior",
+   "note": "only a long line of people far away",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.11-05-00.11-10-00.hospital.G436:person_carries_heavy_object:38",
+   "confidence": "prior",
+   "note": "",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     32
+    ]
+   ]
+  }
+ ]
+}

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -31,6 +32,7 @@ from vms_common.vqa_bank import DEFAULT_EVENT_TYPE, load_vqa_bank
 from annotation_kit import agreement as agreement_mod
 from annotation_kit import batch as batch_mod
 from annotation_kit import (
+    draftedits,
     labelstudio,
     meva,
     phaseconvert,
@@ -143,6 +145,43 @@ def _meva_candidates(args: argparse.Namespace) -> int:
     write_candidates(selection.candidates, args.out)
     print(f"{len(selection.candidates)} candidates -> {args.out}\n")
     print(meva.summarise(selection))
+    return 0
+
+
+def _ls_drafts(args: argparse.Namespace) -> int:
+    file = json.loads(Path(args.drafts).read_text(encoding="utf-8"))
+    token_file = Path(args.token_file) if args.token_file else None
+    try:
+        token = labelstudio._sign_in(args.url, os.environ, token_file)
+        if not token:
+            print("set LABEL_STUDIO_TOKEN, or use --token-file", file=sys.stderr)
+            return 2
+        report = labelstudio.add_drafts(
+            labelstudio.http_transport(args.url, token),
+            args.annotator,
+            file["clips"],
+            model_version=file["model_version"],
+        )
+    except labelstudio.LabelStudioError as exc:
+        print(f"label studio: {exc}", file=sys.stderr)
+        return 1
+    print(
+        f"{report['added']} drafts added, {report['already_there']} already there, "
+        f"projects {report['projects']} now pre-fill from {file['model_version']}"
+    )
+    for missing in report["no_task"]:
+        print(f"no task for: {missing}", file=sys.stderr)
+    return 1 if report["no_task"] else 0
+
+
+def _draft_edits(args: argparse.Namespace) -> int:
+    edits = draftedits.clip_edits(
+        phaseconvert.read_export(args.export), model_version=args.model_version
+    )
+    summary = draftedits.summarise(edits)
+    print(draftedits.markdown(edits, summary))
+    if args.json:
+        Path(args.json).write_text(json.dumps(summary, indent=1), encoding="utf-8")
     return 0
 
 
@@ -396,6 +435,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     mv.add_argument("--seed", type=int, default=0)
     mv.add_argument("--s3-prefix", default=meva.MevaConfig().s3_prefix)
     mv.set_defaults(handler=_meva_candidates)
+
+    ld = sub.add_parser(
+        "ls-drafts", help="load a model's draft stages into Label Studio as pre-filled marks"
+    )
+    ld.add_argument("drafts", help="a drafts file (see ml/annotation/drafts/)")
+    ld.add_argument("--annotator", required=True)
+    ld.add_argument("--url", default="http://localhost:8080")
+    ld.add_argument("--token-file", help="a file holding the access token")
+    ld.set_defaults(handler=_ls_drafts)
+
+    de = sub.add_parser(
+        "draft-edits", help="how much a person changed a model's draft stages (from an export)"
+    )
+    de.add_argument("export", help="the Label Studio export")
+    de.add_argument("--model-version", help="count only drafts from this model version")
+    de.add_argument("--json", help="also write the summary here")
+    de.set_defaults(handler=_draft_edits)
 
     sl = sub.add_parser(
         "span-labels",

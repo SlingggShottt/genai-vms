@@ -222,6 +222,109 @@ def export_annotator(call: Transport, annotator: str) -> list[dict[str, Any]]:
     return tasks
 
 
+STAGES = ("baseline", "precursor", "escalation", "action", "aftermath")  # as `phases.PHASES`
+CONFIDENCE_SCORE = {"seen": 0.7, "hint": 0.4, "prior": 0.3}
+
+
+def draft_result(
+    stages: Sequence[Sequence[Any]],
+    *,
+    frames: int,
+    fps: int,
+    primary_view: str,
+    event_type: str,
+) -> list[dict[str, Any]]:
+    """The marks and answers of a draft, as Label Studio stores a prediction: `stages` are
+    `(phase, from_s, to_s)` in seconds into the clip, a stage covering those seconds, which are
+    frames `from_s * fps + 1 .. to_s * fps` (Label Studio counts from 1 and includes the last)."""
+    order = [STAGES.index(str(phase)) if str(phase) in STAGES else -1 for phase, _a, _b in stages]
+    if -1 in order or order != sorted(set(order)):
+        raise LabelStudioError(f"stages must be known and in order, each once: {list(stages)}")
+    result: list[dict[str, Any]] = []
+    previous_end = 0
+    for phase, start_s, end_s in stages:
+        first, last = int(start_s * fps) + 1, min(int(end_s * fps), frames)
+        if first < 1 or last < first or first <= previous_end:
+            raise LabelStudioError(
+                f"{phase} {start_s}-{end_s} s does not fit a clip of {frames} frames"
+            )
+        previous_end = last
+        value = {"ranges": [{"start": first, "end": last}], "timelinelabels": [str(phase)]}
+        result.append(
+            {"from_name": "phase", "to_name": "video", "type": "timelinelabels", "value": value}
+        )
+    for name, choice in (
+        ("primary_view", primary_view),
+        ("event_type", event_type),
+        ("usable", "Yes"),
+    ):
+        result.append(
+            {
+                "from_name": name,
+                "to_name": "video",
+                "type": "choices",
+                "value": {"choices": [choice]},
+            }
+        )
+    return result
+
+
+def add_drafts(
+    call: Transport,
+    annotator: str,
+    drafts: Sequence[Mapping[str, Any]],
+    *,
+    model_version: str,
+) -> dict[str, Any]:
+    """Load drafts as predictions on the annotator's tasks and make their projects pre-fill from
+    them, so that opening a clip shows the draft as an editable mark. A task that already has a
+    prediction of this version is left alone (safe to run twice). Returns counts and the ids that
+    matched no task."""
+    prefix = f"{annotator} - "
+    tasks: dict[str, tuple[int, int, Mapping[str, Any]]] = {}
+    for title, project in _existing_projects(call).items():
+        if title.startswith(prefix):
+            page = call("GET", f"/api/tasks?project={project['id']}&page_size=500&fields=all", None)
+            for task in page["tasks"]:
+                tasks[str(task["data"]["candidate_id"])] = (project["id"], task["id"], task["data"])
+    report: dict[str, Any] = {"added": 0, "already_there": 0, "no_task": [], "projects": []}
+    used: set[int] = set()
+    for draft in drafts:
+        entry = tasks.get(str(draft["candidate_id"]))
+        if entry is None:
+            report["no_task"].append(draft["candidate_id"])
+            continue
+        project_id, task_id, data = entry
+        used.add(project_id)
+        existing = call("GET", f"/api/predictions?task={task_id}", None)
+        if any(p.get("model_version") == model_version for p in existing):
+            report["already_there"] += 1
+            continue
+        fps = int(data.get("timeline_fps") or 1)
+        result = draft_result(
+            draft["stages"],
+            frames=int(float(data["duration_s"]) * fps),
+            fps=fps,
+            primary_view=str(data["primary_view"]),
+            event_type=str(data["event_type"]),
+        )
+        call(
+            "POST",
+            "/api/predictions",
+            {
+                "task": task_id,
+                "result": result,
+                "model_version": model_version,
+                "score": CONFIDENCE_SCORE.get(str(draft.get("confidence")), 0.5),
+            },
+        )
+        report["added"] += 1
+    for project_id in sorted(used):  # only once the project has predictions of that version
+        call("PATCH", f"/api/projects/{project_id}", {"model_version": model_version})
+    report["projects"] = sorted(used)
+    return report
+
+
 def _sign_in(url: str, env: Mapping[str, str], token_file: Path | None) -> str:
     """A token from the environment, else from `token_file`, else by signing in with the account
     (and saved to `token_file`: Label Studio gives one token per account and shows it once)."""
