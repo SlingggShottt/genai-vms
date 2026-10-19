@@ -1,8 +1,8 @@
 {
  "model_version": "claude-draft-1",
- "drafted_by": "Claude (Sonnet 5.5), looking at a contact sheet of each clip (one frame every 2 s) and using the dataset's crime span (UCF-Crime clips) or the 10 s padding (multi-camera clips) as a hint",
- "date": "2026-10-17",
- "how_to_read": "stages are [phase, from_s, to_s] in seconds into the clip. confidence: seen = the act was visible in the frames; hint = only the dataset span fits and the frames were inconclusive; prior = too small to see, assumed to sit between the 10 s paddings. These are drafts for a person to correct, not labels; use `annotation-kit draft-edits` to say how much was changed.",
+ "drafted_by": "Claude (Sonnet 5.5). Crime clips: from a contact sheet of each clip (one frame every 2 s) with the dataset's crime span as a hint. Multi-camera clips: the first 32 from frames where the activity was visible, otherwise (and for all of the second batch) by the padding rule, which is a rule and not a look at the clip. The `how` field of each clip says which.",
+ "date": "2026-10-17 (first 32), 2026-10-19 (the other 71)",
+ "how_to_read": "stages are [phase, from_s, to_s] in seconds into the clip. confidence: seen = the act was visible in the frames; hint = only the dataset span fits and the frames were inconclusive; prior = too small to see, assumed to sit between the 10 s paddings. how: frames = looked at a contact sheet; padding rule = not looked at, baseline for the first 10 s, action until 10 s before the end, aftermath after. These are drafts for a person to correct, not labels; use `annotation-kit draft-edits` to say how much was changed.",
  "clips": [
   {
    "candidate_id": "ucf_crime:Fighting018_x264",
@@ -29,7 +29,8 @@
      14,
      24
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Fighting033_x264",
@@ -56,7 +57,8 @@
      10,
      27
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Robbery106_x264",
@@ -88,7 +90,8 @@
      14,
      24
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Vandalism028_x264",
@@ -115,7 +118,8 @@
      14,
      28
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Vandalism036_x264",
@@ -142,7 +146,8 @@
      18,
      38
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Fighting003_x264",
@@ -169,7 +174,8 @@
      24,
      40
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Abuse030_x264",
@@ -196,7 +202,8 @@
      13,
      19
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Arrest039_x264",
@@ -223,7 +230,8 @@
      12,
      40
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Robbery048_x264",
@@ -255,7 +263,8 @@
      26,
      36
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Arrest030_x264",
@@ -282,7 +291,8 @@
      14,
      40
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Robbery137_x264",
@@ -304,7 +314,8 @@
      8,
      40
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Assault006_x264",
@@ -331,7 +342,8 @@
      10,
      40
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Robbery050_x264",
@@ -358,7 +370,8 @@
      12,
      40
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Assault010_x264",
@@ -390,7 +403,8 @@
      22,
      40
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Assault011_x264",
@@ -422,7 +436,8 @@
      30,
      39
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Robbery102_x264",
@@ -449,7 +464,8 @@
      18,
      35
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "ucf_crime:Abuse028_x264",
@@ -476,7 +492,8 @@
      8,
      18
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-11.17-10-02.17-15-02.school.G424:person_unloads_vehicle:54",
@@ -503,7 +520,8 @@
      20,
      24
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-11.14-15-00.14-19-59.school.G330:person_carries_heavy_object:133",
@@ -525,7 +543,8 @@
      14,
      23
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-07.16-55-06.17-00-06.school.G424:vehicle_drops_off_person:40",
@@ -547,7 +566,8 @@
      30,
      39
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-07.17-35-00.17-40-00.bus.G506:vehicle_picks_up_person:35",
@@ -574,7 +594,8 @@
      24,
      33
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-09.10-30-00.10-35-00.school.G299:person_transfers_object:74",
@@ -596,7 +617,8 @@
      13,
      22
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-11.11-55-01.12-00-01.school.G424:person_loads_vehicle:4951955982119870770",
@@ -623,7 +645,8 @@
      14,
      23
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-12.11-00-00.11-05-00.bus.G340:person_embraces_person:4",
@@ -650,7 +673,8 @@
      13,
      22
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-15.15-15-00.15-20-00.school.G639:person_rides_bicycle:0",
@@ -672,7 +696,8 @@
      22,
      32
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-07.17-05-00.17-10-00.bus.G340:person_loads_vehicle:11",
@@ -694,7 +719,8 @@
      12,
      21
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-07.16-50-01.16-55-01.hospital.G436:person_unloads_vehicle:175",
@@ -721,7 +747,8 @@
      22,
      24
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-11.16-40-01.16-45-01.school.G336:vehicle_picks_up_person:3202768683383235916",
@@ -748,7 +775,8 @@
      24,
      33
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-11.17-10-08.17-15-08.hospital.G436:vehicle_drops_off_person:7",
@@ -765,7 +793,8 @@
      24,
      30
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-13.16-10-02.16-15-02.hospital.G436:person_embraces_person:48",
@@ -787,7 +816,8 @@
      18,
      27
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-13.16-05-02.16-10-02.hospital.G436:person_transfers_object:23",
@@ -809,7 +839,8 @@
      13,
      22
     ]
-   ]
+   ],
+   "how": "frames"
   },
   {
    "candidate_id": "meva:2018-03-07.11-05-00.11-10-00.hospital.G436:person_carries_heavy_object:38",
@@ -830,6 +861,1785 @@
      "aftermath",
      22,
      32
+    ]
+   ],
+   "how": "frames"
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting022_x264",
+   "confidence": "hint",
+   "note": "two people in an aisle; the taking is hard to see; the dataset's second span (48-52 s) is past the clip",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "action",
+     8,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Burglary018_x264",
+   "confidence": "hint",
+   "note": "night infrared; the person is at the window from the first second",
+   "how": "frames",
+   "stages": [
+    [
+     "precursor",
+     0,
+     6
+    ],
+    [
+     "escalation",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting044_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     16
+    ],
+    [
+     "aftermath",
+     16,
+     26
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting033_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     19
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting039_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     15
+    ],
+    [
+     "aftermath",
+     15,
+     25
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting049_x264",
+   "confidence": "hint",
+   "note": "the taking is hard to see; he keeps reaching to the shelf until about 30 s",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     21
+    ],
+    [
+     "aftermath",
+     21,
+     31
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting021_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     15
+    ],
+    [
+     "aftermath",
+     15,
+     25
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Burglary005_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "precursor",
+     0,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     21
+    ],
+    [
+     "aftermath",
+     21,
+     31
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting028_x264",
+   "confidence": "seen",
+   "note": "the last 2 s are a red end card",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     19
+    ],
+    [
+     "aftermath",
+     19,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting004_x264",
+   "confidence": "hint",
+   "note": "seen from above; the theft itself is hard to make out; the dataset span runs past the clip",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Vandalism017_x264",
+   "confidence": "seen",
+   "note": "two separate hits on the glass door (about 9-11 s and 26-28 s); only the first is marked",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     9
+    ],
+    [
+     "action",
+     9,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     26
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Burglary017_x264",
+   "confidence": "seen",
+   "note": "the person keeps going through the drawers to the end of the clip",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     2
+    ],
+    [
+     "precursor",
+     2,
+     4
+    ],
+    [
+     "escalation",
+     4,
+     6
+    ],
+    [
+     "action",
+     6,
+     30
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting001_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     10
+    ],
+    [
+     "action",
+     10,
+     25
+    ],
+    [
+     "aftermath",
+     25,
+     35
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Burglary021_x264",
+   "confidence": "seen",
+   "note": "two separate events: a ute arrives (about 2-10 s) and a motorbike is wheeled away (about 28-40 s); 10-26 s is empty and left unmarked",
+   "how": "frames",
+   "stages": [
+    [
+     "precursor",
+     2,
+     10
+    ],
+    [
+     "escalation",
+     26,
+     28
+    ],
+    [
+     "action",
+     28,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Arrest001_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting029_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     25
+    ],
+    [
+     "aftermath",
+     25,
+     35
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting010_x264",
+   "confidence": "hint",
+   "note": "a second theft by the same girl around 36-40 s",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     16
+    ],
+    [
+     "aftermath",
+     16,
+     36
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Burglary092_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     20
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Fighting042_x264",
+   "confidence": "seen",
+   "note": "a long struggle at the glass door",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     9
+    ],
+    [
+     "action",
+     9,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting005_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Burglary076_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     2
+    ],
+    [
+     "precursor",
+     2,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     26
+    ],
+    [
+     "action",
+     26,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting031_x264",
+   "confidence": "hint",
+   "note": "small figures, hard to read",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "action",
+     4,
+     11
+    ],
+    [
+     "aftermath",
+     11,
+     14
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting034_x264",
+   "confidence": "hint",
+   "note": "the woman keeps reaching to the displays until about 22 s",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Burglary024_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     2
+    ],
+    [
+     "action",
+     2,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Burglary061_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "escalation",
+     10,
+     12
+    ],
+    [
+     "action",
+     12,
+     40
+    ]
+   ]
+  },
+  {
+   "candidate_id": "ucf_crime:Shoplifting020_x264",
+   "confidence": "seen",
+   "note": "",
+   "how": "frames",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     8
+    ],
+    [
+     "escalation",
+     8,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-05-00.15-10-00.school.G424:vehicle_drops_off_person:17",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     16
+    ],
+    [
+     "aftermath",
+     16,
+     26
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-15-00.10-20-00.school.G299:person_carries_heavy_object:131",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.14-50-01.14-55-01.bus.G506:person_unloads_vehicle:59",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     11
+    ],
+    [
+     "aftermath",
+     11,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.11-20-00.11-25-00.school.G299:person_carries_heavy_object:378",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     15
+    ],
+    [
+     "aftermath",
+     15,
+     25
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-05-01.15-10-01.bus.G506:vehicle_picks_up_person:44",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     21
+    ],
+    [
+     "aftermath",
+     21,
+     31
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-25-00.17-30-00.bus.G340:person_unloads_vehicle:20",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     11
+    ],
+    [
+     "aftermath",
+     11,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-10-00.10-15-00.school.G330:person_carries_heavy_object:6",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     15
+    ],
+    [
+     "aftermath",
+     15,
+     25
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.17-05-03.17-10-03.school.G424:vehicle_picks_up_person:41",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     19
+    ],
+    [
+     "aftermath",
+     19,
+     29
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-50-01.15-55-01.bus.G506:vehicle_drops_off_person:48",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     18
+    ],
+    [
+     "aftermath",
+     18,
+     28
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-12.10-05-00.10-10-00.school.G330:person_embraces_person:47",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-45-03.15-50-03.school.G300:person_rides_bicycle:1",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-00-01.17-05-01.bus.G505:person_transfers_object:66",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-20-00.17-25-00.school.G330:person_transfers_object:46",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-10-00.10-15-00.bus.G506:vehicle_drops_off_person:15",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     25
+    ],
+    [
+     "aftermath",
+     25,
+     35
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-35-03.15-40-03.school.G300:person_loads_vehicle:29",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     11
+    ],
+    [
+     "aftermath",
+     11,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.11-30-00.11-35-00.school.G299:person_embraces_person:245",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     18
+    ],
+    [
+     "aftermath",
+     18,
+     28
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-50-04.15-55-04.bus.G340:person_embraces_person:31",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-00-01.15-05-01.bus.G506:person_rides_bicycle:16",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     21
+    ],
+    [
+     "aftermath",
+     21,
+     31
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.16-50-06.16-55-06.school.G424:person_carries_heavy_object:158",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     17
+    ],
+    [
+     "aftermath",
+     17,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-15-00.15-20-00.school.G424:person_loads_vehicle:4",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     11
+    ],
+    [
+     "aftermath",
+     11,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-05.13-20-00.13-25-00.school.G424:person_loads_vehicle:24",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-12.10-15-04.10-20-04.school.G424:person_embraces_person:9",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-45-00.15-50-00.school.G424:person_embraces_person:109",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-12.10-15-00.10-20-00.school.G330:person_transfers_object:186",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.11-05-05.11-10-05.school.G424:person_loads_vehicle:87",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.11-30-01.11-35-01.school.G424:person_unloads_vehicle:8690034190228169990",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-30-00.17-35-00.bus.G340:person_loads_vehicle:37",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.16-35-02.16-40-02.school.G424:person_loads_vehicle:8788995669255921899",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-30-01.15-35-01.bus.G506:person_rides_bicycle:34",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     26
+    ],
+    [
+     "aftermath",
+     26,
+     36
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-00-00.15-05-00.school.G424:person_rides_bicycle:58",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     32
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-15-00.17-20-00.school.G299:person_transfers_object:203",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-05.13-15-00.13-20-00.school.G424:person_carries_heavy_object:32",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.14-55-01.15-00-01.bus.G506:person_rides_bicycle:59",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     11
+    ],
+    [
+     "aftermath",
+     11,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-35-01.15-40-01.bus.G506:person_rides_bicycle:25",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     19
+    ],
+    [
+     "aftermath",
+     19,
+     29
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-15-07.15-20-07.hospital.G436:person_rides_bicycle:78",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     17
+    ],
+    [
+     "aftermath",
+     17,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.13-50-08.13-55-08.hospital.G436:person_unloads_vehicle:59",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     15
+    ],
+    [
+     "aftermath",
+     15,
+     25
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-25-08.17-30-08.hospital.G436:vehicle_picks_up_person:33",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     28
+    ],
+    [
+     "aftermath",
+     28,
+     38
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.16-20-02.16-25-02.hospital.G436:vehicle_picks_up_person:120",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     26
+    ],
+    [
+     "aftermath",
+     26,
+     36
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.17-20-03.17-25-03.hospital.G436:person_transfers_object:28",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-10-00.10-15-00.school.G336:vehicle_drops_off_person:48",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     23
+    ],
+    [
+     "aftermath",
+     23,
+     33
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-45-07.15-50-07.hospital.G436:person_embraces_person:140",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     17
+    ],
+    [
+     "aftermath",
+     17,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-40-06.15-45-06.hospital.G341:vehicle_drops_off_person:7",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.14-55-07.15-00-07.hospital.G436:vehicle_picks_up_person:82",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     24
+    ],
+    [
+     "aftermath",
+     24,
+     34
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.11-10-06.11-15-05.school.G336:person_carries_heavy_object:69",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     17
+    ],
+    [
+     "aftermath",
+     17,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-20-01.17-25-01.hospital.G436:person_unloads_vehicle:34",
+   "confidence": "prior",
+   "note": "not looked at: the activity is assumed to sit between the 10 s paddings",
+   "how": "padding rule",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     23
     ]
    ]
   }

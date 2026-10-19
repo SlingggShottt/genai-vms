@@ -280,9 +280,26 @@ class TestTheCommittedDrafts:
         self, committed: dict
     ) -> None:
         clips = committed["clips"]
-        assert len(clips) == len({c["candidate_id"] for c in clips}) == 32
+        assert len(clips) == len({c["candidate_id"] for c in clips}) == 103
         for clip in clips:
             assert clip["confidence"] in labelstudio.CONFIDENCE_SCORE
             labelstudio.draft_result(
                 clip["stages"], frames=10_000, fps=1, primary_view="x", event_type="y"
             )
+
+    def test_a_draft_that_was_not_looked_at_says_so_and_is_never_more_than_a_prior(
+        self, committed: dict
+    ) -> None:
+        for clip in committed["clips"]:
+            assert clip["how"] in {"frames", "padding rule"}
+            if clip["how"] == "padding rule":
+                assert clip["confidence"] == "prior" and "not looked at" in clip["note"]
+                assert clip["candidate_id"].startswith("meva:")
+
+    def test_the_padding_rule_drafts_follow_the_rule(self, committed: dict) -> None:
+        rule = [c for c in committed["clips"] if c["how"] == "padding rule"]
+        assert len(rule) == 45
+        for clip in rule:
+            names = [stage[0] for stage in clip["stages"]]
+            assert names[:2] == ["baseline", "action"] and clip["stages"][0][1:] == [0, 10]
+            assert clip["stages"][1][1] == 10 and set(names) <= {"baseline", "action", "aftermath"}
