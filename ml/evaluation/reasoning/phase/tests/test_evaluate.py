@@ -211,3 +211,169 @@ def test_samples_load_exactly_as_the_builder_writes_them(tmp_path: Path) -> None
     assert s.labels == labels and s.frame_times == times
     assert s.prompt == bd.render_user_prompt(clip, "cam01", times, (4.0, 6.0))
     assert s.images == [tmp_path / f"frames/{k}.jpg" for k in range(4)]
+
+
+# ---- who made the labels ------------------------------------------------------------------------
+
+
+def _record(clip_id: str, source: str | None, split: str) -> dict:
+    phases = [
+        {"phase": "baseline", "start_s": 0.0, "end_s": 4.0},
+        {"phase": "action", "start_s": 4.0, "end_s": 8.0},
+    ]
+    line = {
+        "clip_id": clip_id,
+        "source_video": clip_id,
+        "event_type": "robbery",
+        "primary_view": "cam01",
+        "views": [{"camera": "cam01", "video_uri": "x"}],
+        "phases": phases,
+        "annotator": source,
+    }
+    clip = bd.PhaseLabelClip.model_validate(line)
+    times = [0.0, 3.0, 5.0, 7.0]
+    labels, _ = bd.label_frames(times, clip)
+    return bd.sample_record(
+        clip, "cam01", split, times, labels, (4.0, 6.0), ["f0.jpg", "f1.jpg", "f2.jpg", "f3.jpg"]
+    )
+
+
+def test_the_builder_writes_who_made_each_label_and_the_evaluator_reads_it(tmp_path: Path) -> None:
+    (tmp_path / "test.jsonl").write_text(
+        json.dumps(_record("c1", "human:from-scratch", "test")) + "\n"
+    )
+    [s] = ev.load_samples(tmp_path, "test")
+    assert s.label_source == "human:from-scratch"
+
+
+def test_a_dataset_made_before_the_source_was_recorded_still_loads(tmp_path: Path) -> None:
+    record = _record("c1", None, "test")
+    del record["label_source"]
+    (tmp_path / "test.jsonl").write_text(json.dumps(record) + "\n")
+    assert ev.load_samples(tmp_path, "test")[0].label_source == ""
+
+
+def test_the_all_split_is_every_split_in_order(tmp_path: Path) -> None:
+    for split, cid in (("train", "a"), ("val", "b"), ("test", "c")):
+        (tmp_path / f"{split}.jsonl").write_text(
+            json.dumps(_record(cid, "draft:v1:frames", split)) + "\n"
+        )
+    assert [s.id for s in ev.load_samples(tmp_path, "all")] == ["a|cam01", "b|cam01", "c|cam01"]
+    assert [s.id for s in ev.load_samples(tmp_path, "val")] == ["b|cam01"]
+
+
+def test_scores_are_reported_by_who_made_the_labels_in_the_four_groups(tmp_path: Path) -> None:
+    scores = ev.Scores()
+    for source in (
+        "human:from-scratch",
+        "human:accepted-draft:v1",
+        "draft:v2:padding-rule",
+        "dataset-span:ucf-crime",
+        "draft:v1:frames",
+    ):
+        s = sample(tmp_path)
+        s = ev.Sample(**{**s.__dict__, "label_source": source})
+        scores.add(s, ev.Prediction(ev.rules_spans(s), True, None), model=False)
+    groups = scores.summary()["miou_by_label_source"]
+    assert set(groups) == {
+        "human",
+        "model draft (looked at the clip)",
+        "model draft (rule only)",
+        "dataset span",
+    }
+    assert groups["human"]["n"] == 2 and groups["dataset span"]["n"] == 1
+
+
+def test_the_report_has_a_row_per_label_source_group_and_an_old_report_still_renders() -> None:
+    cell = {"n": 3, "mean": 0.5, "ci95": [0.2, 0.8]}
+    method = {
+        "miou": cell, "boundary_mae_s": cell, "frame_accuracy": cell, "usable_answer_rate": cell,
+        "seconds_per_sample_median": 1.2, "boundaries_not_in_answer": 0, "gateway_errors": 0,
+        "miou_by_event_type": {}, "miou_by_views": {}, "miou_by_label_source": {"human": cell},
+    }  # fmt: skip
+    assert "| human | 0.5 (0.2–0.8, n=3) |" in ev.markdown(
+        {"samples": 3, "methods": {"m": method}}, "d", "all"
+    )
+    del method["miou_by_label_source"]
+    assert "| m |" in ev.markdown({"samples": 3, "methods": {"m": method}}, "d", "all")
+
+
+# ---- a run that dies can go on ------------------------------------------------------------------
+
+
+def _numbered(tmp_path: Path, n: int) -> list:
+    out = []
+    for k in range(n):
+        s = sample(tmp_path, window=10.0, truth=TRUTH_M)
+        out.append(ev.Sample(**{**s.__dict__, "id": f"clip{k}|cam01"}))
+    return out
+
+
+GOOD = {"phases": ["baseline", "baseline", "action", "action"]}
+
+
+async def test_each_answer_is_written_as_it_arrives(tmp_path: Path) -> None:
+    log = tmp_path / "answers.jsonl"
+    samples = _numbered(tmp_path, 3)
+    await ev.evaluate(
+        samples, ["model"], FakeGateway({"phase_tg": [GOOD] * 3}), "phase_tg", "m", predictions=log
+    )
+    rows = [json.loads(line) for line in log.read_text().splitlines()]
+    assert [r["id"] for r in rows] == ["clip0|cam01", "clip1|cam01", "clip2|cam01"]
+    assert rows[0]["usable"] is True and rows[0]["spans"][0][0] == "baseline"
+
+
+async def test_a_second_run_reuses_the_answers_and_only_asks_for_the_missing_ones(
+    tmp_path: Path,
+) -> None:
+    log = tmp_path / "answers.jsonl"
+    samples = _numbered(tmp_path, 4)
+    first = FakeGateway({"phase_tg": [GOOD] * 2})
+    await ev.evaluate(samples[:2], ["model"], first, "phase_tg", "m", predictions=log)
+    second = FakeGateway(
+        {"phase_tg": [GOOD] * 2}
+    )  # only two more answers exist: asking for 4 would fail
+    report = await ev.evaluate(samples, ["model"], second, "phase_tg", "m", predictions=log)
+    assert report["methods"]["m"]["usable_answer_rate"]["n"] == 4
+    assert len(log.read_text().splitlines()) == 4
+
+
+async def test_reusing_answers_gives_the_same_report_as_asking_again(tmp_path: Path) -> None:
+    samples = _numbered(tmp_path, 3)
+    answers = [GOOD, {"phases": ["action"] * 4}, GOOD]
+    log = tmp_path / "answers.jsonl"
+    live = await ev.evaluate(
+        samples, ["model"], FakeGateway({"phase_tg": answers}), "phase_tg", "m", predictions=log
+    )
+    reused = await ev.evaluate(
+        samples, ["model"], FakeGateway({"phase_tg": []}), "phase_tg", "m", predictions=log
+    )
+    for key in ("miou", "frame_accuracy", "usable_answer_rate", "boundary_mae_s"):
+        assert reused["methods"]["m"][key] == live["methods"]["m"][key]
+
+
+def test_a_half_written_last_line_is_ignored_not_fatal(tmp_path: Path) -> None:
+    p = ev.Prediction([("action", 0.0, 4.0)], True, ["action"], 1.5, "")
+    log = tmp_path / "answers.jsonl"
+    log.write_text(
+        json.dumps(ev.prediction_to_json("a|cam", p)) + '\n{"id": "b|cam", "spans": [["act'
+    )
+    assert list(ev.read_predictions(log)) == ["a|cam"]
+
+
+def test_a_prediction_survives_the_round_trip_exactly() -> None:
+    p = ev.Prediction(
+        [("baseline", 0.0, 4.5), ("action", 4.5, 10.0)], False, None, 2.25, "no model"
+    )
+    assert ev.prediction_from_json(json.loads(json.dumps(ev.prediction_to_json("x", p)))) == p
+
+
+def test_a_missing_answers_file_is_just_empty(tmp_path: Path) -> None:
+    assert ev.read_predictions(tmp_path / "nothing.jsonl") == {}
+
+
+async def test_without_an_answers_file_nothing_is_written(tmp_path: Path) -> None:
+    await ev.evaluate(
+        _numbered(tmp_path, 1), ["model"], FakeGateway({"phase_tg": [GOOD]}), "phase_tg", "m"
+    )
+    assert not list(tmp_path.glob("*.jsonl"))  # noqa: ASYNC240 - a test, not a service

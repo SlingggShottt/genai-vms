@@ -39,6 +39,7 @@ from typing import Protocol
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # for `stats`
 
+from annotation_kit.combine import group as source_group  # noqa: E402
 from reasoning.domain.timeline import FrameLabels, rule_spans, spans_from_labels  # noqa: E402
 from stats import mean_ci  # noqa: E402
 from vms_common.llm import ImageInput, LLMError
@@ -59,9 +60,17 @@ class Sample:
     flagged: tuple[float, float]
     prompt: str
     images: list[Path]
+    label_source: str = ""  # `annotator` of the label: see annotation_kit.combine
+
+
+SPLITS = ("train", "val", "test")
 
 
 def load_samples(dataset: Path, split: str) -> list[Sample]:
+    """The samples of one split, or of all three with `all` (a zero-shot model was trained on
+    none of them, so scoring it on every clip is fair and gives more clips to score)."""
+    if split == "all":
+        return [s for name in SPLITS for s in load_samples(dataset, name)]
     out = []
     for line in (dataset / f"{split}.jsonl").read_text().splitlines():
         r = json.loads(line)
@@ -78,6 +87,7 @@ def load_samples(dataset: Path, split: str) -> list[Sample]:
                 flagged=(r["flagged_span"][0], r["flagged_span"][1]),
                 prompt=next(c["text"] for c in user if c["type"] == "text"),
                 images=[dataset / p for p in r["images"]],
+                label_source=r.get("label_source") or "",
             )
         )
     return out
@@ -187,6 +197,37 @@ async def model_prediction(gateway: Gateway, task: str, s: Sample) -> Prediction
     )
 
 
+def prediction_to_json(sample_id: str, p: Prediction) -> dict:
+    return {
+        "id": sample_id,
+        "spans": [list(x) for x in p.spans],
+        "usable": p.usable,
+        "labels": p.labels,
+        "seconds": p.seconds,
+        "error": p.error,
+    }
+
+
+def prediction_from_json(r: dict) -> Prediction:
+    spans = [(str(a), float(b), float(c)) for a, b, c in r["spans"]]
+    return Prediction(spans, bool(r["usable"]), r["labels"], float(r["seconds"]), r["error"])
+
+
+def read_predictions(path: Path) -> dict[str, Prediction]:
+    """The answers a run already got, so that a run that died can go on where it stopped. A line
+    that is not whole (the run was killed while writing it) is ignored."""
+    done: dict[str, Prediction] = {}
+    if not path.exists():
+        return done
+    for line in path.read_text().splitlines():
+        try:
+            r = json.loads(line)
+            done[r["id"]] = prediction_from_json(r)
+        except (ValueError, KeyError, TypeError):
+            continue
+    return done
+
+
 # ---- scoring ------------------------------------------------------------------------------------
 
 
@@ -201,12 +242,14 @@ class Scores:
     errors: int = 0
     by_type: dict[str, list[float]] = field(default_factory=dict)
     by_views: dict[str, list[float]] = field(default_factory=dict)
+    by_source: dict[str, list[float]] = field(default_factory=dict)
 
     def add(self, s: Sample, p: Prediction, *, model: bool) -> None:
         m = sample_miou(s.truth, p.spans)
         self.miou.append(m)
         self.by_type.setdefault(s.event_type, []).append(m)
         self.by_views.setdefault("1 view" if s.n_views == 1 else f"{s.n_views} views", []).append(m)
+        self.by_source.setdefault(source_group(s.label_source), []).append(m)
         errs, missing = boundary_errors(s.truth, p.spans)
         self.boundary += errs
         self.unmatched_boundaries += missing
@@ -233,11 +276,18 @@ class Scores:
             "gateway_errors": self.errors,
             "miou_by_event_type": {k: mean_ci(v) for k, v in sorted(self.by_type.items())},
             "miou_by_views": {k: mean_ci(v) for k, v in sorted(self.by_views.items())},
+            "miou_by_label_source": {k: mean_ci(v) for k, v in sorted(self.by_source.items())},
         }
 
 
 async def evaluate(
-    samples: list[Sample], methods: list[str], gateway: Gateway | None, task: str, label: str
+    samples: list[Sample],
+    methods: list[str],
+    gateway: Gateway | None,
+    task: str,
+    label: str,
+    *,
+    predictions: Path | None = None,
 ) -> dict:
     out: dict = {"samples": len(samples), "methods": {}}
     if "rules" in methods:
@@ -249,9 +299,20 @@ async def evaluate(
         if gateway is None:
             raise ValueError("the model method needs a gateway")
         sc = Scores()
+        known = read_predictions(predictions) if predictions else {}
         for i, s in enumerate(samples, 1):
-            sc.add(s, await model_prediction(gateway, task, s), model=True)
-            print(f"  model {i}/{len(samples)}", flush=True)
+            if s.id in known:
+                prediction = known[s.id]
+            else:
+                prediction = await model_prediction(gateway, task, s)
+                if predictions:
+                    with predictions.open("a", encoding="utf-8") as handle:
+                        handle.write(json.dumps(prediction_to_json(s.id, prediction)) + "\n")
+            sc.add(s, prediction, model=True)
+            print(
+                f"  model {i}/{len(samples)}{' (from an earlier run)' if s.id in known else ''}",
+                flush=True,
+            )
         out["methods"][label] = sc.summary()
     return out
 
@@ -282,8 +343,8 @@ def markdown(report: dict, dataset: str, split: str) -> str:
         )
     for name, m in report["methods"].items():
         lines += ["", f"## {name}", "", "| by | mIoU |", "|---|---|"]
-        for group in ("miou_by_event_type", "miou_by_views"):
-            for k, v in m[group].items():
+        for group in ("miou_by_event_type", "miou_by_views", "miou_by_label_source"):
+            for k, v in m.get(group, {}).items():
                 lines.append(f"| {k} | {cell(v)} |")
         lines.append("")
         lines.append(
@@ -305,6 +366,12 @@ async def main() -> None:
         "--redis-url", default="redis://localhost:6379/9", help="scratch db: lease + cache"
     )
     ap.add_argument("--out", type=Path, default=None, help="write <out>.json and <out>.md")
+    ap.add_argument(
+        "--predictions",
+        type=Path,
+        default=None,
+        help="keep each answer here as it arrives, and reuse the ones already there on a re-run",
+    )
     args = ap.parse_args()
 
     samples = load_samples(args.dataset, args.split)
@@ -321,7 +388,9 @@ async def main() -> None:
         await redis.flushdb()  # a cached answer would be timed as a model call
         gateway = LLMGateway.from_settings(LLMSettings(), redis=redis)
     try:
-        report = await evaluate(samples, methods, gateway, args.task, args.label)
+        report = await evaluate(
+            samples, methods, gateway, args.task, args.label, predictions=args.predictions
+        )
     finally:
         if gateway is not None:
             await gateway.aclose()

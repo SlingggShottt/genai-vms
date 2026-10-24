@@ -128,8 +128,10 @@ def write_kaggle_metadata(out: Path, title: str, slug: str) -> None:
 
 
 def resolve_video(uri: str, videos_root: Path) -> Path:
-    """`s3://bucket/key` -> `<videos_root>/key`; `file://` and plain paths are used as given."""
-    if uri.startswith("s3://"):
+    """`s3://bucket/key` -> `<videos_root>/key`; `file://` and plain paths are used as given.
+    A `local://clips/key` (what the annotation package's labels say) is read like an s3 one: its
+    first part is the folder the clips were served from, and `videos_root` is that folder."""
+    if uri.startswith(("s3://", "local://")):
         return videos_root / uri.split("/", 3)[3]
     if uri.startswith("file://"):
         return Path(uri[len("file://") :])

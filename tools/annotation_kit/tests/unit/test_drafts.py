@@ -303,3 +303,46 @@ class TestTheCommittedDrafts:
             names = [stage[0] for stage in clip["stages"]]
             assert names[:2] == ["baseline", "action"] and clip["stages"][0][1:] == [0, 10]
             assert clip["stages"][1][1] == 10 and set(names) <= {"baseline", "action", "aftermath"}
+
+
+@pytest.fixture(scope="module")
+def committed2() -> dict:
+    root = Path(__file__).resolve().parents[4]
+    return json.loads((root / "ml/annotation/drafts/claude-draft-2.json").read_text())
+
+
+class TestTheSecondDraftsFile:
+    """The multi-camera drafts that replace the padding-rule ones of the first file."""
+
+    def test_it_says_what_it_replaces_and_who_made_it(self, committed2: dict) -> None:
+        assert committed2["model_version"] == "claude-draft-2"
+        assert "padding rule" in committed2["supersedes"] and "Claude" in committed2["drafted_by"]
+
+    def test_it_covers_exactly_the_multi_camera_clips_of_the_first_file(
+        self, committed: dict, committed2: dict
+    ) -> None:
+        first = {
+            c["candidate_id"] for c in committed["clips"] if c["candidate_id"].startswith("meva:")
+        }
+        second = [c["candidate_id"] for c in committed2["clips"]]
+        assert len(second) == len(set(second)) == 60 and set(second) == first
+
+    def test_every_draft_is_valid_and_says_how_it_was_made(self, committed2: dict) -> None:
+        for clip in committed2["clips"]:
+            assert clip["how"] in {"zoomed frames", "padding rule"}
+            assert clip["confidence"] in labelstudio.CONFIDENCE_SCORE
+            labelstudio.draft_result(
+                clip["stages"], frames=10_000, fps=1, primary_view="x", event_type="y"
+            )
+            if clip["how"] == "padding rule":
+                assert clip["confidence"] == "prior" and "padding rule" in clip["note"]
+                assert [s[0] for s in clip["stages"]][:2] == ["baseline", "action"]
+            else:
+                assert clip["confidence"] in {"seen", "hint"}
+
+    def test_a_clip_whose_activity_was_not_found_is_never_called_seen(
+        self, committed2: dict
+    ) -> None:
+        for clip in committed2["clips"]:
+            if clip["confidence"] == "seen":
+                assert clip["how"] == "zoomed frames"

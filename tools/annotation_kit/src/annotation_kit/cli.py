@@ -32,6 +32,7 @@ from vms_common.vqa_bank import DEFAULT_EVENT_TYPE, load_vqa_bank
 from annotation_kit import agreement as agreement_mod
 from annotation_kit import batch as batch_mod
 from annotation_kit import (
+    combine,
     draftedits,
     labelstudio,
     meva,
@@ -146,6 +147,27 @@ def _meva_candidates(args: argparse.Namespace) -> int:
     print(f"{len(selection.candidates)} candidates -> {args.out}\n")
     print(meva.summarise(selection))
     return 0
+
+
+def _combine_labels(args: argparse.Namespace) -> int:
+    candidates = read_candidates(args.candidates)
+    docs = [json.loads(Path(p).read_text(encoding="utf-8")) for p in args.drafts]
+    spans = read_phase_labels(args.span_labels) if args.span_labels else []
+    result = combine.combine(
+        candidates,
+        hand_export=phaseconvert.read_export(args.hand_export) if args.hand_export else [],
+        drafts=docs,
+        span_labels=spans,
+        clip_prefix=args.clip_prefix,
+    )
+    phaseconvert.write_phase_labels(result.clips, args.out)
+    print(combine.summary_table(result))
+    print(f"\n{len(result.clips)} of {len(candidates)} clips labelled -> {args.out}")
+    for note in result.notes:
+        print(f"note: {note}", file=sys.stderr)
+    for cid in result.missing:
+        print(f"no label from any source: {cid}", file=sys.stderr)
+    return 1 if result.missing else 0
 
 
 def _ls_drafts(args: argparse.Namespace) -> int:
@@ -435,6 +457,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     mv.add_argument("--seed", type=int, default=0)
     mv.add_argument("--s3-prefix", default=meva.MevaConfig().s3_prefix)
     mv.set_defaults(handler=_meva_candidates)
+
+    cl = sub.add_parser(
+        "combine-labels",
+        help="one label set from a person's marks, model drafts and dataset spans, with sources",
+    )
+    cl.add_argument("candidates", help="the candidates file the clips were cut from")
+    cl.add_argument("--hand-export", help="the Label Studio export with the person's marks")
+    cl.add_argument(
+        "--drafts", action="append", default=[], help="a drafts file; later ones win (repeatable)"
+    )
+    cl.add_argument("--span-labels", help="phase_labels from `span-labels`, the last resort")
+    cl.add_argument("--clip-prefix", default="local://clips")
+    cl.add_argument("--out", required=True)
+    cl.set_defaults(handler=_combine_labels)
 
     ld = sub.add_parser(
         "ls-drafts", help="load a model's draft stages into Label Studio as pre-filled marks"

@@ -176,6 +176,7 @@ def sample_record(
         "split": split,
         "camera": camera,
         "event_type": clip.event_type,
+        "label_source": clip.annotator,  # a person, a model draft or a dataset span
         "images": images,
         "frame_times": [round(t, 1) for t in times],
         "labels": labels,

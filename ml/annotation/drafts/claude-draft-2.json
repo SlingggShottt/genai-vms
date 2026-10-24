@@ -1,0 +1,1354 @@
+{
+ "model_version": "claude-draft-2",
+ "supersedes": "the 60 multi-camera clips in claude-draft-1.json, which were drafted by the padding rule without looking at the clip",
+ "drafted_by": "Claude (Sonnet 5.5), from zoomed contact sheets: for each view the part of the picture with the most movement, cropped and enlarged, one frame every 2 s; the most active view of each clip (two when the first was quiet)",
+ "date": "2026-10-24",
+ "how_to_read": "stages are [phase, from_s, to_s] in seconds into the clip. confidence: seen = the activity was visible; hint = part of it was, or something that fits it; prior = nothing of it could be picked out. how: zoomed frames = read from the zoomed sheets; padding rule = looked at, nothing found, so baseline for the first 10 s, action until 10 s before the end, aftermath after. People are small in these views and the sheets are 2 s apart: expect to correct most of them. Drafts for a person to correct, not labels; use `annotation-kit draft-edits` to say how much was changed.",
+ "clips": [
+  {
+   "candidate_id": "meva:2018-03-11.17-10-02.17-15-02.school.G424:person_unloads_vehicle:54",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a woman walks to an SUV, opens the hatch (about 4 s) and takes things out until the end",
+   "stages": [
+    [
+     "precursor",
+     0,
+     4
+    ],
+    [
+     "action",
+     4,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.14-15-00.14-19-59.school.G330:person_carries_heavy_object:133",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a crowd around a table in a hall; the carrying cannot be picked out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.16-55-06.17-00-06.school.G424:vehicle_drops_off_person:40",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "an SUV arrives at about 4 s and stays; the person getting out was not visible in the zoomed view",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     10
+    ],
+    [
+     "action",
+     10,
+     30
+    ],
+    [
+     "aftermath",
+     30,
+     39
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-35-00.17-40-00.bus.G506:vehicle_picks_up_person:35",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a white SUV arrives at about 8 s, a woman walks to it (12-16 s), gets in, and it leaves at about 24 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "precursor",
+     8,
+     12
+    ],
+    [
+     "escalation",
+     12,
+     16
+    ],
+    [
+     "action",
+     16,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     33
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-05-00.15-10-00.school.G424:vehicle_drops_off_person:17",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "dark and maroon SUVs move through 8-24 s; who gets out was not visible",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "precursor",
+     8,
+     12
+    ],
+    [
+     "action",
+     12,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-15-00.10-20-00.school.G299:person_carries_heavy_object:131",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: people walking about in a crowded hall; nothing can be picked out as the activity",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-30-00.10-35-00.school.G299:person_transfers_object:74",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: only a person's legs walking across a hall; the transfer cannot be seen",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.14-50-01.14-55-01.bus.G506:person_unloads_vehicle:59",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a woman at an open car door at the start, hands something over (2 s), later walks off with a wheeled bag (16-20 s); the car leaves at about 20 s",
+   "stages": [
+    [
+     "action",
+     0,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.11-20-00.11-25-00.school.G299:person_carries_heavy_object:378",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "people carry and set out chairs from carts for the whole clip",
+   "stages": [
+    [
+     "action",
+     0,
+     24
+    ],
+    [
+     "aftermath",
+     24,
+     26
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.11-55-01.12-00-01.school.G424:person_loads_vehicle:4951955982119870770",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a man walks to a red car (up to 8 s), opens the trunk and loads it, joined by a woman from about 14 s; the clip ends mid-loading",
+   "stages": [
+    [
+     "precursor",
+     0,
+     8
+    ],
+    [
+     "action",
+     8,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-05-01.15-10-01.bus.G506:vehicle_picks_up_person:44",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "a maroon car arrives at about 8 s and stops near people; who gets in was not clear",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "precursor",
+     8,
+     12
+    ],
+    [
+     "action",
+     12,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     31
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-25-00.17-30-00.bus.G340:person_unloads_vehicle:20",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "people unload an SUV with its hatch open (0-10 s), a bus arrives at about 8 s, people walk away toward it",
+   "stages": [
+    [
+     "action",
+     0,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-10-00.10-15-00.school.G330:person_carries_heavy_object:6",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "people carry folding chairs across a hall from about 4 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "action",
+     4,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.17-05-03.17-10-03.school.G424:vehicle_picks_up_person:41",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a woman in red walks to traffic cones, bends, picks them up and moves them again and again until the end",
+   "stages": [
+    [
+     "precursor",
+     0,
+     2
+    ],
+    [
+     "action",
+     2,
+     28
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-50-01.15-55-01.bus.G506:vehicle_drops_off_person:48",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "a man with a backpack waits; a black Jeep arrives at about 6 s and stops (10 s); its door opens (12-16 s); a man loads or unloads at the back (24-26 s)",
+   "stages": [
+    [
+     "baseline",
+     0,
+     6
+    ],
+    [
+     "precursor",
+     6,
+     10
+    ],
+    [
+     "escalation",
+     10,
+     14
+    ],
+    [
+     "action",
+     14,
+     26
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-12.11-00-00.11-05-00.bus.G340:person_embraces_person:4",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "a man at the back of a red car hands over a bag (6-8 s), two men embrace (10-12 s), one walks away (16-20 s)",
+   "stages": [
+    [
+     "precursor",
+     0,
+     8
+    ],
+    [
+     "action",
+     8,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     20
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-12.10-05-00.10-10-00.school.G330:person_embraces_person:47",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a basketball game; no activity of the labelled kind can be picked out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-15-00.15-20-00.school.G639:person_rides_bicycle:0",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a cyclist rides down the path from about 12 s and out of view by about 20 s; cars far away",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     32
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-45-03.15-50-03.school.G300:person_rides_bicycle:1",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: the most active view shows only a tree and the side of a truck; nothing of the activity",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-00-01.17-05-01.bus.G505:person_transfers_object:66",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a few people by a bench, one bending over a ball; no transfer of an object can be picked out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-05-00.17-10-00.bus.G340:person_loads_vehicle:11",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "people carry bags to a white SUV (2-8 s) and one stands at it (10-14 s); the loading itself is small",
+   "stages": [
+    [
+     "precursor",
+     0,
+     8
+    ],
+    [
+     "action",
+     8,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-20-00.17-25-00.school.G330:person_transfers_object:46",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "on a stage a man hands something yellow to a woman at about 14 s; small",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     17
+    ],
+    [
+     "aftermath",
+     17,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-10-00.10-15-00.bus.G506:vehicle_drops_off_person:15",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "dark bench view; the other view shows a person walking along a path from about 18 s and a white vehicle at 16 s; the drop-off itself was not seen",
+   "stages": [
+    [
+     "baseline",
+     0,
+     16
+    ],
+    [
+     "action",
+     16,
+     30
+    ],
+    [
+     "aftermath",
+     30,
+     35
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-35-03.15-40-03.school.G300:person_loads_vehicle:29",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "a man carries a bag past a red pickup and stands holding it (8-12 s); no loading of a vehicle was visible",
+   "stages": [
+    [
+     "precursor",
+     0,
+     6
+    ],
+    [
+     "action",
+     6,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.11-30-00.11-35-00.school.G299:person_embraces_person:245",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a crowded hall; people walk about; no embrace can be picked out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     18
+    ],
+    [
+     "aftermath",
+     18,
+     28
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-50-04.15-55-04.bus.G340:person_embraces_person:31",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "two people stand close together at an SUV's open hatch from about 2 s to 14 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     2
+    ],
+    [
+     "action",
+     2,
+     16
+    ],
+    [
+     "aftermath",
+     16,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-00-01.15-05-01.bus.G506:person_rides_bicycle:16",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "a small cyclist crosses by the cars at about 10-16 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "action",
+     8,
+     18
+    ],
+    [
+     "aftermath",
+     18,
+     31
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.16-50-06.16-55-06.school.G424:person_carries_heavy_object:158",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: one man stands in a car park for the whole clip; nothing is carried",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     17
+    ],
+    [
+     "aftermath",
+     17,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-15-00.15-20-00.school.G424:person_loads_vehicle:4",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a man and a woman load luggage into the open hatch of a white SUV from the start; it drives off at about 16-20 s",
+   "stages": [
+    [
+     "action",
+     0,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-05.13-20-00.13-25-00.school.G424:person_loads_vehicle:24",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: in this view men walk up and shake hands at about 16-22 s; no loading of a vehicle was seen",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-12.10-15-04.10-20-04.school.G424:person_embraces_person:9",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a distant car park in both views; no embrace can be picked out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     13
+    ],
+    [
+     "aftermath",
+     13,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-45-00.15-50-00.school.G424:person_embraces_person:109",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a silver car drives in and out of the picture; no embrace can be picked out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-12.10-15-00.10-20-00.school.G330:person_transfers_object:186",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a basketball game; what counts as the transfer of an object is not clear",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.11-05-05.11-10-05.school.G424:person_loads_vehicle:87",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "people in high-visibility vests work around a white pickup behind cones; something is loaded from about 4 s to 20 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "action",
+     4,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.11-30-01.11-35-01.school.G424:person_unloads_vehicle:8690034190228169990",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a man stands by a white SUV (0-6 s), opens the hatch and takes things out (8-12 s), another walks off with a bag (14-18 s)",
+   "stages": [
+    [
+     "precursor",
+     0,
+     6
+    ],
+    [
+     "action",
+     6,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     23
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-30-00.17-35-00.bus.G340:person_loads_vehicle:37",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "two people carry bags to a white Jeep (0-6 s), one loads at the car (8-10 s), then it leaves (16 s)",
+   "stages": [
+    [
+     "precursor",
+     0,
+     6
+    ],
+    [
+     "action",
+     6,
+     14
+    ],
+    [
+     "aftermath",
+     14,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.16-35-02.16-40-02.school.G424:person_loads_vehicle:8788995669255921899",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "people at a black SUV; the hatch opens at about 10 s, a woman loads it, doors close from 14 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     2
+    ],
+    [
+     "precursor",
+     2,
+     6
+    ],
+    [
+     "action",
+     6,
+     16
+    ],
+    [
+     "aftermath",
+     16,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-30-01.15-35-01.bus.G506:person_rides_bicycle:34",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: people and cars, a bus at the edge; no cyclist was seen",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     26
+    ],
+    [
+     "aftermath",
+     26,
+     36
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-00-00.15-05-00.school.G424:person_rides_bicycle:58",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: an empty road with a bus passing at 20-24 s; no cyclist was seen",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     22
+    ],
+    [
+     "aftermath",
+     22,
+     32
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-15-00.17-20-00.school.G299:person_transfers_object:203",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a crowd in a hall; no transfer of an object can be picked out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-05.13-15-00.13-20-00.school.G424:person_carries_heavy_object:32",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "two men hand over and load a black suitcase at the back of a white SUV in the first 4 s; the clip starts mid-action; then only the SUV is in view",
+   "stages": [
+    [
+     "action",
+     0,
+     5
+    ],
+    [
+     "aftermath",
+     5,
+     25
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.14-55-01.15-00-01.bus.G506:person_rides_bicycle:59",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: two women sit on a bench for the whole clip; no cyclist was seen",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     11
+    ],
+    [
+     "aftermath",
+     11,
+     21
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-35-01.15-40-01.bus.G506:person_rides_bicycle:25",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "small cyclists pass in the background at about 10 s and 18 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     8
+    ],
+    [
+     "action",
+     8,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     29
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.16-50-01.16-55-01.hospital.G436:person_unloads_vehicle:175",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "workers in hi-vis vests unload a white pickup behind cones for the whole clip",
+   "stages": [
+    [
+     "action",
+     0,
+     24
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.16-40-01.16-45-01.school.G336:vehicle_picks_up_person:3202768683383235916",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "this view shows only a tree; from the other view an SUV arrives at about 4 s and leaves at about 24 s",
+   "stages": [
+    [
+     "baseline",
+     0,
+     4
+    ],
+    [
+     "precursor",
+     4,
+     8
+    ],
+    [
+     "action",
+     8,
+     24
+    ],
+    [
+     "aftermath",
+     24,
+     33
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-10-08.17-15-08.hospital.G436:vehicle_drops_off_person:7",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "a white car drives across at about 14-20 s and a grey one at 20-28 s; two people walk in at about 24 s; the drop-off may be in another view",
+   "stages": [
+    [
+     "baseline",
+     0,
+     12
+    ],
+    [
+     "precursor",
+     12,
+     22
+    ],
+    [
+     "action",
+     22,
+     27
+    ],
+    [
+     "aftermath",
+     27,
+     28
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-15-07.15-20-07.hospital.G436:person_rides_bicycle:78",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "two people walk along a path from 4 s to 26 s",
+   "stages": [
+    [
+     "action",
+     0,
+     26
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.16-10-02.16-15-02.hospital.G436:person_embraces_person:48",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a long crowd along the path with some milling; no single activity of the labelled kind",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     17
+    ],
+    [
+     "aftermath",
+     17,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.13-50-08.13-55-08.hospital.G436:person_unloads_vehicle:59",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a distant white pickup crossing; nothing of the labelled activity is visible",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     15
+    ],
+    [
+     "aftermath",
+     15,
+     25
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-11.17-25-08.17-30-08.hospital.G436:vehicle_picks_up_person:33",
+   "confidence": "seen",
+   "how": "zoomed frames",
+   "note": "three people stand talking (0-8 s), two embrace at about 14-18 s, a grey car arrives at 22 s, people get in and out of it",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "precursor",
+     10,
+     14
+    ],
+    [
+     "action",
+     14,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     36
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.16-20-02.16-25-02.hospital.G436:vehicle_picks_up_person:120",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a distant red car; nothing of the labelled activity is visible",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     26
+    ],
+    [
+     "aftermath",
+     26,
+     36
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.16-05-02.16-10-02.hospital.G436:person_transfers_object:23",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a group walks along a path past a table with an orange cooler; no transfer can be picked out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-13.17-20-03.17-25-03.hospital.G436:person_transfers_object:28",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a crowd lined along a road with a few people milling; no single transfer",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     12
+    ],
+    [
+     "aftermath",
+     12,
+     22
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-09.10-10-00.10-15-00.school.G336:vehicle_drops_off_person:48",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a distant white car; nothing of the labelled activity is visible",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     23
+    ],
+    [
+     "aftermath",
+     23,
+     33
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-45-07.15-50-07.hospital.G436:person_embraces_person:140",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a distant car; nothing of the labelled activity is visible",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     17
+    ],
+    [
+     "aftermath",
+     17,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.15-40-06.15-45-06.hospital.G341:vehicle_drops_off_person:7",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a dark van, a silver SUV and a red car pass one at a time; none stops and nobody gets out",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     20
+    ],
+    [
+     "aftermath",
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.11-05-00.11-10-00.hospital.G436:person_carries_heavy_object:38",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "road workers in hi-vis vests sweep and move cones for the whole clip",
+   "stages": [
+    [
+     "action",
+     0,
+     32
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-15.14-55-07.15-00-07.hospital.G436:vehicle_picks_up_person:82",
+   "confidence": "prior",
+   "how": "padding rule",
+   "note": "looked at, nothing of the labelled activity could be picked out, so the padding rule: a distant car and a person at the edge; nothing of the labelled activity is visible",
+   "stages": [
+    [
+     "baseline",
+     0,
+     10
+    ],
+    [
+     "action",
+     10,
+     24
+    ],
+    [
+     "aftermath",
+     24,
+     34
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.11-10-06.11-15-05.school.G336:person_carries_heavy_object:69",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "road workers in hi-vis vests sweep and carry along the kerb for the whole clip",
+   "stages": [
+    [
+     "action",
+     0,
+     27
+    ]
+   ]
+  },
+  {
+   "candidate_id": "meva:2018-03-07.17-20-01.17-25-01.hospital.G436:person_unloads_vehicle:34",
+   "confidence": "hint",
+   "how": "zoomed frames",
+   "note": "people walk to and from a building door carrying bags and holding the door (0-16 s); the vehicle is not in view",
+   "stages": [
+    [
+     "action",
+     0,
+     18
+    ],
+    [
+     "aftermath",
+     18,
+     23
+    ]
+   ]
+  }
+ ]
+}
