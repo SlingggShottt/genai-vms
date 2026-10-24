@@ -1,0 +1,8437 @@
+[
+ {
+  "id": 1,
+  "annotations": [
+   {
+    "id": 1,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "f6t8ugAcRO",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "0cDYyj8ojs",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 33
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "j2ApOJcztd",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 34,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "v-ogc6Bap5",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "vandalism"
+       ]
+      },
+      "id": "Sp6_OPaguT",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "FXLSmsFw8d",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "DBJpGbw9-t",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T11:46:31.645223Z",
+    "updated_at": "2026-10-17T11:46:31.645243Z",
+    "draft_created_at": "2026-10-17T10:43:59.483628Z",
+    "lead_time": 5328.474,
+    "prediction": {},
+    "result_count": 7,
+    "unique_id": "af1e6798-5224-4490-9fa0-013110e8affc",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 1,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Vandalism015_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Vandalism015_x264",
+   "event_type": "vandalism",
+   "activity": "Vandalism",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Vandalism015_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Vandalism015_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718348Z",
+  "updated_at": "2026-10-17T11:46:31.672904Z",
+  "allow_skip": true,
+  "inner_id": 1,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 2,
+  "annotations": [
+   {
+    "id": 2,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "rQ2cmU890L",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 9
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "_v-TnOAJzs",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 10,
+         "end": 16
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "TJL5rotpqF",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 17,
+         "end": 23
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "E16r6aiQrm",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "98-WZ7dGMk",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "mk0l5fhZ3N",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "XZ1FgBBZXD",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T11:51:19.145720Z",
+    "updated_at": "2026-10-17T11:51:19.145739Z",
+    "draft_created_at": "2026-10-17T11:49:26.571173Z",
+    "lead_time": 287.229,
+    "prediction": {},
+    "result_count": 7,
+    "unique_id": "4cf222ee-dd61-41ff-b839-d36d43078962",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 2,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting016_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting016_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 23.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting016_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting016_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718402Z",
+  "updated_at": "2026-10-17T11:51:19.179797Z",
+  "allow_skip": true,
+  "inner_id": 2,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 3,
+  "annotations": [
+   {
+    "id": 3,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "6ggkixWgx-",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 29
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "ArPn55IzrW",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 30,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "9RZDRT-Yyn",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "FGCWS75auF",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "arrest"
+       ]
+      },
+      "id": "4cAdZTCtMM",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "pUpWBI9ZvN",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:04:53.569660Z",
+    "updated_at": "2026-10-17T12:04:53.569680Z",
+    "draft_created_at": "2026-10-17T12:02:05.126608Z",
+    "lead_time": 814.159,
+    "prediction": {},
+    "result_count": 6,
+    "unique_id": "c9c57f5c-c165-497a-8a63-c71ddb7f6d98",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 3,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Arrest007_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Arrest007_x264",
+   "event_type": "arrest",
+   "activity": "Arrest",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Arrest007_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Arrest007_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718436Z",
+  "updated_at": "2026-10-17T12:04:53.599922Z",
+  "allow_skip": true,
+  "inner_id": 3,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 4,
+  "annotations": [
+   {
+    "id": 4,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 5
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "MqoMb2oBu7",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 6,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "FGNZpzGE-a",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "KJEkq9hNLs",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "CLcQzeG5-P",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "arrest"
+       ]
+      },
+      "id": "28ws7GbsJZ",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "smvHAUURBU",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:10:35.725722Z",
+    "updated_at": "2026-10-17T12:10:35.725773Z",
+    "draft_created_at": "2026-10-17T12:08:24.221690Z",
+    "lead_time": 341.847,
+    "prediction": {},
+    "result_count": 6,
+    "unique_id": "8d2d7be2-a4ee-4f87-a1a6-ea294d31fc2e",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 4,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Arrest024_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Arrest024_x264",
+   "event_type": "arrest",
+   "activity": "Arrest",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Arrest024_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Arrest024_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718467Z",
+  "updated_at": "2026-10-17T12:10:35.786558Z",
+  "allow_skip": true,
+  "inner_id": 4,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 5,
+  "annotations": [
+   {
+    "id": 5,
+    "completed_by": 1,
+    "result": [],
+    "was_cancelled": true,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:11:11.913021Z",
+    "updated_at": "2026-10-17T12:11:11.913054Z",
+    "draft_created_at": null,
+    "lead_time": 35.784,
+    "prediction": {},
+    "result_count": 0,
+    "unique_id": "a1ea9ebc-09b7-4461-be43-9a5b906b844b",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 5,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Vandalism007_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Vandalism007_x264",
+   "event_type": "vandalism",
+   "activity": "Vandalism",
+   "primary_view": "cam01",
+   "duration_s": 35.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Vandalism007_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Vandalism007_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718500Z",
+  "updated_at": "2026-10-17T12:11:11.964733Z",
+  "allow_skip": true,
+  "inner_id": 5,
+  "total_annotations": 0,
+  "cancelled_annotations": 1,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 6,
+  "annotations": [
+   {
+    "id": 6,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "-qJkeKgPuZ",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 9
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "k3pzGQ8AQU",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 10,
+         "end": 14
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "UlgjrZatPp",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 15,
+         "end": 16
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "dGymPkOxH0",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "T4t9C6dHiS",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "-WX364PT4w",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "qupAmV1g_q",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:15:50.624833Z",
+    "updated_at": "2026-10-17T12:15:50.624866Z",
+    "draft_created_at": "2026-10-17T12:12:18.705832Z",
+    "lead_time": 278.378,
+    "prediction": {},
+    "result_count": 7,
+    "unique_id": "317ac030-9fec-426a-b8c6-79d1259f725f",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 6,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting027_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting027_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 36.461,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting027_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting027_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718532Z",
+  "updated_at": "2026-10-17T12:15:50.678644Z",
+  "allow_skip": true,
+  "inner_id": 6,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 7,
+  "annotations": [
+   {
+    "id": 7,
+    "completed_by": 1,
+    "result": [],
+    "was_cancelled": true,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:29:51.441161Z",
+    "updated_at": "2026-10-17T12:29:51.441192Z",
+    "draft_created_at": null,
+    "lead_time": 840.389,
+    "prediction": {},
+    "result_count": 0,
+    "unique_id": "dda4db18-e3a5-406f-b6ab-686248350513",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 7,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Burglary033_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Burglary033_x264",
+   "event_type": "burglary",
+   "activity": "Burglary",
+   "primary_view": "cam01",
+   "duration_s": 21.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Burglary033_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Burglary033_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718573Z",
+  "updated_at": "2026-10-17T12:29:51.499525Z",
+  "allow_skip": true,
+  "inner_id": 7,
+  "total_annotations": 0,
+  "cancelled_annotations": 1,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 8,
+  "annotations": [
+   {
+    "id": 8,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 3,
+         "end": 5
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "_rEao1Hk2_",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 6,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "TMJYU7D7NO",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "ZVOBmD3Y6E",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "fighting"
+       ]
+      },
+      "id": "uKKU9XL-mU",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "7IqtfyuuGP",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:31:53.546855Z",
+    "updated_at": "2026-10-17T12:31:53.546886Z",
+    "draft_created_at": "2026-10-17T12:31:25.671670Z",
+    "lead_time": 121.738,
+    "prediction": {},
+    "result_count": 5,
+    "unique_id": "75d37c06-bd4d-4635-a54c-594a08768bc7",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 8,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Fighting047_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Fighting047_x264",
+   "event_type": "fighting",
+   "activity": "Fighting",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Fighting047_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Fighting047_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718604Z",
+  "updated_at": "2026-10-17T12:31:53.600436Z",
+  "allow_skip": true,
+  "inner_id": 8,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 9,
+  "annotations": [
+   {
+    "id": 9,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "xXxhbazFn4",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 29
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "bAf98Mm5Yw",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 30,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "O2nFLT9FWl",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "KQKfwxPh3K",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "burglary"
+       ]
+      },
+      "id": "qY19uK4zzA",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "KWPNMcu_K9",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:35:54.940293Z",
+    "updated_at": "2026-10-17T12:35:54.940327Z",
+    "draft_created_at": "2026-10-17T12:34:16.928757Z",
+    "lead_time": 241.028,
+    "prediction": {},
+    "result_count": 6,
+    "unique_id": "8bae97ed-2556-48ce-be45-b33aed0d91d1",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 9,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Burglary035_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Burglary035_x264",
+   "event_type": "burglary",
+   "activity": "Burglary",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Burglary035_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Burglary035_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718633Z",
+  "updated_at": "2026-10-17T12:35:54.997885Z",
+  "allow_skip": true,
+  "inner_id": 9,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 10,
+  "annotations": [
+   {
+    "id": 10,
+    "completed_by": 1,
+    "result": [],
+    "was_cancelled": true,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:36:41.796049Z",
+    "updated_at": "2026-10-17T12:36:41.796093Z",
+    "draft_created_at": null,
+    "lead_time": 46.462,
+    "prediction": {},
+    "result_count": 0,
+    "unique_id": "060f2b62-ba0c-4236-b7a7-3272129e10a1",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 10,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting015_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting015_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 18.2,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting015_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting015_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718663Z",
+  "updated_at": "2026-10-17T12:36:41.844322Z",
+  "allow_skip": true,
+  "inner_id": 10,
+  "total_annotations": 0,
+  "cancelled_annotations": 1,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 11,
+  "annotations": [
+   {
+    "id": 11,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 11
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "CNXquaR5a4",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 12,
+         "end": 18
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "k2430olAyU",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "pK-UdzE4Q-",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "5nRjtvYwVm",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "jZn1Z-mj5S",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T12:40:20.268312Z",
+    "updated_at": "2026-10-17T12:40:20.268343Z",
+    "draft_created_at": "2026-10-17T12:38:30.317480Z",
+    "lead_time": 218.135,
+    "prediction": {},
+    "result_count": 5,
+    "unique_id": "38c8573e-3edc-4366-abed-4043f304053c",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 11,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting037_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting037_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 18.2,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting037_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting037_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718694Z",
+  "updated_at": "2026-10-17T12:40:20.322308Z",
+  "allow_skip": true,
+  "inner_id": 11,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 12,
+  "annotations": [
+   {
+    "id": 12,
+    "completed_by": 1,
+    "result": [],
+    "was_cancelled": true,
+    "ground_truth": false,
+    "created_at": "2026-10-17T13:05:26.802476Z",
+    "updated_at": "2026-10-17T13:05:26.802509Z",
+    "draft_created_at": null,
+    "lead_time": 1330.914,
+    "prediction": {},
+    "result_count": 0,
+    "unique_id": "fd92ef19-ac97-47e8-9124-a14a11545dee",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 12,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting017_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting017_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 13.315,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting017_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting017_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718724Z",
+  "updated_at": "2026-10-17T13:05:26.853224Z",
+  "allow_skip": true,
+  "inner_id": 12,
+  "total_annotations": 0,
+  "cancelled_annotations": 1,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 13,
+  "annotations": [
+   {
+    "id": 13,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 16
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "AxWpYN8h3K",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 17,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "wA1w_iCUqb",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "dBmlUZORdd",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "MMf3HF4MyL",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "KtGaC__ZJ4",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "IswcVxNfrZ",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T13:09:07.238199Z",
+    "updated_at": "2026-10-17T13:09:07.238230Z",
+    "draft_created_at": "2026-10-17T13:07:40.246968Z",
+    "lead_time": 220.095,
+    "prediction": {},
+    "result_count": 6,
+    "unique_id": "5b9d9a78-c83d-401a-80c3-b436fbf8f346",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 13,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting007_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting007_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting007_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting007_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718755Z",
+  "updated_at": "2026-10-17T13:09:07.293251Z",
+  "allow_skip": true,
+  "inner_id": 13,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 14,
+  "annotations": [
+   {
+    "id": 14,
+    "completed_by": 1,
+    "result": [],
+    "was_cancelled": true,
+    "ground_truth": false,
+    "created_at": "2026-10-17T13:10:52.816543Z",
+    "updated_at": "2026-10-17T13:10:52.816574Z",
+    "draft_created_at": null,
+    "lead_time": 105.212,
+    "prediction": {},
+    "result_count": 0,
+    "unique_id": "cbe08b66-4a15-49fc-b39b-f990d18ce72f",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 14,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Burglary032_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Burglary032_x264",
+   "event_type": "burglary",
+   "activity": "Burglary",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Burglary032_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Burglary032_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718785Z",
+  "updated_at": "2026-10-17T13:10:52.864338Z",
+  "allow_skip": true,
+  "inner_id": 14,
+  "total_annotations": 0,
+  "cancelled_annotations": 1,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 15,
+  "annotations": [
+   {
+    "id": 15,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "Eg4GR2Gp6a",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 11
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "rlemlpKulB",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 12,
+         "end": 15
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "Pn4qNviC6F",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 18,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "bJ-HUoZXBe",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "aXw9b6WDoA",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "burglary"
+       ]
+      },
+      "id": "8W2EmNp5n1",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "rPYiELyHDf",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T13:15:52.263333Z",
+    "updated_at": "2026-10-17T13:15:52.263370Z",
+    "draft_created_at": "2026-10-17T13:11:39.042177Z",
+    "lead_time": 299.122,
+    "prediction": {},
+    "result_count": 7,
+    "unique_id": "cbf0bfd2-859d-454e-9d80-1fd29bf9d78c",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 15,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Burglary037_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Burglary037_x264",
+   "event_type": "burglary",
+   "activity": "Burglary",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Burglary037_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Burglary037_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718815Z",
+  "updated_at": "2026-10-17T13:15:52.319529Z",
+  "allow_skip": true,
+  "inner_id": 15,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 16,
+  "annotations": [
+   {
+    "id": 16,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "Tt2tyrV-hu",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "_XCPspkLx7",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "yVYbFJQvnx",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "lk3oqeKPTa",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "burglary"
+       ]
+      },
+      "id": "PgzRFF43i1",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "Ot6IQ2MRAt",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "manual"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-17T13:20:35.758763Z",
+    "updated_at": "2026-10-17T13:20:35.758794Z",
+    "draft_created_at": "2026-10-17T13:18:52.819201Z",
+    "lead_time": 283.117,
+    "prediction": {},
+    "result_count": 6,
+    "unique_id": "29ae6981-3da8-4c29-9d39-ab971009bfd0",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 16,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": null,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [],
+  "data": {
+   "candidate_id": "ucf_crime:Burglary079_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Burglary079_x264",
+   "event_type": "burglary",
+   "activity": "Burglary",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Burglary079_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Burglary079_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718845Z",
+  "updated_at": "2026-10-17T13:20:35.814991Z",
+  "allow_skip": true,
+  "inner_id": 16,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 0,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 17,
+  "annotations": [
+   {
+    "id": 18,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 3,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "i17sx3P3Xl",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "TblTeD5qCT",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 14
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "JS-UkhGsI4",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 15,
+         "end": 24
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "LnoD0jDqi5",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "5vFfWj4e8N",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "fighting"
+       ]
+      },
+      "id": "YEU8NnRpSP",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "AaW5GGHGtE",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:35:05.457516Z",
+    "updated_at": "2026-10-19T11:35:05.457551Z",
+    "draft_created_at": null,
+    "lead_time": 28.246,
+    "prediction": {
+     "id": 2,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 3,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 14
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 15,
+          "end": 24
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "fighting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.134228Z",
+     "updated_at": "2026-10-17T13:34:54.134253Z",
+     "model": null,
+     "model_run": null,
+     "task": 17,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "6c93e457-489a-4e3f-8fba-4e58effb4a06",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 17,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 2,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   2
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Fighting018_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Fighting018_x264",
+   "event_type": "fighting",
+   "activity": "Fighting",
+   "primary_view": "cam01",
+   "duration_s": 24.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Fighting018_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Fighting018_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718873Z",
+  "updated_at": "2026-10-19T11:35:05.522854Z",
+  "allow_skip": true,
+  "inner_id": 17,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 18,
+  "annotations": [
+   {
+    "id": 19,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "d3LlpHNIc5",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "azKl_lvJFF",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 14
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "XiTuHVZ-94",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 15,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "hcEhqd4-43",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "8I4NC4pe4x",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "TLSbVBmrA4",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "OoHC7IqkNi",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:55:14.197613Z",
+    "updated_at": "2026-10-19T11:55:14.197652Z",
+    "draft_created_at": null,
+    "lead_time": 6.569,
+    "prediction": {
+     "id": 34,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 14
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 15,
+          "end": 40
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "shoplifting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "4\u00a0minutes",
+     "score": 0.4,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.218035Z",
+     "updated_at": "2026-10-19T11:51:03.218061Z",
+     "model": null,
+     "model_run": null,
+     "task": 18,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "d1e81da3-c75c-473f-8daf-a13f88f27ab0",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 18,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 34,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   34
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting022_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting022_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting022_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting022_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718903Z",
+  "updated_at": "2026-10-19T11:55:14.253152Z",
+  "allow_skip": true,
+  "inner_id": 18,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 19,
+  "annotations": [
+   {
+    "id": 20,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "TqE92Pd-B6",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 12
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "_eH6aeF7UC",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 13,
+         "end": 20
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "n0yPriCv3Z",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 21,
+         "end": 23
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "kiTlPf96ja",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "vWshiO9GA0",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "burglary"
+       ]
+      },
+      "id": "wn6oyT50nZ",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "maqhQSyQRG",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:58:12.724065Z",
+    "updated_at": "2026-10-19T11:58:12.724095Z",
+    "draft_created_at": "2026-10-19T11:57:53.650652Z",
+    "lead_time": 92.679,
+    "prediction": {
+     "id": 35,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 20
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 21,
+          "end": 23
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "burglary"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "7\u00a0minutes",
+     "score": 0.4,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.301128Z",
+     "updated_at": "2026-10-19T11:51:03.301157Z",
+     "model": null,
+     "model_run": null,
+     "task": 19,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "6cb467e3-f7b1-472f-8410-97b35e33da8d",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 19,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 35,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   35
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Burglary018_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Burglary018_x264",
+   "event_type": "burglary",
+   "activity": "Burglary",
+   "primary_view": "cam01",
+   "duration_s": 23.516,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Burglary018_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Burglary018_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718933Z",
+  "updated_at": "2026-10-19T11:58:12.780090Z",
+  "allow_skip": true,
+  "inner_id": 19,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 20,
+  "annotations": [
+   {
+    "id": 21,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "65G6r0YkDC",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "_v3DWs-YFZ",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "O3uMCvg-9i",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 16
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "3CQLSAfTC3",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 17,
+         "end": 26
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "VxN-gBlzim",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "FUdcNNWhe9",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "Ok40Cnm-n2",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "N98LCizd-Y",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:58:18.021783Z",
+    "updated_at": "2026-10-19T11:58:18.021815Z",
+    "draft_created_at": null,
+    "lead_time": 4.909,
+    "prediction": {
+     "id": 36,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 16
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 17,
+          "end": 26
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "shoplifting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "7\u00a0minutes",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.388257Z",
+     "updated_at": "2026-10-19T11:51:03.388284Z",
+     "model": null,
+     "model_run": null,
+     "task": 20,
+     "project": 1
+    },
+    "result_count": 8,
+    "unique_id": "e1a1bf4d-0241-45cd-bc1f-28b05184dab2",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 20,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 36,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   36
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting044_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting044_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 26.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting044_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting044_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718962Z",
+  "updated_at": "2026-10-19T11:58:18.080503Z",
+  "allow_skip": true,
+  "inner_id": 20,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 21,
+  "annotations": [
+   {
+    "id": 22,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "NTY7R5rKVl",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "wceeaJfGGP",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 11
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "Y7zcEenN2-",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 12,
+         "end": 27
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "8pucRnjaVT",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "WP3tH3ivCi",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "fighting"
+       ]
+      },
+      "id": "HBiS44c1hD",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "4MGhqsliIb",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:58:53.596351Z",
+    "updated_at": "2026-10-19T11:58:53.596393Z",
+    "draft_created_at": null,
+    "lead_time": 35.12,
+    "prediction": {
+     "id": 3,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 27
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "fighting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.198246Z",
+     "updated_at": "2026-10-17T13:34:54.198273Z",
+     "model": null,
+     "model_run": null,
+     "task": 21,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "a3e736f3-3ada-42c1-a1bd-c199374d25df",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 21,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 3,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   3
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Fighting033_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Fighting033_x264",
+   "event_type": "fighting",
+   "activity": "Fighting",
+   "primary_view": "cam01",
+   "duration_s": 27.866,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Fighting033_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Fighting033_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.718991Z",
+  "updated_at": "2026-10-19T11:58:53.664315Z",
+  "allow_skip": true,
+  "inner_id": 21,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 22,
+  "annotations": [
+   {
+    "id": 23,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "kVhCPq4auh",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "_lvnqt1QZk",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 14
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "lxhZ3wNVds",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 15,
+         "end": 18
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "iMMjQI-1rp",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "gSSSAVGvH4",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "yKlKMsjHk4",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "3RkONvg2lj",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:58:59.759565Z",
+    "updated_at": "2026-10-19T11:58:59.759605Z",
+    "draft_created_at": null,
+    "lead_time": 5.762,
+    "prediction": {
+     "id": 37,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 14
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 15,
+          "end": 18
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "shoplifting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "7\u00a0minutes",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.472528Z",
+     "updated_at": "2026-10-19T11:51:03.472551Z",
+     "model": null,
+     "model_run": null,
+     "task": 22,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "fa366679-f0b1-4083-99a7-c3ee4c06b430",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 22,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 37,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   37
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting033_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting033_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 18.99,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting033_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting033_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719021Z",
+  "updated_at": "2026-10-19T11:58:59.816105Z",
+  "allow_skip": true,
+  "inner_id": 22,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 23,
+  "annotations": [
+   {
+    "id": 24,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "Eu3Tewepou",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "tq2t7IgkVX",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "lkC6iBZMna",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 15
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "Exsd0MvmHp",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 16,
+         "end": 25
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "pIn5A2mWdC",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "XJF2KO-V3W",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "0X3Hkgv1Ma",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "ahBx_NDkIQ",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:59:17.064700Z",
+    "updated_at": "2026-10-19T11:59:17.064743Z",
+    "draft_created_at": null,
+    "lead_time": 16.935,
+    "prediction": {
+     "id": 38,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 15
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 16,
+          "end": 25
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "shoplifting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "8\u00a0minutes",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.562890Z",
+     "updated_at": "2026-10-19T11:51:03.562914Z",
+     "model": null,
+     "model_run": null,
+     "task": 23,
+     "project": 1
+    },
+    "result_count": 8,
+    "unique_id": "91d22085-0cef-470d-9e0b-8afe119e307f",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 23,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 38,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   38
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting039_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting039_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 25.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting039_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting039_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719050Z",
+  "updated_at": "2026-10-19T11:59:17.119295Z",
+  "allow_skip": true,
+  "inner_id": 23,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 24,
+  "annotations": [
+   {
+    "id": 25,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "adjoU9mNBc",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "SvWMLSblRW",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "flnH-Wak-i",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 14
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "sdam7DUs9s",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 15,
+         "end": 24
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "ZPGHdOnwol",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "gf3Lbp7iX9",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "robbery"
+       ]
+      },
+      "id": "im-IY7Z15e",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "xnTgRclXKr",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:59:38.594418Z",
+    "updated_at": "2026-10-19T11:59:38.594446Z",
+    "draft_created_at": null,
+    "lead_time": 21.11,
+    "prediction": {
+     "id": 1,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 14
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 15,
+          "end": 24
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "robbery"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:45.073337Z",
+     "updated_at": "2026-10-17T13:34:45.073361Z",
+     "model": null,
+     "model_run": null,
+     "task": 24,
+     "project": 1
+    },
+    "result_count": 8,
+    "unique_id": "19b76899-d480-4372-a798-0cf7589b3cd3",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 24,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 1,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   1
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Robbery106_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Robbery106_x264",
+   "event_type": "robbery",
+   "activity": "Robbery",
+   "primary_view": "cam01",
+   "duration_s": 24.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Robbery106_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Robbery106_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719079Z",
+  "updated_at": "2026-10-19T11:59:38.648739Z",
+  "allow_skip": true,
+  "inner_id": 24,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 25,
+  "annotations": [
+   {
+    "id": 26,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "ni7WWjDI6i",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "4gWYXOm6YA",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "sP13vUUX9-",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 21
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "MOR0V3PkKA",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 22,
+         "end": 31
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "t-hDtibr--",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "w1AziYPjcU",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "LDpsmX8Md8",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "E4_TqMThHs",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:59:41.492041Z",
+    "updated_at": "2026-10-19T11:59:41.492074Z",
+    "draft_created_at": null,
+    "lead_time": 2.498,
+    "prediction": {
+     "id": 39,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 21
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 22,
+          "end": 31
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "shoplifting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "8\u00a0minutes",
+     "score": 0.4,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.648447Z",
+     "updated_at": "2026-10-19T11:51:03.648497Z",
+     "model": null,
+     "model_run": null,
+     "task": 25,
+     "project": 1
+    },
+    "result_count": 8,
+    "unique_id": "45297a16-ffcd-4299-b45d-43f72b2fe6fd",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 25,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 39,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   39
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting049_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting049_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 31.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting049_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting049_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719108Z",
+  "updated_at": "2026-10-19T11:59:41.547596Z",
+  "allow_skip": true,
+  "inner_id": 25,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 26,
+  "annotations": [
+   {
+    "id": 27,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "YM0a8m7NjQ",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "UzsX-3Nutj",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "JzKNJ8wqJc",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 15
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "oQ7S9qtpYu",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 16,
+         "end": 25
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "8ADLSvAe5s",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "VzgoV89gxb",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "Vtsh4CfJDZ",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "_Ih4nP67X8",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T11:59:54.141192Z",
+    "updated_at": "2026-10-19T11:59:54.141219Z",
+    "draft_created_at": null,
+    "lead_time": 12.253,
+    "prediction": {
+     "id": 40,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 15
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 16,
+          "end": 25
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "shoplifting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "8\u00a0minutes",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.736946Z",
+     "updated_at": "2026-10-19T11:51:03.736969Z",
+     "model": null,
+     "model_run": null,
+     "task": 26,
+     "project": 1
+    },
+    "result_count": 8,
+    "unique_id": "021ee12c-d84b-4b2f-904f-50bbaf8406a9",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 26,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 40,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   40
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting021_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting021_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 25.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting021_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting021_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719139Z",
+  "updated_at": "2026-10-19T11:59:54.199948Z",
+  "allow_skip": true,
+  "inner_id": 26,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 27,
+  "annotations": [
+   {
+    "id": 28,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "QPUpOZuzeO",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "txSxmyTp1O",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 14
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "rQ8J0nhduW",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 15,
+         "end": 28
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "brMeISJ61O",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "UvewBDannP",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "vandalism"
+       ]
+      },
+      "id": "BJIV5Vzrzv",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "iclOSeZy3Q",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:00:17.912997Z",
+    "updated_at": "2026-10-19T12:00:17.913026Z",
+    "draft_created_at": null,
+    "lead_time": 23.34,
+    "prediction": {
+     "id": 4,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 14
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 15,
+          "end": 28
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "vandalism"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.263106Z",
+     "updated_at": "2026-10-17T13:34:54.263153Z",
+     "model": null,
+     "model_run": null,
+     "task": 27,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "389b881c-9935-49b1-8432-4ca8414bd34d",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 27,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 4,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   4
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Vandalism028_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Vandalism028_x264",
+   "event_type": "vandalism",
+   "activity": "Vandalism",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Vandalism028_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Vandalism028_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719168Z",
+  "updated_at": "2026-10-19T12:00:17.969228Z",
+  "allow_skip": true,
+  "inner_id": 27,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 28,
+  "annotations": [
+   {
+    "id": 29,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "ZuFRzYTTb_",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "XKj_dVCEMj",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 18
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "7CpNFZP1M5",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 19,
+         "end": 38
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "zF06wfWQng",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "Hi5jjn2Fqv",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "vandalism"
+       ]
+      },
+      "id": "xu9YfXuj6t",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "g-kB7z5JNa",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:00:48.212326Z",
+    "updated_at": "2026-10-19T12:00:48.212354Z",
+    "draft_created_at": null,
+    "lead_time": 29.916,
+    "prediction": {
+     "id": 5,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 18
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 19,
+          "end": 38
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "vandalism"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.327529Z",
+     "updated_at": "2026-10-17T13:34:54.327558Z",
+     "model": null,
+     "model_run": null,
+     "task": 28,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "70a8973f-9f67-4f93-9f4f-a4b995cb6569",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 28,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 5,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   5
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Vandalism036_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Vandalism036_x264",
+   "event_type": "vandalism",
+   "activity": "Vandalism",
+   "primary_view": "cam01",
+   "duration_s": 38.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Vandalism036_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Vandalism036_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719197Z",
+  "updated_at": "2026-10-19T12:00:48.269699Z",
+  "allow_skip": true,
+  "inner_id": 28,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 29,
+  "annotations": [
+   {
+    "id": 30,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "aIaw7lbR5i",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "rK4HDK1W0q",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 24
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "KzgJyrZkqh",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 25,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "8MCFv1sN3X",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "G7FFwcdC7q",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "fighting"
+       ]
+      },
+      "id": "uxpjHiTcCa",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "3ZB7AyQyau",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:01:14.114599Z",
+    "updated_at": "2026-10-19T12:01:14.114628Z",
+    "draft_created_at": null,
+    "lead_time": 25.516,
+    "prediction": {
+     "id": 6,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 24
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 25,
+          "end": 40
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "fighting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.4,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.393635Z",
+     "updated_at": "2026-10-17T13:34:54.393662Z",
+     "model": null,
+     "model_run": null,
+     "task": 29,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "168bb28e-bd7f-44d8-a543-8c004038432d",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 29,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 6,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   6
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Fighting003_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Fighting003_x264",
+   "event_type": "fighting",
+   "activity": "Fighting",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Fighting003_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Fighting003_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719225Z",
+  "updated_at": "2026-10-19T12:01:14.170595Z",
+  "allow_skip": true,
+  "inner_id": 29,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 30,
+  "annotations": [
+   {
+    "id": 31,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "_qcuArbUV2",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "rL47xYOkYg",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 21
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "qK4syoUQbB",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 22,
+         "end": 31
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "sRYUqSC2O8",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "0_RAglxEf7",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "burglary"
+       ]
+      },
+      "id": "kg4H-_kKHX",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "0CQPSRQo2R",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:02:14.340315Z",
+    "updated_at": "2026-10-19T12:02:14.340361Z",
+    "draft_created_at": "2026-10-19T12:02:02.985708Z",
+    "lead_time": 59.821,
+    "prediction": {
+     "id": 41,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 21
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 22,
+          "end": 31
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "burglary"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "11\u00a0minutes",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.822728Z",
+     "updated_at": "2026-10-19T11:51:03.822758Z",
+     "model": null,
+     "model_run": null,
+     "task": 30,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "6a5bde1e-c608-41a7-960a-86af41a0944f",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 30,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 41,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   41
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Burglary005_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Burglary005_x264",
+   "event_type": "burglary",
+   "activity": "Burglary",
+   "primary_view": "cam01",
+   "duration_s": 31.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Burglary005_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Burglary005_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719254Z",
+  "updated_at": "2026-10-19T12:02:14.401573Z",
+  "allow_skip": true,
+  "inner_id": 30,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 31,
+  "annotations": [
+   {
+    "id": 32,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "BRFup7cHz2",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "MZubT1tsrh",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 13
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "fbjhZEs-T8",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 14,
+         "end": 19
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "WU69SJJfja",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "cFCFQxJ9iS",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "abuse"
+       ]
+      },
+      "id": "ZnzC81Rirm",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "bwZvSI-I7f",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": true,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:02:40.966052Z",
+    "updated_at": "2026-10-19T12:02:40.966084Z",
+    "draft_created_at": null,
+    "lead_time": 26.173,
+    "prediction": {
+     "id": 7,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 13
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 14,
+          "end": 19
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "abuse"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.4,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.461360Z",
+     "updated_at": "2026-10-17T13:34:54.461388Z",
+     "model": null,
+     "model_run": null,
+     "task": 31,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "cd2bdb1b-b741-42cd-9513-fda5a5ee3631",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 31,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 7,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   7
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Abuse030_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Abuse030_x264",
+   "event_type": "abuse",
+   "activity": "Abuse",
+   "primary_view": "cam01",
+   "duration_s": 19.003,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Abuse030_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Abuse030_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719283Z",
+  "updated_at": "2026-10-19T12:02:41.022671Z",
+  "allow_skip": true,
+  "inner_id": 31,
+  "total_annotations": 0,
+  "cancelled_annotations": 1,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 32,
+  "annotations": [
+   {
+    "id": 33,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "tOA1pvTxeC",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "QBmOZZXOmp",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "j-CoNsR9dU",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 19
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "QNthFp9MrN",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 20,
+         "end": 27
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "9k8bcsQa14",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "qr-vZEp9Di",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "X5W-UlHeky",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "M26Ho3gzNS",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:03:11.056240Z",
+    "updated_at": "2026-10-19T12:03:11.056267Z",
+    "draft_created_at": null,
+    "lead_time": 29.709,
+    "prediction": {
+     "id": 42,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 19
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 20,
+          "end": 27
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "shoplifting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "12\u00a0minutes",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.907157Z",
+     "updated_at": "2026-10-19T11:51:03.907180Z",
+     "model": null,
+     "model_run": null,
+     "task": 32,
+     "project": 1
+    },
+    "result_count": 8,
+    "unique_id": "3d676cb4-62c2-4768-a719-880d579bf90b",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 32,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 42,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   42
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting028_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting028_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 29.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting028_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting028_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719313Z",
+  "updated_at": "2026-10-19T12:03:11.110282Z",
+  "allow_skip": true,
+  "inner_id": 32,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 33,
+  "annotations": [
+   {
+    "id": 34,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "tfGmcYc_zg",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "abMl1Z3Wed",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 12
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "lbkt8njH6F",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 13,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "HLmKyhFKM4",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "VhDRAYFnet",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "arrest"
+       ]
+      },
+      "id": "9ntR3x1fR1",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "awQ87_MUNs",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:03:32.978269Z",
+    "updated_at": "2026-10-19T12:03:32.978297Z",
+    "draft_created_at": null,
+    "lead_time": 21.545,
+    "prediction": {
+     "id": 8,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 12
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 13,
+          "end": 40
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "arrest"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.4,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.526410Z",
+     "updated_at": "2026-10-17T13:34:54.526446Z",
+     "model": null,
+     "model_run": null,
+     "task": 33,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "1cc85061-a4c6-4dcc-9815-8fd94bf1b221",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 33,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 8,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   8
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Arrest039_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Arrest039_x264",
+   "event_type": "arrest",
+   "activity": "Arrest",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Arrest039_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Arrest039_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719341Z",
+  "updated_at": "2026-10-19T12:03:33.030434Z",
+  "allow_skip": true,
+  "inner_id": 33,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 34,
+  "annotations": [
+   {
+    "id": 35,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "ALEeQPcdpy",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "YpIp8IkvPN",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "KKzbWZ6bZq",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "grOnzHZP33",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "shoplifting"
+       ]
+      },
+      "id": "OfRoGg2avx",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "iNL0uQelfp",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:03:34.667137Z",
+    "updated_at": "2026-10-19T12:03:34.667167Z",
+    "draft_created_at": null,
+    "lead_time": 1.304,
+    "prediction": {
+     "id": 43,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 40
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "shoplifting"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "12\u00a0minutes",
+     "score": 0.4,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:03.990936Z",
+     "updated_at": "2026-10-19T11:51:03.990966Z",
+     "model": null,
+     "model_run": null,
+     "task": 34,
+     "project": 1
+    },
+    "result_count": 6,
+    "unique_id": "2c7a5a39-c08a-4e62-a2c5-6097f7c236e2",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 34,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 43,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   43
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Shoplifting004_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Shoplifting004_x264",
+   "event_type": "shoplifting",
+   "activity": "Shoplifting",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Shoplifting004_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Shoplifting004_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719370Z",
+  "updated_at": "2026-10-19T12:03:34.725388Z",
+  "allow_skip": true,
+  "inner_id": 34,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 35,
+  "annotations": [
+   {
+    "id": 36,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 6
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "OCGCJMPars",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 7,
+         "end": 9
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "fS9UWZ-owx",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 10,
+         "end": 12
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "n7cvSnDzDS",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 13,
+         "end": 26
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "i-sPlYqdTd",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "PCv2wqn0o_",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "vandalism"
+       ]
+      },
+      "id": "6IW4a9WPHg",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "W4aZ19Eyj8",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:03:55.124422Z",
+    "updated_at": "2026-10-19T12:03:55.124475Z",
+    "draft_created_at": null,
+    "lead_time": 20.059,
+    "prediction": {
+     "id": 44,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 6
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 7,
+          "end": 9
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 10,
+          "end": 12
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 13,
+          "end": 26
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "vandalism"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "12\u00a0minutes",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-19T11:51:04.072519Z",
+     "updated_at": "2026-10-19T11:51:04.072543Z",
+     "model": null,
+     "model_run": null,
+     "task": 35,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "658e5342-3a98-404b-a0e0-1ec0f3d06cbf",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 35,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 44,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   44
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Vandalism017_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Vandalism017_x264",
+   "event_type": "vandalism",
+   "activity": "Vandalism",
+   "primary_view": "cam01",
+   "duration_s": 33.798,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Vandalism017_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Vandalism017_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719399Z",
+  "updated_at": "2026-10-19T12:03:55.177660Z",
+  "allow_skip": true,
+  "inner_id": 35,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 36,
+  "annotations": [
+   {
+    "id": 37,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 8
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "Yh9cssLq-8",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 9,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "YvAbKqOB_t",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 12
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "di4otOEz2W",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 13,
+         "end": 26
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "Xuxy4RReZU",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 27,
+         "end": 36
+        }
+       ],
+       "timelinelabels": [
+        "aftermath"
+       ]
+      },
+      "id": "yYpMaw3nor",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "kI0u0WoUre",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "robbery"
+       ]
+      },
+      "id": "7Wl3Dp7FjV",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "l1os3lrKDQ",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:04:24.557088Z",
+    "updated_at": "2026-10-19T12:04:24.557114Z",
+    "draft_created_at": null,
+    "lead_time": 29.041,
+    "prediction": {
+     "id": 9,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 8
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 9,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 12
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 13,
+          "end": 26
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 27,
+          "end": 36
+         }
+        ],
+        "timelinelabels": [
+         "aftermath"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "robbery"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.589298Z",
+     "updated_at": "2026-10-17T13:34:54.589321Z",
+     "model": null,
+     "model_run": null,
+     "task": 36,
+     "project": 1
+    },
+    "result_count": 8,
+    "unique_id": "4cc6d427-0b9f-4980-973f-d7e114985f07",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 36,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 9,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   9
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Robbery048_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Robbery048_x264",
+   "event_type": "robbery",
+   "activity": "Robbery",
+   "primary_view": "cam01",
+   "duration_s": 36.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Robbery048_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Robbery048_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719427Z",
+  "updated_at": "2026-10-19T12:04:24.611506Z",
+  "allow_skip": true,
+  "inner_id": 36,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ },
+ {
+  "id": 37,
+  "annotations": [
+   {
+    "id": 38,
+    "completed_by": 1,
+    "result": [
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 1,
+         "end": 4
+        }
+       ],
+       "timelinelabels": [
+        "baseline"
+       ]
+      },
+      "id": "NX9qErr98L",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 5,
+         "end": 10
+        }
+       ],
+       "timelinelabels": [
+        "precursor"
+       ]
+      },
+      "id": "DNbs-4-Amu",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 11,
+         "end": 14
+        }
+       ],
+       "timelinelabels": [
+        "escalation"
+       ]
+      },
+      "id": "rE3X-EEdvw",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "ranges": [
+        {
+         "start": 15,
+         "end": 40
+        }
+       ],
+       "timelinelabels": [
+        "action"
+       ]
+      },
+      "id": "mpQwiOUiHo",
+      "from_name": "phase",
+      "to_name": "video",
+      "type": "timelinelabels",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "cam01"
+       ]
+      },
+      "id": "XwFXAWKHP8",
+      "from_name": "primary_view",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "arrest"
+       ]
+      },
+      "id": "Q-KqgiFn-N",
+      "from_name": "event_type",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     },
+     {
+      "value": {
+       "choices": [
+        "Yes"
+       ]
+      },
+      "id": "HTwglsi_oQ",
+      "from_name": "usable",
+      "to_name": "video",
+      "type": "choices",
+      "origin": "prediction"
+     }
+    ],
+    "was_cancelled": false,
+    "ground_truth": false,
+    "created_at": "2026-10-19T12:04:28.234613Z",
+    "updated_at": "2026-10-19T12:04:28.234643Z",
+    "draft_created_at": null,
+    "lead_time": 3.292,
+    "prediction": {
+     "id": 10,
+     "result": [
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 1,
+          "end": 4
+         }
+        ],
+        "timelinelabels": [
+         "baseline"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 5,
+          "end": 10
+         }
+        ],
+        "timelinelabels": [
+         "precursor"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 11,
+          "end": 14
+         }
+        ],
+        "timelinelabels": [
+         "escalation"
+        ]
+       }
+      },
+      {
+       "from_name": "phase",
+       "to_name": "video",
+       "type": "timelinelabels",
+       "value": {
+        "ranges": [
+         {
+          "start": 15,
+          "end": 40
+         }
+        ],
+        "timelinelabels": [
+         "action"
+        ]
+       }
+      },
+      {
+       "from_name": "primary_view",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "cam01"
+        ]
+       }
+      },
+      {
+       "from_name": "event_type",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "arrest"
+        ]
+       }
+      },
+      {
+       "from_name": "usable",
+       "to_name": "video",
+       "type": "choices",
+       "value": {
+        "choices": [
+         "Yes"
+        ]
+       }
+      }
+     ],
+     "model_version": "claude-draft-1",
+     "created_ago": "1\u00a0day, 22\u00a0hours",
+     "score": 0.7,
+     "cluster": null,
+     "neighbors": null,
+     "mislabeling": 0.0,
+     "created_at": "2026-10-17T13:34:54.650204Z",
+     "updated_at": "2026-10-17T13:34:54.650253Z",
+     "model": null,
+     "model_run": null,
+     "task": 37,
+     "project": 1
+    },
+    "result_count": 7,
+    "unique_id": "22afa731-863a-47d3-8d55-6031789ac89a",
+    "import_id": null,
+    "last_action": null,
+    "bulk_created": false,
+    "task": 37,
+    "project": 1,
+    "updated_by": 1,
+    "parent_prediction": 10,
+    "parent_annotation": null,
+    "last_created_by": null
+   }
+  ],
+  "drafts": [],
+  "predictions": [
+   10
+  ],
+  "data": {
+   "candidate_id": "ucf_crime:Arrest030_x264",
+   "dataset": "ucf_crime",
+   "source_video": "ucf_crime:Arrest030_x264",
+   "event_type": "arrest",
+   "activity": "Arrest",
+   "primary_view": "cam01",
+   "duration_s": 40.0,
+   "timeline_fps": 1,
+   "views": [
+    "cam01"
+   ],
+   "view_choices": [
+    {
+     "value": "cam01"
+    }
+   ],
+   "clips": [
+    {
+     "camera": "cam01",
+     "video_uri": "local://clips/ucf_crime_Arrest030_x264/cam01.mp4"
+    }
+   ],
+   "video": "/data/local-files/?d=clips/ucf_crime_Arrest030_x264/cam01.mp4"
+  },
+  "meta": {},
+  "created_at": "2026-10-17T10:11:52.719456Z",
+  "updated_at": "2026-10-19T12:04:28.289922Z",
+  "allow_skip": true,
+  "inner_id": 37,
+  "total_annotations": 1,
+  "cancelled_annotations": 0,
+  "total_predictions": 1,
+  "comment_count": 0,
+  "unresolved_comment_count": 0,
+  "last_comment_updated_at": null,
+  "project": 1,
+  "updated_by": 1,
+  "comment_authors": []
+ }
+]

@@ -1,0 +1,340 @@
+{
+ "samples": 196,
+ "methods": {
+  "rules (detector timing, no model)": {
+   "miou": {
+    "n": 196,
+    "mean": 0.468,
+    "ci95": [
+     0.444,
+     0.494
+    ]
+   },
+   "boundary_mae_s": {
+    "n": 273,
+    "mean": 1.329,
+    "ci95": [
+     1.144,
+     1.544
+    ]
+   },
+   "boundaries_not_in_answer": 150,
+   "frame_accuracy": {
+    "n": 196,
+    "mean": 0.775,
+    "ci95": [
+     0.757,
+     0.793
+    ]
+   },
+   "usable_answer_rate": null,
+   "seconds_per_sample_median": null,
+   "gateway_errors": 0,
+   "miou_by_event_type": {
+    "abuse": {
+     "n": 2,
+     "mean": 0.467,
+     "ci95": [
+      0.334,
+      0.601
+     ]
+    },
+    "activity": {
+     "n": 137,
+     "mean": 0.468,
+     "ci95": [
+      0.44,
+      0.498
+     ]
+    },
+    "arrest": {
+     "n": 5,
+     "mean": 0.642,
+     "ci95": [
+      0.498,
+      0.784
+     ]
+    },
+    "assault": {
+     "n": 3,
+     "mean": 0.589,
+     "ci95": [
+      0.434,
+      0.717
+     ]
+    },
+    "burglary": {
+     "n": 13,
+     "mean": 0.364,
+     "ci95": [
+      0.299,
+      0.429
+     ]
+    },
+    "fighting": {
+     "n": 5,
+     "mean": 0.411,
+     "ci95": [
+      0.294,
+      0.516
+     ]
+    },
+    "robbery": {
+     "n": 5,
+     "mean": 0.501,
+     "ci95": [
+      0.423,
+      0.588
+     ]
+    },
+    "shoplifting": {
+     "n": 21,
+     "mean": 0.48,
+     "ci95": [
+      0.407,
+      0.554
+     ]
+    },
+    "vandalism": {
+     "n": 5,
+     "mean": 0.468,
+     "ci95": [
+      0.404,
+      0.561
+     ]
+    }
+   },
+   "miou_by_views": {
+    "1 view": {
+     "n": 59,
+     "mean": 0.468,
+     "ci95": [
+      0.429,
+      0.51
+     ]
+    },
+    "2 views": {
+     "n": 86,
+     "mean": 0.446,
+     "ci95": [
+      0.417,
+      0.477
+     ]
+    },
+    "3 views": {
+     "n": 51,
+     "mean": 0.506,
+     "ci95": [
+      0.451,
+      0.572
+     ]
+    }
+   },
+   "miou_by_label_source": {
+    "dataset span": {
+     "n": 7,
+     "mean": 0.347,
+     "ci95": [
+      0.285,
+      0.407
+     ]
+    },
+    "human": {
+     "n": 29,
+     "mean": 0.504,
+     "ci95": [
+      0.445,
+      0.565
+     ]
+    },
+    "model draft (looked at the clip)": {
+     "n": 101,
+     "mean": 0.523,
+     "ci95": [
+      0.485,
+      0.564
+     ]
+    },
+    "model draft (rule only)": {
+     "n": 59,
+     "mean": 0.372,
+     "ci95": [
+      0.361,
+      0.383
+     ]
+    }
+   }
+  },
+  "zero-shot qwen2.5vl:3b (16k context)": {
+   "miou": {
+    "n": 196,
+    "mean": 0.349,
+    "ci95": [
+     0.322,
+     0.377
+    ]
+   },
+   "boundary_mae_s": {
+    "n": 252,
+    "mean": 4.052,
+    "ci95": [
+     3.563,
+     4.537
+    ]
+   },
+   "boundaries_not_in_answer": 171,
+   "frame_accuracy": {
+    "n": 125,
+    "mean": 0.507,
+    "ci95": [
+     0.472,
+     0.543
+    ]
+   },
+   "usable_answer_rate": {
+    "n": 196,
+    "mean": 0.638,
+    "ci95": [
+     0.571,
+     0.704
+    ]
+   },
+   "seconds_per_sample_median": 19.3,
+   "gateway_errors": 11,
+   "miou_by_event_type": {
+    "abuse": {
+     "n": 2,
+     "mean": 0.698,
+     "ci95": [
+      0.601,
+      0.795
+     ]
+    },
+    "activity": {
+     "n": 137,
+     "mean": 0.36,
+     "ci95": [
+      0.326,
+      0.394
+     ]
+    },
+    "arrest": {
+     "n": 5,
+     "mean": 0.281,
+     "ci95": [
+      0.103,
+      0.473
+     ]
+    },
+    "assault": {
+     "n": 3,
+     "mean": 0.238,
+     "ci95": [
+      0.069,
+      0.434
+     ]
+    },
+    "burglary": {
+     "n": 13,
+     "mean": 0.232,
+     "ci95": [
+      0.16,
+      0.318
+     ]
+    },
+    "fighting": {
+     "n": 5,
+     "mean": 0.214,
+     "ci95": [
+      0.107,
+      0.303
+     ]
+    },
+    "robbery": {
+     "n": 5,
+     "mean": 0.345,
+     "ci95": [
+      0.196,
+      0.533
+     ]
+    },
+    "shoplifting": {
+     "n": 21,
+     "mean": 0.388,
+     "ci95": [
+      0.304,
+      0.475
+     ]
+    },
+    "vandalism": {
+     "n": 5,
+     "mean": 0.314,
+     "ci95": [
+      0.257,
+      0.373
+     ]
+    }
+   },
+   "miou_by_views": {
+    "1 view": {
+     "n": 59,
+     "mean": 0.323,
+     "ci95": [
+      0.274,
+      0.373
+     ]
+    },
+    "2 views": {
+     "n": 86,
+     "mean": 0.36,
+     "ci95": [
+      0.32,
+      0.401
+     ]
+    },
+    "3 views": {
+     "n": 51,
+     "mean": 0.36,
+     "ci95": [
+      0.308,
+      0.416
+     ]
+    }
+   },
+   "miou_by_label_source": {
+    "dataset span": {
+     "n": 7,
+     "mean": 0.346,
+     "ci95": [
+      0.246,
+      0.486
+     ]
+    },
+    "human": {
+     "n": 29,
+     "mean": 0.278,
+     "ci95": [
+      0.223,
+      0.338
+     ]
+    },
+    "model draft (looked at the clip)": {
+     "n": 101,
+     "mean": 0.37,
+     "ci95": [
+      0.323,
+      0.421
+     ]
+    },
+    "model draft (rule only)": {
+     "n": 59,
+     "mean": 0.348,
+     "ci95": [
+      0.333,
+      0.362
+     ]
+    }
+   }
+  }
+ }
+}
