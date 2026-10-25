@@ -90,8 +90,11 @@ profiles:
     incident_synthesis: {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
     assistant:          {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
     daily_narrative:    {provider: ollama, model: "qwen2.5:3b", num_ctx: 8192}
-    # Fine-tuned (not yet trained):
-    #   phase_tg: {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/tg/v1"}
+    # Fine-tuned: `tg/v1` is trained and uploaded (ml/evaluation/results/tg-adapter-real.md: a better-formed
+    # answer than zero-shot, but not better than the rules timeline on judged labels, so it is not the
+    # default). Serve it with the frame size it was trained on: the adapter saw 640x360 frames and the
+    # task's `max_image_edge: 360` would shrink them to 360x202.
+    #   phase_tg: {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/tg/v1", max_image_edge: 640}
     #   phase_vr: {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/phavr/v1"}
 
   hybrid:               # local vision, cloud text reasoning

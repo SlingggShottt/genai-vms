@@ -1,0 +1,276 @@
+{
+ "samples": 32,
+ "methods": {
+  "rules (detector timing, no model)": {
+   "miou": {
+    "n": 32,
+    "mean": 0.537,
+    "ci95": [
+     0.462,
+     0.617
+    ]
+   },
+   "boundary_mae_s": {
+    "n": 36,
+    "mean": 0.7,
+    "ci95": [
+     0.558,
+     0.847
+    ]
+   },
+   "boundaries_not_in_answer": 23,
+   "frame_accuracy": {
+    "n": 32,
+    "mean": 0.801,
+    "ci95": [
+     0.759,
+     0.842
+    ]
+   },
+   "usable_answer_rate": null,
+   "seconds_per_sample_median": null,
+   "gateway_errors": 0,
+   "miou_by_event_type": {
+    "abuse": {
+     "n": 1,
+     "mean": 0.601,
+     "ci95": [
+      NaN,
+      NaN
+     ]
+    },
+    "activity": {
+     "n": 24,
+     "mean": 0.535,
+     "ci95": [
+      0.443,
+      0.64
+     ]
+    },
+    "burglary": {
+     "n": 1,
+     "mean": 0.563,
+     "ci95": [
+      NaN,
+      NaN
+     ]
+    },
+    "fighting": {
+     "n": 2,
+     "mean": 0.532,
+     "ci95": [
+      0.49,
+      0.573
+     ]
+    },
+    "shoplifting": {
+     "n": 4,
+     "mean": 0.525,
+     "ci95": [
+      0.343,
+      0.707
+     ]
+    }
+   },
+   "miou_by_views": {
+    "1 view": {
+     "n": 8,
+     "mean": 0.541,
+     "ci95": [
+      0.446,
+      0.636
+     ]
+    },
+    "2 views": {
+     "n": 12,
+     "mean": 0.407,
+     "ci95": [
+      0.36,
+      0.452
+     ]
+    },
+    "3 views": {
+     "n": 12,
+     "mean": 0.663,
+     "ci95": [
+      0.499,
+      0.825
+     ]
+    }
+   },
+   "miou_by_label_source": {
+    "dataset span": {
+     "n": 1,
+     "mean": 0.342,
+     "ci95": [
+      NaN,
+      NaN
+     ]
+    },
+    "human": {
+     "n": 6,
+     "mean": 0.564,
+     "ci95": [
+      0.457,
+      0.664
+     ]
+    },
+    "model draft (looked at the clip)": {
+     "n": 17,
+     "mean": 0.612,
+     "ci95": [
+      0.487,
+      0.738
+     ]
+    },
+    "model draft (rule only)": {
+     "n": 8,
+     "mean": 0.381,
+     "ci95": [
+      0.351,
+      0.409
+     ]
+    }
+   }
+  },
+  "Ollama qwen2.5vl:3b (zero-shot)": {
+   "miou": {
+    "n": 32,
+    "mean": 0.322,
+    "ci95": [
+     0.238,
+     0.408
+    ]
+   },
+   "boundary_mae_s": {
+    "n": 35,
+    "mean": 4.826,
+    "ci95": [
+     3.441,
+     6.314
+    ]
+   },
+   "boundaries_not_in_answer": 24,
+   "frame_accuracy": {
+    "n": 22,
+    "mean": 0.405,
+    "ci95": [
+     0.322,
+     0.484
+    ]
+   },
+   "usable_answer_rate": {
+    "n": 32,
+    "mean": 0.688,
+    "ci95": [
+     0.531,
+     0.844
+    ]
+   },
+   "seconds_per_sample_median": 18.5,
+   "gateway_errors": 1,
+   "miou_by_event_type": {
+    "abuse": {
+     "n": 1,
+     "mean": 0.601,
+     "ci95": [
+      NaN,
+      NaN
+     ]
+    },
+    "activity": {
+     "n": 24,
+     "mean": 0.33,
+     "ci95": [
+      0.23,
+      0.446
+     ]
+    },
+    "burglary": {
+     "n": 1,
+     "mean": 0.28,
+     "ci95": [
+      NaN,
+      NaN
+     ]
+    },
+    "fighting": {
+     "n": 2,
+     "mean": 0.144,
+     "ci95": [
+      0.032,
+      0.257
+     ]
+    },
+    "shoplifting": {
+     "n": 4,
+     "mean": 0.302,
+     "ci95": [
+      0.117,
+      0.534
+     ]
+    }
+   },
+   "miou_by_views": {
+    "1 view": {
+     "n": 8,
+     "mean": 0.297,
+     "ci95": [
+      0.165,
+      0.449
+     ]
+    },
+    "2 views": {
+     "n": 12,
+     "mean": 0.222,
+     "ci95": [
+      0.138,
+      0.306
+     ]
+    },
+    "3 views": {
+     "n": 12,
+     "mean": 0.438,
+     "ci95": [
+      0.274,
+      0.619
+     ]
+    }
+   },
+   "miou_by_label_source": {
+    "dataset span": {
+     "n": 1,
+     "mean": 0.286,
+     "ci95": [
+      NaN,
+      NaN
+     ]
+    },
+    "human": {
+     "n": 6,
+     "mean": 0.249,
+     "ci95": [
+      0.11,
+      0.423
+     ]
+    },
+    "model draft (looked at the clip)": {
+     "n": 17,
+     "mean": 0.336,
+     "ci95": [
+      0.192,
+      0.492
+     ]
+    },
+    "model draft (rule only)": {
+     "n": 8,
+     "mean": 0.35,
+     "ci95": [
+      0.309,
+      0.388
+     ]
+    }
+   }
+  }
+ }
+}

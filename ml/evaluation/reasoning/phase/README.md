@@ -35,6 +35,19 @@ then one command each: the zero-shot one is the `local` profile's `phase_tg`, an
 same command under `VMS_LLM_PROFILE=cloud` with the provider keys set (check that profile's `phase_tg`
 entry in `config/models.yaml` first; it has not been exercised here).
 
+## Two runs, paired (`compare.py`)
+
+```bash
+uv run python ml/evaluation/reasoning/phase/compare.py --dataset datasets/tg-v1 --split test \
+  --a zero-shot-answers.jsonl --b adapter-answers.jsonl --names "zero-shot" "adapter"
+```
+
+Two overlapping intervals say little about whether one run is better, because the clips differ far more
+than the runs do. This scores both runs on every clip and takes the difference clip by clip, overall and
+by who made the label, with a bootstrap interval of the *difference* and the count of clips each run wins.
+Its first use is `ml/evaluation/results/tg-adapter-real.md`: the adapter's gain is all on the clips whose
+labels a padding rule made.
+
 ## Options added with the first real run
 
 - `--split all` scores every split (train, val and test files of the dataset): a zero-shot model was trained on

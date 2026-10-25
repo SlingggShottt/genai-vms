@@ -595,7 +595,7 @@
 ### P3-J4 · Alerts & events UI — 3 pts · Must · E08 · FR-ALR-01, FR-ALR-02
 - [x] Alert tray (AlertItem §B.7), live via WS, acknowledge/resolve with note dialog; `aria-live` per §B.10.
 - [x] Events page with filters; event detail with keyframes, VLM caption, clip playback, correlated events list.
-  - Scope note: the page lists events that raised an alert (`GET /alerts`); it switches to `GET /events` (every verified event) when P3-D4's `events.events` lands. See `frontend/README.md`.
+  - Scope note: the page lists events that raised an alert (`GET /alerts`), because acknowledge and resolve live on the alert. `GET /events` (every verified event, any role; added 2026-10-26, `services/api/src/api/api/events.py`) exists and is tested but the page does not use it yet. See `frontend/README.md`.
 
 ### P3-J5 · Zone & camera-link editors — 3 pts · Must · E03 · FR-CAM-03, FR-CAM-04
 - [x] Polygon editor over a camera snapshot (add/move/delete points, name, type, schedule).
@@ -721,12 +721,14 @@
       > Nothing has been uploaded to Kaggle: there are no phase annotations yet.
 
 ### P5-D2 · TG adapter fine-tuning — 8 pts · Must · E12
+> **2026-10-26 — trained once on the real 3B model, on the 4 GB card, and uploaded.** `tg/v1`: QLoRA r 16, 3 epochs, 138 train / 26 val / 32 test camera-samples from the 119 labelled clips (labels of mixed origin), about 50 minutes; validation loss 0.157 → 0.115 → 0.108. Making it fit 4 GB took five changes (`ml/training/README.md`). **Not ticked:** the Unsloth/Kaggle notebook (Transformers + PEFT on the local card instead; the notebook was never run) and val mIoU per epoch (`metrics.jsonl` has loss and token accuracy; mIoU comes from the evaluation on the test split). What the adapter does and does not show: `ml/evaluation/results/tg-adapter-real.md`. One run, one seed.
 > **2026-10-08 — trainer and notebook written, not run on real data:** `ml/training/train_adapter.py` (QLoRA, design hyperparameters, answer-only loss, checkpoint/resume that reproduces an uninterrupted run, best-adapter + model card, upload) and `train_adapter_kaggle.ipynb`. Verified on a 10 M-parameter random model and the synthetic dataset (see `ml/training/README.md`); **not** on the 3B model, a T4, Kaggle or any real annotation. Uses Transformers + PEFT, not Unsloth. Experiment tracking is `metrics.jsonl` (loss, validation loss and token accuracy); mIoU per epoch is not computed in the loop (the evaluation harness scores the finished adapter). Nothing is ticked: each item needs the real run.
 - [ ] Unsloth QLoRA notebook on Qwen2.5-VL-3B with hyperparameters from design §8.3; runs within one Kaggle session (checkpointing to resume).
 - [ ] Experiment tracking (config, loss curves, val mIoU per epoch).
-- [ ] Best adapter uploaded to `vms-models/tg/v1` with model card (data, metrics, limits).
+- [x] Best adapter uploaded to `vms-models/tg/v1` with model card (data, metrics, limits).
 
 ### P5-D3 · TG evaluation — 3 pts · Must · E18 · EV-02
+> **2026-10-26 — adapter against zero-shot on the 32 held-out samples** (`ml/evaluation/results/tg-adapter-real.md`, paired comparison in `compare.py`). Frames as trained: zero-shot `hf_local` base mIoU 0.274, adapter 0.354, paired difference +0.080 (+0.005 to +0.153) over all clips, but **all of it on the 8 samples whose labels a padding rule made** (+0.265, +0.158 to +0.400); on a person's labels (6 clips) −0.040 and on drafts that looked at the clip (17) +0.021, both with intervals through zero. The adapter always answers in form (32/32 against 23/32), has boundaries 1 to 2 s nearer and 0.61 frame accuracy against 0.47, but is far below the rules timeline on judged labels and almost never says precursor or escalation. The claim "the adapter beats zero-shot" is **not established**; "it reproduces the labelling convention and the format" is. Still not done: the cloud-VLM baseline (no keys), a confusion matrix between adjacent phases, a test set made only of a person's labels.
 - [x] `ml/evaluation/reasoning/phase`: mIoU and boundary MAE on test split.
 - [ ] Baselines: zero-shot base 3B (same prompt) and zero-shot cloud VLM on ≤ 40 clips (free tier).
 - [ ] Error analysis: confusion between adjacent phases, per event type, single vs multi-view.
@@ -750,7 +752,7 @@
 > **2026-10-08 — backend built, verified on a tiny model only:** `llm/hf_local.py` (see design §8.3): base loaded once, adapters fetched and hot-swapped, frame back-off on out-of-memory, error translation, wired into the gateway when a profile uses `hf_local`. 22 unit tests with a fake runtime (mutation-checked) and a real run with a 10 M-parameter random Qwen2.5-VL through the real transformers, PEFT and bitsandbytes code in fp16 and 4-bit (base loaded once; plain, `tg` and `phavr` outputs differ and repeat; VRAM released on unload). **Not measured:** VRAM and latency of the real 3B model (download too slow here) and quality of any adapter (none trained).
 - [x] Gateway provider loads 4-bit base once and hot-swaps `tg` / `phavr` LoRA adapters via PEFT under the GPU lease.
 - [x] Pixel/frame caps configurable; OOM caught → retry with fewer frames.
-- [ ] Measured VRAM and latency per call documented.
+- [x] Measured VRAM and latency per call documented. (2026-10-26, RTX 3050 4 GB, adapter active, 8 frames: frames as trained 640×360 → ~2.8k prompt tokens, 2,994 MiB peak allocated, 5.7 s warm call, 22 s first call with the load; long edge 360 → ~1.2k tokens, 2,712 MiB, 3.5 s. `ml/evaluation/results/tg-adapter-real.md`.)
 
 ## Jatin — 22 pts
 
