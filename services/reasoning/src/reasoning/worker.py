@@ -11,6 +11,7 @@ raw model output when synthesis was the problem) — never a half-written `gener
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -19,6 +20,12 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from vms_common.contracts.event import Severity
 from vms_common.contracts.reasoning import IncidentReadyV1
+from vms_common.contracts.ws import (
+    IncidentReadyData,
+    JobProgressData,
+    incident_ready,
+    job_progress,
+)
 from vms_common.ids import uuid7_str
 from vms_common.kafka.producer import KafkaProducerClient
 from vms_common.llm import Gateway
@@ -26,6 +33,7 @@ from vms_common.logging import bind_context, clear_context, get_logger
 from vms_common.vqa_bank import VQABank
 
 from reasoning.adapters.footage import Footage, FootFrame
+from reasoning.adapters.notify import Notifier
 from reasoning.adapters.store import JobRow, ReasoningStore
 from reasoning.domain.context import build_context
 from reasoning.domain.evidence import PhaseReading, build_bundle
@@ -46,6 +54,11 @@ class JobFailedError(Exception):
 
 
 class ReasoningWorker:
+    _notifier: Notifier | None = None  # optional: no browsers to tell is not an error
+    _incident: uuid.UUID | None = None  # the report the current job is writing
+    _attached = False  # whether that report's row exists yet
+    _fraction = 0.0  # how far the current job got, for the message that says it failed
+
     def __init__(
         self,
         *,
@@ -59,6 +72,7 @@ class ReasoningWorker:
         tz: ZoneInfo,
         reports: ReportQueue | None = None,
         sessions: async_sessionmaker[AsyncSession] | None = None,
+        notifier: Notifier | None = None,
     ) -> None:
         self._s = settings
         self._store = store
@@ -70,6 +84,7 @@ class ReasoningWorker:
         self._tz = tz
         self._reports = reports
         self._sessions = sessions
+        self._notifier = notifier
         self._last_schedule_check = 0.0
         self._stage: tuple[str, float] | None = None
 
@@ -125,6 +140,7 @@ class ReasoningWorker:
     async def process(self, job: JobRow) -> None:
         bind_context(job_id=str(job.id))
         incident_id = uuid.UUID(uuid7_str())
+        self._incident, self._attached, self._fraction = incident_id, False, 0.0
         try:
             await self._run(job, incident_id)
         except JobFailedError as exc:
@@ -141,12 +157,30 @@ class ReasoningWorker:
             jobs_total.labels(outcome="done").inc()
         finally:
             self._close_stage()
+            self._incident, self._attached = None, False
             clear_context()
 
     async def _step(self, job: JobRow, stage: str, fraction: float) -> None:
         self._close_stage()
         self._stage = (_coarse(stage), time.monotonic())
         await self._store.progress(job.id, stage, fraction, lease_s=self._s.job_lease_s)
+        self._fraction = fraction
+        await self._push_progress(job, "running", stage, fraction)
+
+    async def _push_progress(self, job: JobRow, status: str, stage: str, fraction: float) -> None:
+        """Tell the browsers where the job is (`job.progress`). The incident id is only known once
+        the report row exists, so the first steps carry none."""
+        if self._notifier is None:
+            return
+        data = JobProgressData(
+            job_id=str(job.id),
+            status=status,  # type: ignore[arg-type]
+            stage=stage,
+            fraction=min(max(fraction, 0.0), 1.0),
+            group_id=str(job.group_id) if job.group_id else None,
+            incident_id=str(self._incident) if self._incident and self._attached else None,
+        )
+        await self._notifier.send(job_progress(data))
 
     def _close_stage(self) -> None:
         """Record how long the stage that just ended took (stages are the coarse names the
@@ -187,7 +221,7 @@ class ReasoningWorker:
             window_start=ctx.window.start,
             window_end=ctx.window.end,
         )
-        await self._store.attach_incident(job.id, incident_id)
+        await self._attach(job, incident_id)
 
         # --- footage ---------------------------------------------------------------
         await self._step(job, "collecting footage", 0.08)
@@ -303,19 +337,66 @@ class ReasoningWorker:
             raise JobFailedError(result.error or "the report could not be written")
 
         report = result.report
+        final_provenance = {**provenance, **report.provenance}
+        copy = await self._keep_report(
+            incident_id,
+            {
+                "incident_id": str(incident_id),
+                "report": report.model_dump(mode="json"),
+                "evidence": bundle.model_dump(mode="json"),
+                "provenance": final_provenance,
+            },
+        )
+        if copy:
+            final_provenance["report_uri"] = copy
         await self._store.complete_incident(
             incident_id,
             status="generated",
             title=report.title,
             report=report.model_dump(mode="json"),
             evidence=bundle.model_dump(mode="json"),
-            provenance={**provenance, **report.provenance},
+            provenance=final_provenance,
             raw_output=None,
         )
-        await self._store.finish(job.id)
-        await self._announce(incident_id, ctx.group_id, "generated", ctx.severity, report.title)
-        log.info("incident_generated", incident_id=str(incident_id), calls=result.calls)
+        await self._finish_generated(
+            job, incident_id, ctx.group_id, ctx.severity, report.title, result.calls
+        )
         await self._incident_pdf(incident_id)
+
+    async def _attach(self, job: JobRow, incident_id: uuid.UUID) -> None:
+        """The report row exists: link it to the job, and from now on say so in the progress."""
+        await self._store.attach_incident(job.id, incident_id)
+        self._attached = True
+
+    async def _finish_generated(
+        self,
+        job: JobRow,
+        incident_id: uuid.UUID,
+        group_id: str | None,
+        severity: Severity,
+        title: str,
+        calls: int,
+    ) -> None:
+        """The report is stored: close the job, announce it (Kafka, browsers), say it is done."""
+        await self._store.finish(job.id)
+        await self._announce(incident_id, group_id, "generated", severity, title)
+        log.info("incident_generated", incident_id=str(incident_id), calls=calls)
+        await self._push_progress(job, "done", "the report is ready", 1.0)
+
+    async def _keep_report(self, incident_id: uuid.UUID, payload: dict) -> str | None:
+        """A copy of the finished report in object storage, beside its PDF: the database row stays
+        the source of truth, this one outlives a lost database and can be handed over as it is.
+        Its failure leaves the report without a copy, nothing more."""
+        uri = f"s3://{self._s.reports_bucket}/incidents/{incident_id}/report.json"
+        try:
+            data = json.dumps(payload, ensure_ascii=False, indent=1).encode("utf-8")
+            await self._footage.put(uri, data, "application/json")
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("incident_copy_failed", incident_id=str(incident_id))
+            return None
+        return uri
 
     async def _incident_pdf(self, incident_id: uuid.UUID) -> None:
         """The PDF of a finished report. Its failure leaves a report without a PDF, nothing more."""
@@ -364,6 +445,7 @@ class ReasoningWorker:
             await self._store.abandon_incidents(job.id, reason[:500])
         except Exception:
             log.exception("could_not_mark_incident_failed")
+        await self._push_progress(job, "failed", reason[:200], self._fraction)
 
     async def _announce(
         self,
@@ -373,6 +455,18 @@ class ReasoningWorker:
         severity: Severity,
         title: str,
     ) -> None:
+        if self._notifier is not None:
+            await self._notifier.send(
+                incident_ready(
+                    IncidentReadyData(
+                        incident_id=str(incident_id),
+                        group_id=group_id,
+                        status=status,  # type: ignore[arg-type]
+                        severity=severity,
+                        title=title,
+                    )
+                )
+            )
         if self._producer is None:
             return
         try:

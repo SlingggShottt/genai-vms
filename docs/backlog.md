@@ -673,7 +673,8 @@
 ### P4-J4 · Search API, logging & event-caption indexing — 3 pts · Must · E11 · FR-SRC-09
 > **Status 2026-10-04 — partly built:** the api proxies `/search*` with auth, presigned urls and timeouts; `retrieval.search_logs` is written. Event captions are indexed into `knowledge` by the indexer (see P6-J3).
 - [x] API proxies `/search*` to retrieval with auth and timeouts.
-- [ ] `retrieval.search_logs` stores query, plan, candidates, final results, per-stage latency, profile.
+- [x] `retrieval.search_logs` stores query, plan, candidates, final results, per-stage latency, profile.
+  - 2026-10-25: the table already kept the rest; `candidates` (what fusion ranked before any reranking: id, camera, fused score) was the gap, added by migration 0015 and written by the pipeline for text and image searches. Checked on a real Postgres (up, write, read, down).
 - [x] Indexer consumes `event.v1` and writes captions into `knowledge` (dense + sparse) with payload.
 
 ### P4-J5 · Image search & mask UI — 3 pts · Must · E11 · FR-SRC-06, FR-SRC-07
@@ -741,7 +742,8 @@
 > **Status 2026-10-04 — partly built** (`services/reasoning`): `reasoning.jobs` queue with `SKIP LOCKED` and lease recovery, auto-queue from closed `correlation.v1` groups (high+, capped per hour) and `POST /events/{id}/analyze`, ±15 s window, TG → evidence → synthesis, queue position and stage in the job. Phase location uses the **zero-shot base model** (no adapter is trained), falling back to detector timing, recorded in provenance. **Not done:** `job.progress` on the WebSocket (the UI polls), the cloud fallback step.
 - [x] Consumes `correlation.v1` (closed, severity ≥ threshold) and `POST /events/{id}/analyze`; `reasoning.jobs` queue with `SKIP LOCKED`.
 - [x] Gathers synced clips for all cameras (window ±15 s), samples frames, runs TG → `phasetimeline.v1` → calls evidence module → stores bundle.
-- [ ] Job progress via API WS `job.progress`; queue position exposed.
+- [x] Job progress via API WS `job.progress`; queue position exposed.
+  - 2026-10-25: the worker publishes `job.progress` (job, status running/done/failed, the stage in words, 0-1, the group and, once the report row exists, the incident) after the database is updated, to the Redis channel the api relays; operators and admins receive it, viewers do not. The message envelope and both payloads are a contract (`vms_common.contracts.ws`, fixtures, round-trip tests); checked on real Redis and Postgres through the api's WebSocket with role filtering. The frontend refreshes the event's analysis on each push (polling stays as the fallback). Best-effort: a failed push is counted (`vms_reasoning_ws_publish_errors_total`) and never fails a job.
 - [ ] Fallback chain: TG adapter → zero-shot base → cloud profile, recorded in provenance.
 
 ### P5-D5 · Adapter serving (`hf_local`) — 3 pts · Must · E12
@@ -806,7 +808,8 @@
 > **Status 2026-10-04 — partly built:** two schema-validated steps (stage summaries; causal chain, factors, actions) with citation checks, ≤ 2 retries quoting the problems, uncited claims dropped (never patched), `failed` with the raw output kept; `reasoning.incidents` + `incidentready.v1`. **Not done:** golden tests on 5 fixture bundles, S3 copy of the report, WS `incident.ready`.
 - [x] Hierarchical prompts: phase summaries → causal chain & contributing factors → final report, each schema-validated.
 - [x] Citation validator (every evidence id exists; each causal step and factor has ≥ 1); retry with error text ≤ 2; `failed` status with raw output.
-- [ ] Persists `reasoning.incidents` (JSONB + S3 copy), publishes `incidentready.v1`, WS `incident.ready`.
+- [x] Persists `reasoning.incidents` (JSONB + S3 copy), publishes `incidentready.v1`, WS `incident.ready`.
+  - 2026-10-25: the S3 copy is `s3://vms-reports/incidents/<id>/report.json` (report, evidence bundle, provenance; its uri is in the incident's provenance as `report_uri`), written before the row is completed and failing soft. `incident.ready` goes to every role. **Not covered by a test:** that `_run` calls the two helpers that attach the incident and finish the job (their behaviour is tested; the call sites are two lines no test drives, because nothing runs `_run` end to end without a model).
 - [x] Golden tests on 5 fixture evidence bundles (schema-valid, citations valid).
 
 ### P6-D2 · RAG assistant agent & streaming — 8 pts · Must · E14 · FR-AST-02…04, FR-AST-06

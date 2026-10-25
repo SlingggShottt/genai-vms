@@ -11,11 +11,13 @@ from vms_common.kafka.producer import KafkaProducerClient
 from vms_common.llm import LLMGateway
 from vms_common.logging import configure_logging, get_logger
 from vms_common.metrics import serve as serve_metrics
+from vms_common.redis import get_redis_client
 from vms_common.storage.s3 import S3Client
 from vms_common.vqa_bank import load_vqa_bank
 from vms_db.session import create_engine, create_session_factory
 
 from reasoning.adapters.footage import Footage
+from reasoning.adapters.notify import RedisNotifier
 from reasoning.adapters.store import ReasoningStore
 from reasoning.consumers.correlations import CorrelationConsumer
 from reasoning.reports.daily import ReportQueue
@@ -43,6 +45,7 @@ async def _amain() -> None:
     gateway = LLMGateway.from_settings(redis_settings=settings.redis)
     producer = KafkaProducerClient(bootstrap_servers=settings.kafka.bootstrap_servers)
     await producer.start()
+    redis = get_redis_client(settings.redis)  # the WebSocket pushes go through it
 
     worker = ReasoningWorker(
         settings=settings,
@@ -55,6 +58,7 @@ async def _amain() -> None:
         tz=ZoneInfo(settings.site_timezone),
         reports=ReportQueue(sessions, settings.job_lease_s),
         sessions=sessions,
+        notifier=RedisNotifier(redis),
     )
     tasks = [asyncio.create_task(worker.run_forever(), name="reasoning-worker")]
     consumer = CorrelationConsumer(store=store, settings=settings)
@@ -69,6 +73,7 @@ async def _amain() -> None:
         with contextlib.suppress(Exception):
             await consumer.stop()
         await producer.stop()
+        await redis.aclose()
         await gateway.aclose()
         await engine.dispose()
 

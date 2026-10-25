@@ -57,6 +57,7 @@ class TrainConfig:
     seed: int = 7
     load_4bit: bool = True
     grad_checkpointing: bool = True
+    light_prep: bool = False  # skip the fp32 upcast of the non-quantised weights (4 GB GPUs)
     save_every: int = 50  # optimizer steps
     max_steps: int | None = None  # stop after this many optimizer steps (a smoke test)
     resume: bool = False
@@ -146,6 +147,44 @@ def _tensor(rows: list[list[int]]) -> Any:
     return torch.tensor(rows, dtype=torch.long)
 
 
+class LazyExamples:
+    """The examples of one split, built when they are asked for and not kept. A picture sample is
+    tens of megabytes of float32 patches (eight frames of a 640x360 clip), so building all of them
+    up front is gigabytes of RAM that a small machine does not have; building one is a few tenths of
+    a second, which a training step does not notice. Indexable and iterable like the list it
+    replaces."""
+
+    def __init__(self, rows: list[dict[str, Any]], root: Path, processor: Any) -> None:
+        self.rows, self.root, self.processor = rows, root, processor
+
+    def __len__(self) -> int:
+        return len(self.rows)
+
+    def __getitem__(self, index: int) -> dict[str, Any]:
+        return build_example(self.rows[index], self.root, self.processor)
+
+    def __iter__(self):  # noqa: ANN204
+        return (self[i] for i in range(len(self)))
+
+
+def prepare_model(model: Any, cfg: TrainConfig) -> Any:
+    """Make a (4-bit) base model ready to train adapters on. PEFT's own preparation also casts every
+    weight that is not quantised to fp32: for a 3B model with a 152k-word vocabulary that is the
+    311 M-parameter embedding, 1.2 GB that a 4 GB GPU does not have, so `light_prep` does only the
+    part that is needed (gradients through the frozen inputs, checkpointing) and keeps the rest in
+    half precision."""
+    from peft import prepare_model_for_kbit_training  # noqa: PLC0415
+
+    if cfg.load_4bit and not cfg.light_prep:
+        return prepare_model_for_kbit_training(
+            model, use_gradient_checkpointing=cfg.grad_checkpointing
+        )
+    if cfg.grad_checkpointing:
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+    model.enable_input_require_grads()
+    return model
+
+
 # ---- the run -------------------------------------------------------------------------------
 
 
@@ -229,7 +268,6 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
         LoraConfig,
         PeftModel,
         get_peft_model,
-        prepare_model_for_kbit_training,
     )
 
     random.seed(cfg.seed)
@@ -240,10 +278,8 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
     ckpt = cfg.out / "checkpoint"
 
     model, processor = load_model(cfg)
-    if cfg.load_4bit:
-        model = prepare_model_for_kbit_training(
-            model, use_gradient_checkpointing=cfg.grad_checkpointing
-        )
+    if cfg.load_4bit or cfg.light_prep:
+        model = prepare_model(model, cfg)
     elif cfg.grad_checkpointing:
         model.gradient_checkpointing_enable()
         model.enable_input_require_grads()
@@ -264,8 +300,8 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
     train_rows = read_split(cfg.dataset, "train")
     if not train_rows:
         raise SystemExit(f"{cfg.dataset}/train.jsonl has no samples")
-    examples = [build_example(r, cfg.dataset, processor) for r in train_rows]
-    val = [build_example(r, cfg.dataset, processor) for r in read_split(cfg.dataset, "val")]
+    examples = LazyExamples(train_rows, cfg.dataset, processor)
+    val = LazyExamples(read_split(cfg.dataset, "val"), cfg.dataset, processor)
 
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(params, lr=cfg.lr, weight_decay=cfg.weight_decay)
@@ -444,6 +480,11 @@ def main() -> None:
         "--no-4bit", action="store_true", help="fp16 base (a small model, or a big GPU)"
     )
     ap.add_argument("--no-grad-checkpointing", action="store_true")
+    ap.add_argument(
+        "--light-prep",
+        action="store_true",
+        help="do not upcast the non-quantised weights to fp32 (needed on a 4 GB GPU)",
+    )
     ap.add_argument("--save-every", type=int, default=TrainConfig.save_every)
     ap.add_argument("--max-steps", type=int, default=None, help="stop after N steps (smoke test)")
     ap.add_argument("--resume", action="store_true")
@@ -463,6 +504,7 @@ def main() -> None:
         dataset=args.dataset, out=args.out, base=args.base, epochs=args.epochs, lr=args.lr,
         rank=args.rank, alpha=args.alpha, grad_accum=args.grad_accum, seed=args.seed,
         load_4bit=not args.no_4bit, grad_checkpointing=not args.no_grad_checkpointing,
+        light_prep=args.light_prep,
         save_every=args.save_every, max_steps=args.max_steps, resume=args.resume,
     )  # fmt: skip
     summary = train(cfg)

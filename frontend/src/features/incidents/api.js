@@ -10,6 +10,7 @@ import {
 } from './schemas';
 
 export const incidentsKey = ['incidents'];
+export const EVENT_REASONING_KEY = ['event-reasoning'];
 
 export function useIncidents(filters = {}) {
   const params = new URLSearchParams();
@@ -51,7 +52,7 @@ export function useUpdateIncident(id) {
  * while a job is live. */
 export function useEventReasoning(eventId, { enabled = true } = {}) {
   return useQuery({
-    queryKey: ['event-reasoning', eventId],
+    queryKey: [...EVENT_REASONING_KEY, eventId],
     queryFn: async () =>
       reasoningStateSchema.parse(await apiClient.get(`/events/${eventId}/reasoning`)),
     enabled: enabled && Boolean(eventId),
@@ -67,7 +68,7 @@ export function useAnalyzeEvent(eventId) {
   return useMutation({
     mutationFn: async () => jobSchema.parse(await apiClient.post(`/events/${eventId}/analyze`, {})),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['event-reasoning', eventId] });
+      queryClient.invalidateQueries({ queryKey: [...EVENT_REASONING_KEY, eventId] });
       queryClient.invalidateQueries({ queryKey: incidentsKey });
     },
   });

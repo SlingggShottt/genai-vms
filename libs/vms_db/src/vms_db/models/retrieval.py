@@ -32,6 +32,9 @@ class SearchLog(Base):
     mode: Mapped[str] = mapped_column(String(20), nullable=False)
     profile: Mapped[str] = mapped_column(String(20), nullable=False)
     plan: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # What the search had before any model reranked it (id, camera, fused score), best first:
+    # `results` are what it returned, so the two together show what the reranking changed.
+    candidates: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
     results: Mapped[list] = mapped_column(JSONB, nullable=False, server_default="[]")
     timings: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default="{}")
     created_at: Mapped[datetime] = mapped_column(

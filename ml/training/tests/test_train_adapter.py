@@ -290,3 +290,77 @@ def test_a_tiny_run_learns_resumes_exactly_and_writes_what_hf_local_loads(tmp_pa
     b = load_file(tmp_path / "cut" / "checkpoint" / "adapter" / "adapter_model.safetensors")
     assert max(float((a[k] - b[k]).abs().max()) for k in a) < 1e-4, "a resumed run differs"
     assert torch is not None
+
+
+# ---- fitting a small machine --------------------------------------------------------------------
+
+
+class CountingProcessor:
+    """Stands in for the processor: counts how many examples were built."""
+
+
+def test_examples_are_built_when_asked_for_and_not_kept(monkeypatch: pytest.MonkeyPatch) -> None:
+    built: list[int] = []
+    monkeypatch.setattr(
+        ta, "build_example", lambda row, root, proc: built.append(row["n"]) or {"n": row["n"]}
+    )
+    lazy = ta.LazyExamples([{"n": 0}, {"n": 1}, {"n": 2}], Path("."), CountingProcessor())
+    assert built == [] and len(lazy) == 3  # nothing is built just to count them
+    assert lazy[1] == {"n": 1} and built == [1]
+    assert lazy[1] == {"n": 1} and built == [1, 1]  # and nothing is remembered: RAM stays flat
+    assert [e["n"] for e in lazy] == [0, 1, 2] and built == [1, 1, 0, 1, 2]
+
+
+def test_an_empty_split_is_falsy_like_the_list_it_replaces() -> None:
+    assert not ta.LazyExamples([], Path("."), CountingProcessor())
+    assert ta.LazyExamples([{"n": 0}], Path("."), CountingProcessor())
+
+
+class FakeModel:
+    def __init__(self) -> None:
+        self.calls: list[tuple] = []
+
+    def gradient_checkpointing_enable(self, **kwargs) -> None:  # noqa: ANN003
+        self.calls.append(("checkpointing", kwargs))
+
+    def enable_input_require_grads(self) -> None:
+        self.calls.append(("input_grads",))
+
+
+def _cfg(**over) -> ta.TrainConfig:  # noqa: ANN003
+    return ta.TrainConfig(dataset=Path("d"), out=Path("o"), **over)
+
+
+def test_the_default_preparation_is_pefts_which_upcasts(monkeypatch: pytest.MonkeyPatch) -> None:
+    peft = pytest.importorskip("peft")
+    seen = {}
+    monkeypatch.setattr(
+        peft,
+        "prepare_model_for_kbit_training",
+        lambda m, use_gradient_checkpointing: (
+            seen.update(gc=use_gradient_checkpointing) or "prepared"
+        ),
+    )
+    assert ta.prepare_model(FakeModel(), _cfg()) == "prepared" and seen == {"gc": True}
+
+
+def test_the_light_preparation_does_not_call_pefts_upcast(monkeypatch: pytest.MonkeyPatch) -> None:
+    peft = pytest.importorskip("peft")
+
+    def boom(*a, **k):  # noqa: ANN002, ANN003, ANN202
+        raise AssertionError("the fp32 upcast must not run")
+
+    monkeypatch.setattr(peft, "prepare_model_for_kbit_training", boom)
+    model = FakeModel()
+    assert ta.prepare_model(model, _cfg(light_prep=True)) is model
+    assert model.calls == [
+        ("checkpointing", {"gradient_checkpointing_kwargs": {"use_reentrant": False}}),
+        ("input_grads",),
+    ]
+
+
+def test_the_light_preparation_without_checkpointing_only_enables_input_gradients() -> None:
+    pytest.importorskip("peft")
+    model = FakeModel()
+    ta.prepare_model(model, _cfg(light_prep=True, grad_checkpointing=False))
+    assert model.calls == [("input_grads",)]

@@ -8,22 +8,6 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from typing import Any
+from vms_common.contracts.ws import WsMessage
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
-
-
-def _utcnow() -> datetime:
-    return datetime.now(UTC)
-
-
-class WsMessage(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    type: str = Field(min_length=1)
-    data: dict[str, Any]
-    ts: AwareDatetime = Field(default_factory=_utcnow)
-
-    def to_json(self) -> str:
-        return self.model_dump_json()
+__all__ = ["WsMessage"]  # the envelope is a cross-service contract: vms_common.contracts.ws

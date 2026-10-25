@@ -18,6 +18,7 @@ import asyncio
 from pydantic import ValidationError
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
+from vms_common.contracts.ws import WS_CHANNEL
 from vms_common.logging import get_logger
 
 from api.cancellation import raise_if_cancelling
@@ -26,7 +27,7 @@ from api.realtime.messages import WsMessage
 
 log = get_logger(__name__)
 
-CHANNEL = "vms:ws:broadcast"
+CHANNEL = WS_CHANNEL  # also what the reasoning service publishes to
 RECONNECT_BACKOFF_S = (0.5, 1.0, 2.0, 5.0)
 
 

@@ -206,6 +206,7 @@ class SearchPipeline:
                 "the recording has been removed by the retention policy"
             )
         timings["fuse"] = _ms_since(t)
+        candidates = candidate_log(results)  # before any reranking, for the search log
 
         if req.mode == "reason" and results:
             t = perf_counter()
@@ -228,7 +229,7 @@ class SearchPipeline:
             notes=notes,
         )
         self._observe("text", req.mode, timings)
-        await self._log(response, kind="text", user_id=user_id)
+        await self._log(response, kind="text", user_id=user_id, candidates=candidates)
         return response
 
     # --- image --------------------------------------------------------------------------
@@ -262,6 +263,7 @@ class SearchPipeline:
         results = await self._to_results(windows)
         results, expired = await self._drop_expired(windows, results)
         timings["fuse"] = _ms_since(t)
+        candidates = candidate_log(results)
         search_id = str(uuid.uuid4())
         self._remember(search_id, results[:top_k])
         response = SearchResponse(
@@ -277,7 +279,7 @@ class SearchPipeline:
             else [],
         )
         self._observe("image", "fast", timings)
-        await self._log(response, kind="image", user_id=user_id)
+        await self._log(response, kind="image", user_id=user_id, candidates=candidates)
         return response
 
     # --- shared -------------------------------------------------------------------------
@@ -531,7 +533,14 @@ class SearchPipeline:
                     scored[rid] = item
         return scored
 
-    async def _log(self, response: SearchResponse, *, kind: str, user_id: str | None) -> None:
+    async def _log(
+        self,
+        response: SearchResponse,
+        *,
+        kind: str,
+        user_id: str | None,
+        candidates: list[dict] | None = None,
+    ) -> None:
         try:
             await self._catalog.log_search(
                 search_id=response.search_id,
@@ -541,6 +550,7 @@ class SearchPipeline:
                 mode=response.mode,
                 profile=response.profile,
                 plan=response.plan.model_dump(mode="json") if response.plan else None,
+                candidates=candidates,
                 results=[
                     {"id": r.result_id, "camera": r.camera_id, "score": r.score}
                     for r in response.results
@@ -549,6 +559,14 @@ class SearchPipeline:
             )
         except Exception as exc:  # the log must never fail a search
             log.warning("search_log_failed", error=str(exc))
+
+
+def candidate_log(results: list[SearchResult]) -> list[dict]:
+    """What a search had before reranking, as the log keeps it: id, camera and fused score, in the
+    order fusion ranked them."""
+    return [
+        {"id": r.result_id, "camera": r.camera_id, "fused_score": r.fused_score} for r in results
+    ]
 
 
 async def _none() -> None:

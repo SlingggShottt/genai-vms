@@ -5,6 +5,7 @@
  * made per request and never go over a shared channel). So an update is *merged* into what is
  * cached (`mergeAlert`), never allowed to wipe urls we already hold.
  */
+import { EVENT_REASONING_KEY, incidentsKey } from '@/features/incidents/api';
 import { alertSchema, wsEnvelopeSchema } from './schemas';
 import { ALERTS_KEY, LIST_KEY, TRAY_KEY, alertKey } from './queries';
 
@@ -67,15 +68,22 @@ export function applyAlert(queryClient, alert) {
 }
 
 /**
- * Apply one raw WebSocket message. Unknown message types (`camera.status`, `job.progress`,
- * `incident.ready`: not ours yet) are ignored; a malformed alert payload is not trusted, the
- * alerts are refetched instead.
- * @returns {{kind: 'created'|'updated'|'ignored', alert?: object}}
+ * Apply one raw WebSocket message. `job.progress` and `incident.ready` (the reasoning worker's)
+ * make the analysis and, for a finished report, the incidents refetch now rather than at the next
+ * poll: the push says something changed, the api has what. Other message types (`camera.status`,
+ * anything new) are ignored; a malformed alert payload is not trusted, the alerts are refetched
+ * instead.
+ * @returns {{kind: 'created'|'updated'|'reasoning'|'ignored', alert?: object}}
  */
 export function handleLiveMessage(queryClient, raw) {
   const envelope = wsEnvelopeSchema.safeParse(raw);
   if (!envelope.success) return { kind: 'ignored' };
   const { type, data } = envelope.data;
+  if (type === 'job.progress' || type === 'incident.ready') {
+    queryClient.invalidateQueries({ queryKey: EVENT_REASONING_KEY });
+    if (type === 'incident.ready') queryClient.invalidateQueries({ queryKey: incidentsKey });
+    return { kind: 'reasoning' };
+  }
   if (type !== 'alert.created' && type !== 'alert.updated') return { kind: 'ignored' };
 
   const alert = alertSchema.safeParse(data);

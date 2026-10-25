@@ -253,3 +253,27 @@ def test_only_real_questions_are_sent_to_the_vision_model():
     )
     assert got == ["Is the bag blue?", "Does he run?"]
     assert question_hash("Is the bag blue?") == question_hash("is the BAG blue")
+
+
+# ---- what the search log keeps of the candidates -------------------------------------------------
+
+
+def test_the_candidate_log_keeps_id_camera_and_fused_score_in_fusion_order() -> None:
+    from datetime import UTC, datetime
+
+    from retrieval.pipeline import candidate_log
+    from vms_common.contracts.search import SearchResult
+
+    def result(rid: str, cam: str, fused: float, final: float) -> SearchResult:
+        now = datetime(2026, 10, 25, tzinfo=UTC)
+        return SearchResult(
+            result_id=rid, camera_id=cam, segment_ids=[], start_ts=now, end_ts=now,
+            score=final, fused_score=fused,
+        )  # fmt: skip
+
+    ranked = [result("a", "cam01", 0.9, 0.2), result("b", "cam02", 0.5, 0.95)]
+    assert candidate_log(ranked) == [
+        {"id": "a", "camera": "cam01", "fused_score": 0.9},
+        {"id": "b", "camera": "cam02", "fused_score": 0.5},
+    ]  # the fused score, not the reranked one: the log shows what reranking changed
+    assert candidate_log([]) == []

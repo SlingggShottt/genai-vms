@@ -1,0 +1,12 @@
+{
+  "type": "job.progress",
+  "data": {
+    "job_id": "0192b0c3-5b1e-7c1a-9d3f-6f1a8c2e4b10",
+    "status": "running",
+    "stage": "reading action · cam02",
+    "fraction": 0.45,
+    "group_id": "0192b0c3-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+    "incident_id": "0192b0c3-6a7b-7c8d-9e0f-1a2b3c4d5e6f"
+  },
+  "ts": "2026-10-25T10:16:14.512Z"
+}

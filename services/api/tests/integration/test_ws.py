@@ -20,6 +20,13 @@ from api.settings import ApiSettings
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
+from vms_common.contracts.ws import (
+    WS_CHANNEL,
+    IncidentReadyData,
+    JobProgressData,
+    incident_ready,
+    job_progress,
+)
 from vms_db.models import Alert
 
 pytestmark = pytest.mark.integration
@@ -403,3 +410,39 @@ def test_each_replica_delivers_a_message_exactly_once_not_per_publisher(
         publish(client, "camera.status", marker=True)
         types = [on_a.receive_json()["type"], on_a.receive_json()["type"]]
     assert types == ["alert.created", "camera.status"]  # a duplicate would show up in between
+
+
+def publish_as_reasoning(client: TestClient, message: WsMessage) -> None:
+    """Publish the way the reasoning worker does: the contract's JSON straight to the Redis channel,
+    not through anything in the api."""
+    client.portal.call(client.app.state.relay._client.publish, WS_CHANNEL, message.to_json())
+
+
+def test_what_the_reasoning_worker_publishes_reaches_the_roles_that_may_see_it(
+    client: TestClient, operator: dict, viewer: dict
+) -> None:
+    progress = job_progress(
+        JobProgressData(
+            job_id="j1", status="running", stage="reading action · cam02", fraction=0.45
+        )
+    )
+    ready = incident_ready(
+        IncidentReadyData(
+            incident_id="i1", status="generated", severity="high", title="Person climbs the fence"
+        )
+    )
+    with connect(client, operator["token"]) as op, connect(client, viewer["token"]) as vw:
+        settle(client, 2)
+        publish_as_reasoning(client, progress)
+        publish_as_reasoning(client, ready)
+        for_operator = [op.receive_json(), op.receive_json()]
+        for_viewer = (
+            vw.receive_json()
+        )  # job progress is operational: the viewer's first is the report
+
+    assert [m["type"] for m in for_operator] == ["job.progress", "incident.ready"]
+    assert JobProgressData.model_validate(for_operator[0]["data"]).fraction == 0.45
+    assert (
+        IncidentReadyData.model_validate(for_operator[1]["data"]).title == "Person climbs the fence"
+    )
+    assert for_viewer["type"] == "incident.ready"

@@ -14,6 +14,9 @@ jobs_total = counter(
     "reasoning", "jobs", "total", "Reasoning jobs finished", labelnames=("outcome",)
 )
 queue_depth = gauge("reasoning", "queue_depth", "jobs", "Reasoning jobs waiting for the worker")
+ws_publish_errors_total = counter(
+    "reasoning", "ws_publish_errors", "total", "WebSocket pushes that could not be published"
+)
 daily_reports_total = counter(
     "reasoning", "daily_reports", "total", "Daily reports written", labelnames=("narrative",)
 )

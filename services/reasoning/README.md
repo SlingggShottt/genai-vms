@@ -64,5 +64,14 @@ PDF is not indexed into the `knowledge` collection.
 
 ## Not built
 
-`incident.ready` / `job.progress` pushes on the WebSocket (the UI polls). (The `hf_local` provider is
-built: `libs/vms_common/.../llm/hf_local.py`; the synced multi-view playback is in the frontend.)
+A trained adapter (`phase_tg`, `phase_vr` run the zero-shot base model; the fallback chain is base then the
+profile's cloud model). (The `hf_local` provider is built: `libs/vms_common/.../llm/hf_local.py`; the synced
+multi-view playback is in the frontend.)
+
+## Pushes to the browsers
+
+After each step the worker publishes `job.progress` and, when a report is written (or cannot be),
+`incident.ready` to the Redis channel `vms:ws:broadcast`; the api relays them to the clients its role
+table allows. The messages are `vms_common.contracts.ws` (fixtures `ws_*.json`). Best-effort: the state is
+in Postgres, a failed push is counted in `vms_reasoning_ws_publish_errors_total`, and the UI still polls.
+A JSON copy of each finished report is kept at `s3://vms-reports/incidents/<id>/report.json`.

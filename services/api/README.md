@@ -117,8 +117,9 @@ Env (`VMS_ALERTS_*`): `MIN_SEVERITY` (medium), `CONSUMERS_ENABLED` (true), `NOTI
 Env (`VMS_NOTIFY_*`): `CHANNELS`, `TIMEOUT_SECONDS`, `SMTP_HOST/PORT/USERNAME/PASSWORD/STARTTLS`, `EMAIL_FROM`,
 `EMAIL_TO`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. Kafka as everywhere (`VMS_KAFKA_*`).
 
-Not yet: `GET /events` (needs P3-D4's `events.events`), and nothing publishes `camera.status`, `job.progress`
-or `incident.ready` yet — the channel carries and role-filters them (`WS_MESSAGE_ROLES`) for when something does.
+Not yet: the `GET /events` list (the per-event routes, `/events/{id}/analyze`, `/reasoning` and `/alert`, exist).
+The reasoning worker publishes `job.progress` and `incident.ready` (`vms_common.contracts.ws`); nothing
+publishes `camera.status` yet. The channel carries and role-filters all of them (`WS_MESSAGE_ROLES`).
 
 **P2-J3** — Recordings & twin overlay endpoints, all roles read
 (`api/recordings.py`, `api/twin.py`):

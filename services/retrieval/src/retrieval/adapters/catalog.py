@@ -171,6 +171,7 @@ class Catalog:
         plan: dict | None,
         results: list[dict],
         timings: dict[str, float],
+        candidates: list[dict] | None = None,
     ) -> None:
         async with self._sessions() as s, s.begin():
             s.add(
@@ -182,6 +183,7 @@ class Catalog:
                     mode=mode,
                     profile=profile,
                     plan=plan,
+                    candidates=candidates or [],
                     results=results,
                     timings=timings,
                 )

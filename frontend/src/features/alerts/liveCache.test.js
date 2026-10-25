@@ -14,6 +14,7 @@ import {
   newestFirst,
   shouldPulse,
 } from './liveCache';
+import { EVENT_REASONING_KEY, incidentsKey } from '@/features/incidents/api';
 import { TRAY_KEY, alertKey, listKey } from './queries';
 
 const withId = (alert, id, extra = {}) => ({ ...alert, id, ...extra });
@@ -179,16 +180,13 @@ describe('applyAlert and handleLiveMessage on a real QueryClient', () => {
     expect(queryClient.getQueryData(TRAY_KEY).items.map((i) => i.id)).toEqual([acknowledged.id]);
   });
 
-  it.each(['camera.status', 'job.progress', 'incident.ready', 'something.new'])(
-    'ignores %s (not an alert)',
-    (type) => {
-      queryClient.setQueryData(TRAY_KEY, { items: [open], next_cursor: null });
-      const result = handleLiveMessage(queryClient, { type, data: { x: 1 }, ts: open.created_at });
-      expect(result).toEqual({ kind: 'ignored' });
-      expect(queryClient.getQueryData(TRAY_KEY).items).toHaveLength(1);
-      expect(invalidated(TRAY_KEY)).toBe(false); // a camera message must not make us refetch alerts
-    },
-  );
+  it.each(['camera.status', 'something.new'])('ignores %s (not an alert)', (type) => {
+    queryClient.setQueryData(TRAY_KEY, { items: [open], next_cursor: null });
+    const result = handleLiveMessage(queryClient, { type, data: { x: 1 }, ts: open.created_at });
+    expect(result).toEqual({ kind: 'ignored' });
+    expect(queryClient.getQueryData(TRAY_KEY).items).toHaveLength(1);
+    expect(invalidated(TRAY_KEY)).toBe(false); // a camera message must not make us refetch alerts
+  });
 
   it.each([null, 'text', 42, {}, { type: 'alert.created' }, { type: '', data: {}, ts: 'x' }])(
     'ignores a malformed envelope %j',
@@ -227,5 +225,52 @@ describe('announcementFor and shouldPulse', () => {
     expect(
       ['low', 'medium', 'high', 'critical'].map((severity) => shouldPulse({ severity })),
     ).toEqual([false, false, true, true]);
+  });
+});
+
+describe('what the reasoning worker pushes', () => {
+  const progress = {
+    type: 'job.progress',
+    data: { job_id: 'j1', status: 'running', stage: 'reading action · cam02', fraction: 0.45 },
+    ts: '2026-10-25T10:16:14Z',
+  };
+  const ready = {
+    type: 'incident.ready',
+    data: { incident_id: 'i1', status: 'generated', severity: 'high', title: 'Fence climbed' },
+    ts: '2026-10-25T10:17:02Z',
+  };
+  let queryClient;
+  const stale = (key) => queryClient.getQueryState(key)?.isInvalidated === true;
+
+  beforeEach(() => {
+    queryClient = new QueryClient();
+    queryClient.setQueryData([...EVENT_REASONING_KEY, 'e1'], { job: { status: 'running' } });
+    queryClient.setQueryData([...incidentsKey, 'list'], { items: [] });
+    queryClient.setQueryData(TRAY_KEY, { items: [open], next_cursor: null });
+  });
+
+  it('refreshes the analysis of an event when its job moves, and nothing else', () => {
+    expect(handleLiveMessage(queryClient, progress)).toEqual({ kind: 'reasoning' });
+    expect(stale([...EVENT_REASONING_KEY, 'e1'])).toBe(true);
+    expect(stale([...incidentsKey, 'list'])).toBe(false); // the report is not there yet
+    expect(stale(TRAY_KEY)).toBe(false);
+  });
+
+  it('also refreshes the incidents when a report is ready', () => {
+    expect(handleLiveMessage(queryClient, ready)).toEqual({ kind: 'reasoning' });
+    expect(stale([...EVENT_REASONING_KEY, 'e1'])).toBe(true);
+    expect(stale([...incidentsKey, 'list'])).toBe(true);
+    expect(stale(TRAY_KEY)).toBe(false);
+  });
+
+  it('does not try to read the payload: the api is the record, so an odd one still refreshes', () => {
+    const odd = { ...progress, data: { whatever: 1 } };
+    expect(handleLiveMessage(queryClient, odd)).toEqual({ kind: 'reasoning' });
+    expect(stale([...EVENT_REASONING_KEY, 'e1'])).toBe(true);
+  });
+
+  it('is not mistaken for an alert: the alert caches and screen-reader messages stay quiet', () => {
+    handleLiveMessage(queryClient, ready);
+    expect(queryClient.getQueryData(TRAY_KEY).items).toHaveLength(1);
   });
 });
