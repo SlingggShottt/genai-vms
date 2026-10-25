@@ -15,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import async_sessionmaker
-from vms_db.models import Alert, CorrelationGroup, Track
+from vms_db.models import Alert, CorrelationGroup, Event, Track
 
 pytestmark = pytest.mark.integration
 
@@ -61,6 +61,8 @@ ROUTER_TABLE: list[tuple[str, str, frozenset[str] | None]] = [
     ("POST", "/api/v1/alerts/{alert_id}/resolve", frozenset({"admin", "operator"})),
     ("GET", "/api/v1/correlations", None),
     ("GET", "/api/v1/correlations/{group_id}", None),
+    ("GET", "/api/v1/events", None),
+    ("GET", "/api/v1/events/{event_id}", None),
     # Reasoning, reports, cases and the timeline (P5/P6): database-only endpoints. The ones that
     # proxy to the retrieval service (search, assistant, similar incidents) cannot be asked to
     # succeed here without it; their authentication is checked in `AUTH_REQUIRED` below.
@@ -220,6 +222,32 @@ async def _create_track(db_session_factory: async_sessionmaker, *, camera_code: 
     return track_id
 
 
+async def _create_event(db_session_factory: async_sessionmaker) -> str:
+    """Insert an `events.events` row directly: only the events service's gate writes them."""
+    event_id = uuid.uuid4()
+    async with db_session_factory() as session:
+        session.add(
+            Event(
+                id=event_id,
+                site_id="rvce-campus",
+                camera_id=_unique_code("cam"),
+                event_type="intrusion",
+                severity="high",
+                rule_id="intrusion.test",
+                rule_score=0.7,
+                track_ids=[],
+                segment_ids=[],
+                keyframe_uris=[],
+                start_ts=_WINDOW_START,
+                end_ts=_WINDOW_END,
+                status="verified",
+                verification={"status": "verified"},
+            )
+        )
+        await session.commit()
+    return str(event_id)
+
+
 async def _path_kwargs_for(
     path: str,
     client: TestClient,
@@ -231,6 +259,8 @@ async def _path_kwargs_for(
     kwargs: dict[str, str] = {}
     if "{alert_id}" in path:
         kwargs["alert_id"] = str((await seed_alert()).id)  # fresh and open for every call
+    if "{event_id}" in path:
+        kwargs["event_id"] = await _create_event(db_session_factory)
     if "{group_id}" in path:
         kwargs["group_id"] = str((await seed_group(event_ids=[str(uuid.uuid4())])).id)
     if "{target_id}" in path:
@@ -380,6 +410,7 @@ def test_router_table_rejects_unauthenticated(
         track_id="does-not-matter",
         alert_id=str(uuid.uuid4()),
         group_id=str(uuid.uuid4()),
+        event_id=str(uuid.uuid4()),
     )
     status_code = _call(client, method, resolved_path, None)
     assert status_code == 401

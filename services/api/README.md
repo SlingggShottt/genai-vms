@@ -117,7 +117,13 @@ Env (`VMS_ALERTS_*`): `MIN_SEVERITY` (medium), `CONSUMERS_ENABLED` (true), `NOTI
 Env (`VMS_NOTIFY_*`): `CHANNELS`, `TIMEOUT_SECONDS`, `SMTP_HOST/PORT/USERNAME/PASSWORD/STARTTLS`, `EMAIL_FROM`,
 `EMAIL_TO`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. Kafka as everywhere (`VMS_KAFKA_*`).
 
-Not yet: the `GET /events` list (the per-event routes, `/events/{id}/analyze`, `/reasoning` and `/alert`, exist).
+**Events** (`api/events.py`, every role): `GET /events?camera&type&severity&status&start&end&limit&cursor` lists what the
+VLM gate let through, newest first by the event's start; `type`, `severity` and `status` repeat; `start` is inclusive and
+`end` exclusive. The cursor is the last row of the page (`<start>|<id>`, opaque) so a page that ends inside events sharing
+one start still walks every event once. A `rejected` event (the gate said no) is hidden unless `status=rejected` is asked
+for. `GET /events/{id}` adds presigned keyframe urls (≤ 15 min, per request); both carry the gate's verdict, confidence,
+caption and model, the correlation group the event is in now (merges followed) and the alert raised for it, if any.
+Beside them live `/events/{id}/analyze`, `/reasoning` and `/alert`.
 The reasoning worker publishes `job.progress` and `incident.ready` (`vms_common.contracts.ws`); nothing
 publishes `camera.status` yet. The channel carries and role-filters all of them (`WS_MESSAGE_ROLES`).
 

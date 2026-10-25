@@ -21,6 +21,7 @@ from vms_db.models import (
     CorrelationGroup,
     CorrelationLinkRow,
     EdgeType,
+    Event,
     TopologyEdge,
     Track,
     User,
@@ -626,6 +627,97 @@ class AlertsPage(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     items: list[AlertOut]
+    next_cursor: str | None
+
+
+EventStatusLiteral = Literal["verified", "skipped", "rejected"]
+
+
+class EventVerificationOut(BaseModel):
+    """What the VLM gate decided and why (`events.events.verification`). `verdict`, `confidence`
+    and `caption` are the model's, so they are null when it was not asked."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str | None = None
+    reason: str | None = None
+    verdict: str | None = None
+    confidence: float | None = None
+    caption: str | None = None
+    flagged: bool = False
+    model: str | None = None
+    prompt_version: str | None = None
+
+    @classmethod
+    def from_record(cls, record: dict) -> EventVerificationOut:
+        return cls(**{name: record.get(name) for name in cls.model_fields if name in record})
+
+
+class EventOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    site_id: str
+    # The camera's code (what event.v1 carries); `camera_id` is its core.cameras.id when the
+    # camera is still configured.
+    camera_code: CameraCode
+    camera_id: CameraId | None
+    event_type: str
+    severity: Severity
+    rule_id: str
+    rule_score: float
+    zone_id: str | None
+    zone_name: str | None
+    track_ids: list[str]
+    start_ts: datetime
+    end_ts: datetime
+    status: EventStatusLiteral
+    verification: EventVerificationOut
+    # Presigned GET urls, valid ≤ 15 min and made per request; only `GET /events/{id}` fills them.
+    keyframe_urls: list[str]
+    keyframe_count: int
+    group: AlertGroupOut | None
+    alert_id: str | None
+    created_at: datetime
+
+    @classmethod
+    def from_model(
+        cls,
+        event: Event,
+        *,
+        group: CorrelationGroup | None = None,
+        camera_id: uuid.UUID | None = None,
+        alert_id: uuid.UUID | None = None,
+        keyframe_urls: list[str] | None = None,
+    ) -> EventOut:
+        return cls(
+            id=str(event.id),
+            site_id=event.site_id,
+            camera_code=CameraCode(event.camera_id),
+            camera_id=CameraId(str(camera_id)) if camera_id else None,
+            event_type=event.event_type,
+            severity=event.severity,  # type: ignore[arg-type]
+            rule_id=event.rule_id,
+            rule_score=event.rule_score,
+            zone_id=event.zone_id,
+            zone_name=event.zone_name,
+            track_ids=list(event.track_ids),
+            start_ts=event.start_ts,
+            end_ts=event.end_ts,
+            status=event.status,  # type: ignore[arg-type]
+            verification=EventVerificationOut.from_record(event.verification),
+            keyframe_urls=keyframe_urls or [],
+            keyframe_count=len(event.keyframe_uris),
+            group=AlertGroupOut.from_model(group) if group is not None else None,
+            alert_id=str(alert_id) if alert_id else None,
+            created_at=event.created_at,
+        )
+
+
+class EventsPage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[EventOut]
     next_cursor: str | None
 
 

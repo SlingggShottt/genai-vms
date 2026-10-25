@@ -33,7 +33,7 @@ from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import HttpWaitStrategy
 from vms_common.config import DatabaseSettings, JWTSettings, RedisSettings, StorageSettings
 from vms_common.storage.s3 import S3Client
-from vms_db.models import Alert, CorrelationGroup
+from vms_db.models import Alert, CorrelationGroup, Event
 from vms_db.session import create_engine, create_session_factory, session_scope
 
 VMS_DB_ALEMBIC_INI = Path(__file__).resolve().parents[4] / "libs" / "vms_db" / "alembic.ini"
@@ -305,6 +305,62 @@ def seed_group(
         async with session_scope(db_session_factory) as session:
             session.add(group)
         return group
+
+    return _seed
+
+
+@pytest.fixture
+def seed_event(db_session_factory: async_sessionmaker) -> Callable[..., Awaitable[Event]]:
+    """Insert a row of `events.events` as the events service's gate would have written it."""
+
+    async def _seed(
+        *,
+        camera: str = "cam02",
+        severity: str = "high",
+        event_type: str = "intrusion",
+        status: str = "verified",
+        start_ts: datetime | None = None,
+        keyframes: int = 2,
+        event_id: uuid.UUID | None = None,
+    ) -> Event:
+        event_id = event_id or uuid.uuid4()
+        start = start_ts or datetime.now(UTC)
+        event = Event(
+            id=event_id,
+            site_id="rvce-campus",
+            camera_id=camera,
+            event_type=event_type,
+            severity=severity,
+            rule_id=f"{event_type}.test",
+            rule_score=0.7,
+            zone_id="z1",
+            zone_name="Back fence",
+            track_ids=["t1"],
+            segment_ids=[],
+            keyframe_uris=[
+                f"s3://vms-keyframes/{camera}/{event_id}/{i}.jpg" for i in range(keyframes)
+            ],
+            start_ts=start,
+            end_ts=start + timedelta(seconds=20),
+            status=status,
+            verification={
+                "status": status,
+                "reason": "the model agreed" if status == "verified" else "the model said no",
+                "verdict": "yes" if status == "verified" else "no",
+                "confidence": 0.8,
+                "caption": "A person near the fence.",
+                "flagged": False,
+                "model": "qwen2.5vl:3b",
+                "latency_ms": 900,
+                "frames": 2,
+                "attempts": 1,
+                "prompt_version": "v1",
+            },
+            published_at=start if status != "rejected" else None,
+        )
+        async with session_scope(db_session_factory) as session:
+            session.add(event)
+        return event
 
     return _seed
 

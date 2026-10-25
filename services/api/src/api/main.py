@@ -27,6 +27,7 @@ from api.api.cameras import router as cameras_router
 from api.api.cases import router as cases_router
 from api.api.correlations import router as correlations_router
 from api.api.errors import register_exception_handlers
+from api.api.events import router as events_router
 from api.api.health import router as health_router
 from api.api.incidents import router as incidents_router
 from api.api.internal import router as internal_router
@@ -193,6 +194,7 @@ def create_app(settings: ApiSettings | None = None) -> FastAPI:
     app.include_router(topology_router, prefix="/api/v1")
     app.include_router(alerts_router, prefix="/api/v1")
     app.include_router(correlations_router, prefix="/api/v1")
+    app.include_router(events_router, prefix="/api/v1")
     app.include_router(ws_router, prefix="/api/v1")
     app.include_router(recordings_router, prefix="/api/v1")
     app.include_router(twin_router, prefix="/api/v1")
