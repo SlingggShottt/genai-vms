@@ -25,6 +25,7 @@ the adapter (mIoU, BLEU...) is `ml/evaluation/reasoning/*`, which asks the gatew
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import math
 import random
@@ -58,6 +59,7 @@ class TrainConfig:
     load_4bit: bool = True
     grad_checkpointing: bool = True
     light_prep: bool = False  # skip the fp32 upcast of the non-quantised weights (4 GB GPUs)
+    optim: str = "adamw"  # "adamw8bit": a quarter of the optimizer state (4 GB GPUs)
     save_every: int = 50  # optimizer steps
     max_steps: int | None = None  # stop after this many optimizer steps (a smoke test)
     resume: bool = False
@@ -203,9 +205,11 @@ def load_model(cfg: TrainConfig) -> tuple[Any, Any]:
     import torch  # noqa: PLC0415
     from transformers import AutoModelForImageTextToText, AutoProcessor  # noqa: PLC0415
 
-    kwargs: dict[str, Any] = {
-        "dtype": torch.float16 if torch.cuda.is_available() else torch.float32
-    }
+    # the weights are loaded in the dtype autocast will run in: a mismatch makes autocast keep a
+    # converted copy of each weight it touches, and for the 152k-word output layer that is 594 MB
+    # asked for in the last op of the first forward pass, which a 4 GB card does not have
+    half = pick_precision()[0]
+    kwargs: dict[str, Any] = {"dtype": half if torch.cuda.is_available() else torch.float32}
     if torch.cuda.is_available():
         kwargs["device_map"] = {"": 0}
     if cfg.load_4bit:
@@ -214,11 +218,25 @@ def load_model(cfg: TrainConfig) -> tuple[Any, Any]:
         kwargs["quantization_config"] = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_compute_dtype=half,
             bnb_4bit_use_double_quant=True,
         )
     model = AutoModelForImageTextToText.from_pretrained(cfg.base, **kwargs)
     return model, AutoProcessor.from_pretrained(cfg.base)
+
+
+def make_optimizer(params: list[Any], cfg: TrainConfig) -> Any:
+    """AdamW, or bitsandbytes' 8-bit AdamW whose two moments take a quarter of the memory: on a 4 GB
+    card with a 3B base that is about 180 MB of the ~500 MB left for activations."""
+    if cfg.optim == "adamw8bit":
+        import bitsandbytes as bnb  # noqa: PLC0415
+
+        return bnb.optim.AdamW8bit(params, lr=cfg.lr, weight_decay=cfg.weight_decay)
+    if cfg.optim != "adamw":
+        raise ValueError(f"unknown optimizer {cfg.optim!r}: use adamw or adamw8bit")
+    import torch  # noqa: PLC0415
+
+    return torch.optim.AdamW(params, lr=cfg.lr, weight_decay=cfg.weight_decay)
 
 
 def answer_loss(model: Any, batch: dict[str, Any], amp: Any) -> tuple[Any, int, int]:
@@ -231,7 +249,15 @@ def answer_loss(model: Any, batch: dict[str, Any], amp: Any) -> tuple[Any, int, 
     labels = batch["labels"][0]
     n = int((labels != IGNORE).sum())
     inputs = {k: v for k, v in batch.items() if k != "labels"}
-    with torch.autocast(labels.device.type, dtype=amp, enabled=labels.device.type == "cuda"):
+    on_gpu = labels.device.type == "cuda"
+    # what the backward pass keeps (the input of each of the 36 checkpointed layers, 420 MB at 2,900
+    # tokens) waits in pinned host memory instead: a 4 GB card has 150 MB to spare, a host has many
+    keep = (
+        torch.autograd.graph.save_on_cpu(pin_memory=True)
+        if on_gpu and torch.is_grad_enabled()
+        else contextlib.nullcontext()
+    )
+    with torch.autocast(labels.device.type, dtype=amp, enabled=on_gpu), keep:
         out = model(**inputs, logits_to_keep=n + 1)
     logits = out.logits[0, :-1].float()  # the position before each answer token predicts it
     target = labels[-n:]
@@ -304,7 +330,7 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
     val = LazyExamples(read_split(cfg.dataset, "val"), cfg.dataset, processor)
 
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.AdamW(params, lr=cfg.lr, weight_decay=cfg.weight_decay)
+    optimizer = make_optimizer(params, cfg)
     scaler = torch.amp.GradScaler("cuda", enabled=scaled)
     per_epoch = steps_per_epoch(len(examples), cfg.grad_accum)
     total = per_epoch * cfg.epochs
@@ -351,6 +377,10 @@ def train(cfg: TrainConfig) -> dict[str, Any]:
             loss, _, _ = answer_loss(model, batch, amp)
             losses.append(float(loss))
             scaler.scale(loss / cfg.grad_accum).backward()
+            del loss
+            if device.type == "cuda":
+                torch.cuda.empty_cache()  # hand back what the pass left unused: fragmentation is
+                # the difference between fitting and not on a 4 GB card
             accumulated += 1
             last = index == len(order) - 1
             if accumulated == cfg.grad_accum or last:
@@ -474,6 +504,12 @@ def main() -> None:
     ap.add_argument("--lr", type=float, default=TrainConfig.lr)
     ap.add_argument("--rank", type=int, default=TrainConfig.rank)
     ap.add_argument("--alpha", type=int, default=TrainConfig.alpha)
+    ap.add_argument(
+        "--dropout",
+        type=float,
+        default=TrainConfig.dropout,
+        help="LoRA dropout; 0 saves ~100 MB of activations at 2,900 tokens (a 4 GB GPU)",
+    )
     ap.add_argument("--grad-accum", type=int, default=TrainConfig.grad_accum)
     ap.add_argument("--seed", type=int, default=TrainConfig.seed)
     ap.add_argument(
@@ -484,6 +520,12 @@ def main() -> None:
         "--light-prep",
         action="store_true",
         help="do not upcast the non-quantised weights to fp32 (needed on a 4 GB GPU)",
+    )
+    ap.add_argument(
+        "--optim",
+        choices=("adamw", "adamw8bit"),
+        default=TrainConfig.optim,
+        help="adamw8bit keeps the optimizer state in 8 bits (needed on a 4 GB GPU)",
     )
     ap.add_argument("--save-every", type=int, default=TrainConfig.save_every)
     ap.add_argument("--max-steps", type=int, default=None, help="stop after N steps (smoke test)")
@@ -502,9 +544,10 @@ def main() -> None:
         ap.error("--dataset is required unless --upload-only")
     cfg = TrainConfig(
         dataset=args.dataset, out=args.out, base=args.base, epochs=args.epochs, lr=args.lr,
-        rank=args.rank, alpha=args.alpha, grad_accum=args.grad_accum, seed=args.seed,
+        rank=args.rank, alpha=args.alpha, dropout=args.dropout, grad_accum=args.grad_accum,
+        seed=args.seed,
         load_4bit=not args.no_4bit, grad_checkpointing=not args.no_grad_checkpointing,
-        light_prep=args.light_prep,
+        light_prep=args.light_prep, optim=args.optim,
         save_every=args.save_every, max_steps=args.max_steps, resume=args.resume,
     )  # fmt: skip
     summary = train(cfg)

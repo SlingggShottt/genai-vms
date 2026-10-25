@@ -354,14 +354,17 @@ class TransformersRuntime:
         import torch  # noqa: PLC0415
         from transformers import AutoModelForImageTextToText, AutoProcessor  # noqa: PLC0415
 
-        kwargs: dict[str, Any] = {"torch_dtype": torch.float16, "device_map": {"": 0}}
+        # bf16 where the card has it, as the adapters were trained: fp16 activations of this model
+        # can overflow, and the numerics should be the ones the adapter was fitted under
+        half = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+        kwargs: dict[str, Any] = {"dtype": half, "device_map": {"": 0}}
         if self._load_4bit:
             from transformers import BitsAndBytesConfig  # noqa: PLC0415
 
             kwargs["quantization_config"] = BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_compute_dtype=half,
                 bnb_4bit_use_double_quant=True,
             )
         with self._lock:

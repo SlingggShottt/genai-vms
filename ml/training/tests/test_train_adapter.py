@@ -364,3 +364,67 @@ def test_the_light_preparation_without_checkpointing_only_enables_input_gradient
     model = FakeModel()
     ta.prepare_model(model, _cfg(light_prep=True, grad_checkpointing=False))
     assert model.calls == [("input_grads",)]
+
+
+# ---- memory choices for a small GPU -----------------------------------------------------------
+
+
+def test_the_optimizer_is_plain_adamw_unless_the_8_bit_one_is_asked_for() -> None:
+    torch = pytest.importorskip("torch")
+    weight = torch.nn.Parameter(torch.zeros(4))
+    assert type(ta.make_optimizer([weight], _cfg())) is torch.optim.AdamW
+    with pytest.raises(ValueError, match="unknown optimizer"):
+        ta.make_optimizer([weight], _cfg(optim="sgd"))
+
+
+def test_the_8_bit_optimizer_comes_from_bitsandbytes_with_the_configured_rates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import types
+
+    made = {}
+
+    class FakeAdamW8bit:
+        def __init__(self, params, lr, weight_decay) -> None:  # noqa: ANN001
+            made.update(params=params, lr=lr, weight_decay=weight_decay)
+
+    bnb = types.SimpleNamespace(optim=types.SimpleNamespace(AdamW8bit=FakeAdamW8bit))
+    monkeypatch.setitem(sys.modules, "bitsandbytes", bnb)
+    optimizer = ta.make_optimizer(["w"], _cfg(optim="adamw8bit", lr=3e-4, weight_decay=0.1))
+    assert isinstance(optimizer, FakeAdamW8bit)
+    assert made == {"params": ["w"], "lr": 3e-4, "weight_decay": 0.1}
+
+
+def test_the_model_is_loaded_in_the_dtype_autocast_runs_in(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A mismatch makes autocast keep a converted copy of each weight: 594 MB for the output layer
+    of the 3B model, the allocation that failed the first real run on a 4 GB card. A stand-in for
+    `transformers`, so that nothing is downloaded or loaded."""
+    import types
+
+    torch = pytest.importorskip("torch")
+    seen: dict = {}
+
+    class FakeAuto:
+        @staticmethod
+        def from_pretrained(base, **kwargs):  # noqa: ANN001, ANN003, ANN205
+            seen.update(kwargs)
+            return "model"
+
+    class FakeQuantConfig:
+        def __init__(self, **kwargs) -> None:  # noqa: ANN003
+            self.__dict__.update(kwargs)
+
+    fake = types.SimpleNamespace(
+        AutoModelForImageTextToText=FakeAuto,
+        AutoProcessor=FakeAuto,
+        BitsAndBytesConfig=FakeQuantConfig,
+    )
+    monkeypatch.setitem(sys.modules, "transformers", fake)
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: True)
+    for half, scaled in ((torch.bfloat16, False), (torch.float16, True)):
+        monkeypatch.setattr(ta, "pick_precision", lambda half=half, scaled=scaled: (half, scaled))
+        ta.load_model(_cfg())
+        loaded_in = (seen["dtype"], seen["quantization_config"].bnb_4bit_compute_dtype)
+        assert loaded_in == (half, half)
