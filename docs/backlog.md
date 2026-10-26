@@ -785,9 +785,9 @@
 
 ### P5-J4 · Evidence builder — 5 pts · Must · E12 · FR-RSN-03, FR-RSN-04
 > **Status 2026-10-04 — built inside `services/reasoning` by Track D** at the user's request: per phase × camera frames, caption + VQA-bank questions, stable ids, frames copied to `vms-evidence`, `evidence.v1`. Uses the zero-shot base model, not PhaVR.
-- [ ] `reasoning/evidence`: for each phase × view, sample frames, run PhaVR caption + VQA bank for the event type.
+- [ ] `reasoning/evidence`: for each phase × view, sample frames, run PhaVR caption + VQA bank for the event type. (Built, but with the zero-shot base as the reader: the PhaVR adapter is not trained — it needs caption and answer annotations nobody has made. `provenance.phavr` says `zero-shot`.)
 - [x] Assemble `evidence.v1` with stable evidence ids and frame URIs in `vms-evidence`; validated against contract.
-- [ ] Skips empty phases/views; per-call timings in provenance.
+- [x] Skips empty phases/views; per-call timings in provenance. (2026-10-26: a stage × camera with no frame within 4 s is skipped and counted; `provenance.timings` lists every model-driven step with its seconds, source and frames. Checked by a whole-run test of `ReasoningWorker._run` with fakes, mutation-checked.)
 
 ### P5-J5 · Event reasoning view — 3 pts · Must · E12
 > **2026-10-08:** the report page and the event page's Reasoning section (*Watch the views together*) now have the phase band, a lane per camera with the phases and one playhead, and the incident's cameras on one playhead; pressing a phase plays every view for that phase from its start and stops at its end (driven in Brave on a fresh incident: playhead jumped to the phase start, stopped at its end, largest drift 145 ms). Phases are located once, on the primary view, so every lane shows the same spans; the incident above had a single camera, so four-camera phase playback was checked on the timeline page, not on an incident.

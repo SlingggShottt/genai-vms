@@ -37,6 +37,7 @@ from reasoning.adapters.notify import Notifier
 from reasoning.adapters.store import JobRow, ReasoningStore
 from reasoning.domain.context import build_context
 from reasoning.domain.evidence import PhaseReading, build_bundle
+from reasoning.domain.timings import CallLog
 from reasoning.metrics import job_seconds, jobs_total, queue_depth
 from reasoning.reports.daily import ReportQueue
 from reasoning.reports.daily import generate as generate_report
@@ -236,7 +237,9 @@ class ReasoningWorker:
         cameras = [c for c in ctx.cameras if footage.get(c)]
 
         # --- phases ----------------------------------------------------------------
+        calls = CallLog()
         await self._step(job, "locating the phases", 0.15)
+        started = time.monotonic()
         timeline, fallback, tg_source = await locate_phases(
             self._gateway,
             self._footage,
@@ -244,6 +247,7 @@ class ReasoningWorker:
             footage[ctx.primary.camera_id],
             n_frames=s.phase_frames,
         )
+        calls.add("phases", time.monotonic() - started, source=tg_source, fallback=fallback)
 
         # --- evidence --------------------------------------------------------------
         questions = list(self._bank.questions_for(ctx.event_type))[: s.questions_per_view]
@@ -253,6 +257,7 @@ class ReasoningWorker:
             await self._step(
                 job, f"reading {span.phase} · {cam}", 0.2 + 0.55 * i / max(len(jobs), 1)
             )
+            started = time.monotonic()
             view = await read_view(
                 self._gateway,
                 self._footage,
@@ -262,6 +267,14 @@ class ReasoningWorker:
                 footage[cam],
                 questions,
                 n_frames=s.frames_per_view,
+            )
+            calls.add(
+                "reading",
+                time.monotonic() - started,
+                phase=span.phase,
+                camera=cam,
+                answered=view is not None,
+                frames=len(view.frames) if view is not None else 0,
             )
             if view is not None:
                 readings.setdefault(span.phase, []).append(view)
@@ -300,6 +313,7 @@ class ReasoningWorker:
 
         # --- report ----------------------------------------------------------------
         await self._step(job, "writing the report", 0.8)
+        started = time.monotonic()
         when = (
             f"{ctx.window.start.astimezone(self._tz):%d %b %Y %H:%M:%S}"
             f" to {ctx.window.end.astimezone(self._tz):%H:%M:%S} ({self._tz})"
@@ -314,12 +328,14 @@ class ReasoningWorker:
             profile=self._profile,
             when=when,
         )
+        calls.add("report", time.monotonic() - started, model_calls=result.calls)
         provenance = {
             "tg": tg_source,
             "fallback_used": fallback,
             "profile": self._profile,
             "synthesis_model": result.model,
             "model_calls": result.calls,
+            "timings": calls.summary(),
         }
         if result.report is None:
             await self._store.complete_incident(
