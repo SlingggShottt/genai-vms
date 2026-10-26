@@ -679,11 +679,11 @@
 
 ### P4-J5 · Image search & mask UI — 3 pts · Must · E11 · FR-SRC-06, FR-SRC-07
 - [ ] "Search by image" upload dialog and "Find similar" crop tool on any paused frame (playback, event detail).
-- [ ] Mask overlay rendering on result keyframes, requested lazily when a card is visible.
+- [x] Mask overlay rendering on result keyframes, requested lazily when a card is visible. (`MaskOverlay`: requested once the card is 40 % on screen; a failure leaves the plain picture.)
 
 ### P4-J6 · Retrieval evaluation harness — 5 pts · Must · E18 · EV-01
-- [ ] `ml/evaluation/retrieval`: `queries.jsonl` format + validation; ground-truth labelling guide for K & P.
-- [ ] Metrics R@1/5/10, mAP, tIoU@0.3/0.5, latency per stage.
+- [x] `ml/evaluation/retrieval`: `queries.jsonl` format + validation; ground-truth labelling guide for K & P. (`queries.py`, `LABELLING_GUIDE.md`; 63 queries written from the MEVA labels, 43 % implicit, checked mechanically not to use their label's words.)
+- [x] Metrics R@1/5/10, mAP, tIoU@0.3/0.5, latency per stage. (`metrics.py`, unit-tested and mutation-checked.)
 - [ ] Ablation runner: `embed`, `embed+filters`, `+rerank`, `+jit`, for `local` and `hybrid` profiles.
 - [ ] Baseline report generated on the first 50 queries.
       Not ticked. A first harness exists with labels nobody had to annotate: `ml/evaluation/retrieval` joins the 121
@@ -792,7 +792,7 @@
 ### P5-J5 · Event reasoning view — 3 pts · Must · E12
 > **2026-10-08:** the report page and the event page's Reasoning section (*Watch the views together*) now have the phase band, a lane per camera with the phases and one playhead, and the incident's cameras on one playhead; pressing a phase plays every view for that phase from its start and stops at its end (driven in Brave on a fresh incident: playhead jumped to the phase start, stopped at its end, largest drift 145 ms). Phases are located once, on the primary view, so every lane shows the same spans; the incident above had a single camera, so four-camera phase playback was checked on the timeline page, not on an incident.
 > **Status 2026-10-04 — partly built:** the reasoning view is the incident report (phase band, per-phase captions and Q&A, evidence frames) and the event page's *Reasoning* panel with job progress and queue position. **Not done:** camera lanes and synced multi-view playback per phase.
-- [ ] Event/correlation detail gains a "Reasoning" tab: timeline with phase band across camera lanes (§B.6), per-phase captions and Q&A, evidence frames.
+- [x] Event/correlation detail gains a "Reasoning" tab: timeline with phase band across camera lanes (§B.6), per-phase captions and Q&A, evidence frames. (A *Reasoning* section of the event page rather than a tab: phase band, a lane per camera, per-stage captions and answers, evidence frames, job progress and queue position; see the 2026-10-08 note.)
 - [x] Clicking a phase plays all views for that phase in sync (≤ 4 views); job progress/queue shown while running.
 
 ---

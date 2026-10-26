@@ -54,6 +54,26 @@ often share a location; the benchmark cannot tell the two apart. Returned window
 black gaps, 92–94 % of the time. The two security-relevant singletons (theft, abandon-package) are
 single clips: theft appeared at rank 6 in reason mode only, abandon-package never.
 
+## The ablation (`run_ablation.py`, P4-J6)
+
+The same questions with more of the system on: `embed` (fast mode, no filters), `embed+filters`,
+`+rerank` (reason mode) and `+jit` (reason mode with picture checks, on the first `--jit-limit`
+queries only: it swaps models per candidate). Questions come from `queries.jsonl`
+(`make_queries.py` writes it from this folder's MEVA labels: 36 explicit plus 27 implicit, whose
+words are checked not to repeat their label; the format and how to add queries are in
+`queries.py` and `LABELLING_GUIDE.md`). Metrics: R@1/5/10, mAP (AP@10 with the relevant places as
+items), tIoU@0.3/0.5 of the first window, and median/p95 latency per stage (`metrics.py`).
+
+```bash
+# the stream recorded as above, then
+VMS_RETRIEVAL_JIT_BUDGET_S=150 deploy/demo/start.sh        # the demo launcher already sets this
+uv run --package vms-retrieval python ml/evaluation/retrieval/run_ablation.py --limit 50
+```
+
+Results land in `ml/evaluation/results/retrieval-ablation.{json,md}`. The `hybrid` profile needs
+provider keys and has not been run; start the retrieval service under `VMS_LLM_PROFILE=hybrid` and
+pass `--profile-label hybrid` to get it.
+
 ## How it is scored
 
 - **Relevant window.** A result window is relevant to a query when it overlaps a clip of that
