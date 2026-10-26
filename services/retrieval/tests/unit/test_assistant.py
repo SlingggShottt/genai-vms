@@ -274,6 +274,61 @@ async def test_a_model_that_asks_for_the_same_lookup_twice_is_stopped_and_answer
     assert kinds(events)[-2:] == ["citation", "done"] and store.saved[0]["status"] == "complete"
 
 
+async def test_a_model_that_keeps_asking_for_new_lookups_is_cut_off_at_the_cap(
+    monkeypatch,
+) -> None:
+    def ask(camera: str) -> dict:
+        return {
+            "thought": "one more", "action": "tool", "tool": "list_events",
+            "arguments": {"camera": camera},
+        }  # fmt: skip
+
+    cameras = ["bus-g340", "bus-g331", "cam01", "cam-2", "cam03", "cam04", "cam05"]
+    gateway = FakeGateway(
+        {"assistant": [*[ask(c) for c in cameras], "An intrusion on bus-g340 [E:84912e49]."]}
+    )
+    events, store = await turn(monkeypatch, gateway, "What should I look at first this morning?")
+
+    assert kinds(events).count("tool_call") == agent_module.MAX_CALLS <= 5
+    assert kinds(events)[-2:] == ["citation", "done"] and store.saved[0]["status"] == "complete"
+
+
+async def test_a_lookup_that_finds_nothing_is_answered_as_nothing_found_with_no_citations(
+    monkeypatch,
+) -> None:
+    async def nothing(ctx, args):
+        return "No verified events found on bus-g340 on 06 Oct."
+
+    real = agent_module.TOOLS["list_events"]
+    monkeypatch.setitem(
+        agent_module.TOOLS, "list_events", Tool(real.name, real.description, real.args, nothing)
+    )
+    gateway = FakeGateway(
+        {"assistant": "I found nothing for that question. Try a wider period or another camera."}
+    )
+    assistant = Assistant(
+        gateway=gateway,
+        store=FakeStore(),
+        ctx_factory=lambda evidence: SimpleNamespace(evidence=evidence),
+        tz=ZoneInfo("Asia/Kolkata"),
+        cameras=CAMERAS,
+    )
+
+    events = [
+        e
+        async for e in assistant.respond(
+            uuid.uuid4(), "Which events happened on bus-g340 on 2026-10-06?"
+        )
+    ]
+
+    cite = next(e for e in events if e["type"] == "citation")
+    assert cite["citations"] == [] and cite["unknown"] == [] and cite["consulted"] is False
+    said = "".join(e["text"] for e in events if e["type"] == "token")
+    assert said.startswith("No verified events found") and "found nothing" in said
+    asked = gateway.calls_for("assistant")[-1].prompt
+    assert "No verified events found on bus-g340" in asked  # the model was shown the empty result
+
+
 # ---- conversation memory (P6-D3) --------------------------------------------------
 
 

@@ -660,7 +660,7 @@
 
 ### P4-J2 · Object-level grounding — 5 pts · Must · E11 · FR-SRC-07
 > **Status 2026-10-04 — partly built, in retrieval rather than perception:** `POST /search/grounding` (api proxy) turns `(search_id, result_id)` into SAM 2.1-tiny masks of the objects the result matched, run-length encoded, cached in `vms-masks`. It runs on **CPU in the retrieval process** (~1.2 s warm, so the p95 ≤ 700 ms target is not met; the GPU stays free for the language models).
-- [ ] `perception/grounding` module: `POST /internal/grounding {keyframe_uri, bbox}` → SAM 2.1-tiny mask → RLE cached in `vms-masks`.
+- [x] `perception/grounding` module: `POST /internal/grounding {keyframe_uri, bbox}` → SAM 2.1-tiny mask → RLE cached in `vms-masks`. (Superseded by ADR-017: the masks are made by the retrieval service on the CPU for `(search_id, result_id)`, RLE cached in `vms-masks` by keyframe and box.)
 - [ ] Shares the perception process/GPU; loads lazily; p95 ≤ 700 ms warm (measured).
 - [x] API `POST /search/grounding` proxies with caching by `(keyframe_uri, bbox)`. (The cache key is the keyframe plus the coordinates of the boxes found, `adapters/grounding.cache_key`; the request names a search result, never a uri.)
 
@@ -818,7 +818,7 @@
 > **2026-10-08:** 25+ scripted conversations (`tests/unit/test_assistant.py`): the lookup each question gets, whole turns with a scripted model, citations resolved server-side, unknown tags reported, a repeated lookup stopped. They found that *daily security report* was not routed (fixed).
 > **Status 2026-10-04 — partly built** (`services/retrieval/src/retrieval/assistant`): seven parameterised tools (`search_footage`, `list_events`, `list_incidents`, `get_incident`, `get_timeline`, `count_objects` over `vision.minute_counts`, `get_daily_report`); SSE `tool_call`, `tool_result`, `token`, `citation`, `done`, `error`; citation tags resolved server-side. The local model has no native tool calling, so clear questions are routed by keywords and only the rest go to a JSON-action planner (≤ 4 calls). **Not done:** the 25 scripted `FakeGateway` conversations, `zone` in `count_objects` (counts are per camera), a rate/size cap on tool results beyond truncation.
 - [x] Tools per design §10.3 with JSON schemas; `count_objects` uses pre-defined parameterized SQL only.
-- [ ] Agent loop (≤ 5 tool rounds), citation format enforcement, "nothing found" behaviour.
+- [x] Agent loop (≤ 5 tool rounds), citation format enforcement, "nothing found" behaviour. (The cap is `MAX_CALLS = 4`, enforced and tested with a model that keeps asking for new lookups; tags are resolved server-side and a tag nobody handed out is reported, not cited; a lookup that finds nothing is answered as nothing found with no citations — scripted `FakeGateway` turns in `test_assistant.py`.)
 - [x] `POST /assistant/sessions/{id}/messages` streams SSE events `token`, `tool_call`, `tool_result`, `citation`, `done`, `error`.
 - [x] 25 scripted conversations pass tool-selection and citation checks with `FakeGateway` recordings.
 
@@ -840,7 +840,7 @@
 - [x] `DailyFacts` aggregation SQL; charts (events by hour/type/camera, alert response times).
 - [x] Narrative via gateway with numeric post-check (numbers must exist in facts) → regenerate once → template fallback.
 - [ ] Jinja2 + WeasyPrint PDF per §B.11 → `vms-reports`; row in `reasoning.daily_reports`; indexed into `knowledge`.
-- [ ] Entry point `python -m reasoning.reports.daily`; supercronic in Compose; `POST /reports/daily` on demand (≤ 7-day range).
+- [x] Entry point `python -m reasoning.reports.daily`; supercronic in Compose; `POST /reports/daily` on demand (≤ 7-day range). (Entry point and endpoint exist; the schedule is the worker's own, not supercronic: ADR-016.)
 
 ### P6-J2 · Incident UI & PDF export — 5 pts · Must · E13 · FR-INC-04, FR-INC-06
 > **2026-10-08:** the incident PDF is built on the same pipeline (see P6-J1): A4, phase table, evidence grid, causal chain, factors, actions, limitations and the provenance sentence; written by the worker when a report is generated; *Download PDF* on the report page. Barlow / Source Serif 4 are used only where installed (the container has DejaVu).
