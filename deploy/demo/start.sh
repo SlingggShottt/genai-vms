@@ -18,6 +18,9 @@
 # Environment:
 #   VMS_RETRIEVAL_ARCHIVE_SINCE   ISO time; footage older than this is not searched (recordings
 #                                 the retention policy has removed). Unset = search everything.
+#   VMS_RETRIEVAL_JIT_BUDGET_S    seconds the picture checks of one search may take (default here 150: a
+#                                 text->vision model swap alone is ~20 s on the 4 GB GPU; the service's
+#                                 own default is the design's 8 s, for a host with both models resident)
 #   VMS_OLLAMA_MEMORY_MAX         memory cap for Ollama's scope (default 8G; 0 = no cap). Its runner uses
 #                                 6-7 GB on the CPU: a 6G cap killed it three times in 16 minutes
 set -euo pipefail
@@ -79,7 +82,8 @@ else
   echo "  ollama not found - the language-model steps will degrade (set OLLAMA_BIN)" >&2
 fi
 
-start retrieval 8010 uv run --package vms-retrieval python -m retrieval.main
+VMS_RETRIEVAL_JIT_BUDGET_S="${VMS_RETRIEVAL_JIT_BUDGET_S:-150}" \
+  start retrieval 8010 uv run --package vms-retrieval python -m retrieval.main
 start reasoning "" uv run --package vms-reasoning python -m reasoning.main
 start api 8000 uv run --package vms-api python -m api.main
 start vite 5173 bash -c "cd frontend && VMS_API_URL=http://localhost:8000 exec npx vite --port 5173 --host 127.0.0.1"

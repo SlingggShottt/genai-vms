@@ -28,6 +28,7 @@ SPARSE_MODEL = "Qdrant/bm25"
 DOC_EVENT = "event_caption"
 DOC_INCIDENT = "incident_section"
 DOC_DAILY = "daily_report"
+DOC_JIT = "jit_answer"  # a picture check the vision model answered "yes" to (retrieval/jit.py)
 
 
 @dataclass

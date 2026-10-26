@@ -726,6 +726,7 @@ sequenceDiagram
 Relative times ("this morning") are resolved by the LLM using the provided current time and site timezone, then clamped by validation.
 
 **`candidate.v1`** (D → J): `{candidate_id, camera_id, segment_ids, window, keyframe_uris, twin_excerpt, fused_score, matched_track_ids, missing: [sub_question]}`
+*(Superseded by ADR-015: JIT runs in the search request, so this payload is the `SearchResult` with `missing[]`, not a message.)*
 
 **As built (P4-D1…D4, `services/retrieval`)** — see the service README for detail.
 - `fast` plans from vocabulary alone (no model, so it stays interactive); `reason` adds `query_decompose` and then rereads the top 10 windows with `rerank`. Categories are mapped onto the detector's vocabulary and relative times come from the query text, whatever the model returned.
@@ -899,6 +900,7 @@ Results are written to `ml/evaluation/results/<date>/<harness>.json` plus a Mark
 | 012 | **One Postgres DB, schema per domain, single Alembic history** | DB per service | Easy joins for reports/assistant; ownership enforced by CODEOWNERS |
 | 013 | **JavaScript (JSX) frontend**, JSDoc for key types, zod for runtime validation | TypeScript | Matches team skills; weaker static checks, compensated by zod + tests |
 | 014 | **S3 API abstraction**; MinIO default, SeaweedFS fallback | Local filesystem | Portable to cloud; verify MinIO image/licence status at setup |
+| 015 | **JIT refinement runs inside the search request**, not as a separate worker fed `candidate.v1` over a topic | A JIT worker consuming `candidate.v1` from Kafka | The rerank's `missing[]` questions are answered within the same request's time budget and come straight back to the rescoring pass; a topic would add a hop and a polling wait for no isolation (the vision model already runs under the GPU lease). The hand-over is `SearchResult.missing` and `SearchResult.jit_answers` in the search contract; `candidate.v1` is not implemented. Answers that came out "yes" are indexed into `knowledge` (`doc_type: jit_answer`) so a later search finds the footage without the model |
 
 ## 15. Reliability, security, observability
 

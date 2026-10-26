@@ -196,7 +196,9 @@ class SearchPipeline:
 
         t = perf_counter()
         windows = group_windows(
-            [lst for lst in lists if lst], window_s=self._s.window_s, top_k=max(req.top_k, 12)
+            [lst for lst in lists if lst],
+            window_s=self._s.window_s,
+            top_k=max(req.top_k, self._s.candidate_pool),
         )
         results = await self._to_results(windows)
         results, expired = await self._drop_expired(windows, results)

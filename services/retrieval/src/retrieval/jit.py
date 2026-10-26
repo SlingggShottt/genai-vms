@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import re
+from collections.abc import Awaitable, Callable
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -17,6 +18,8 @@ from sqlalchemy import text
 from vms_common.contracts.search import JitAnswerOut, SearchResult
 from vms_common.llm import Gateway, ImageInput, LLMError, render_prompt
 from vms_common.logging import get_logger
+from vms_common.qdrant.knowledge import DOC_JIT, KnowledgeDoc
+from vms_common.qdrant.point_ids import knowledge_point_id
 from vms_common.storage.s3 import S3Client
 
 from retrieval.adapters.catalog import Catalog
@@ -47,11 +50,48 @@ def question_hash(question: str) -> str:
     return hashlib.sha1(norm.encode()).hexdigest()  # noqa: S324 - a cache key, not a secret
 
 
+def jit_doc(result: SearchResult, segment: str, answer: JitAnswerOut) -> KnowledgeDoc | None:
+    """What a picture check adds to the `knowledge` index, so that a later search for the same
+    thing finds the footage without asking the vision model again. Only a "yes" is indexed: the
+    text is matched by meaning and by words, so a "no" ("is the bag blue? no") would be found by
+    exactly the queries it rules out, and an "unsure" says nothing."""
+    if answer.answer != "yes":
+        return None
+    when = result.start_ts.isoformat(timespec="seconds")
+    detail = f" {answer.detail}" if answer.detail else ""
+    qhash = question_hash(answer.question)
+    return KnowledgeDoc(
+        point_id=knowledge_point_id(DOC_JIT, segment, qhash),
+        text=f"Confirmed in the picture on {result.camera_id} at {when}: "
+        f"{answer.question.rstrip('?')}? Yes.{detail}",
+        payload={
+            "doc_type": DOC_JIT,
+            "ref_id": segment,
+            "part": qhash,
+            "camera_ids": [result.camera_id],
+            "ts_start": int(result.start_ts.timestamp() * 1000),
+            "ts_end": int(result.end_ts.timestamp() * 1000),
+            "keyframe_uri": result.keyframe_uri,
+        },
+    )
+
+
+IndexDoc = Callable[[KnowledgeDoc], Awaitable[None]]
+
+
 class JitRefiner:
-    def __init__(self, gateway: Gateway, catalog: Catalog, s3: S3Client) -> None:
+    def __init__(
+        self,
+        gateway: Gateway,
+        catalog: Catalog,
+        s3: S3Client,
+        *,
+        index: IndexDoc | None = None,
+    ) -> None:
         self._gateway = gateway
         self._catalog = catalog
         self._s3 = s3
+        self._index = index  # where a new "yes" is written for later searches (best effort)
 
     async def _cached(self, segment_id: str, qhash: str) -> JitAnswerOut | None:
         async with self._catalog.session_factory() as s:
@@ -121,6 +161,12 @@ class JitRefiner:
         await self._store(
             segment, qhash, result.keyframe_uri, answer, f"{out.provider}/{out.model}"
         )
+        doc = jit_doc(result, segment, answer)
+        if doc is not None and self._index is not None:
+            try:
+                await self._index(doc)
+            except Exception as exc:  # noqa: BLE001 - a search must not fail over its cache
+                log.warning("jit_index_failed", error=str(exc))
         return answer
 
     async def refine(

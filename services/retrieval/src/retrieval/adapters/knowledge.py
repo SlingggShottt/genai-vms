@@ -12,6 +12,7 @@ from vms_common.logging import get_logger
 from vms_common.qdrant.knowledge import (
     DOC_EVENT,
     DOC_INCIDENT,
+    DOC_JIT,
     KnowledgeEmbedder,
     search_docs,
 )
@@ -47,13 +48,15 @@ class KnowledgeSearch:
         end: datetime | None,
         limit: int,
     ) -> list[Hit]:
-        """Event captions and incident sections matching `query`, as search hits. Keys match
-        the Postgres caption search (`e:<event id>`), so one event found both ways counts once."""
+        """Event captions, incident sections and earlier picture checks matching `query`, as
+        search hits. Keys match the Postgres caption search (`e:<event id>`), so one event found
+        both ways counts once. A picture check adds to its window's score and nothing else: its
+        text is a question and an answer, not a caption to show."""
         points = await search_docs(
             self._client,
             self._embedder,
             query,
-            doc_types=[DOC_EVENT, DOC_INCIDENT],
+            doc_types=[DOC_EVENT, DOC_INCIDENT, DOC_JIT],
             camera_ids=cameras or None,
             since_ms=_ms(start),
             until_ms=_ms(end),
@@ -65,9 +68,22 @@ class KnowledgeSearch:
             cams = pl.get("camera_ids") or []
             if not cams:
                 continue
-            is_event = pl.get("doc_type") == DOC_EVENT
             ref = pl["ref_id"]
             part = pl.get("part", "")
+            if pl.get("doc_type") == DOC_JIT:
+                out.append(
+                    Hit(
+                        source="events",
+                        key=f"j:{ref}:{part}",
+                        camera_id=cams[0],
+                        start_ms=int(pl["ts_start"]),
+                        end_ms=int(pl["ts_end"]),
+                        cosine=float(p.score),
+                        keyframe_uri=pl.get("keyframe_uri"),
+                    )
+                )
+                continue
+            is_event = pl.get("doc_type") == DOC_EVENT
             out.append(
                 Hit(
                     source="events",

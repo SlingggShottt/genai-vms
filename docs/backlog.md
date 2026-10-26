@@ -634,7 +634,7 @@
 > **Status 2026-10-04 — partly built:** SigLIP 2 text encoder on CPU, `frames` + `tracks` search with plan filters, RRF, 10 s windows, per-stage timings. `knowledge` (dense + BM25) is searched and fused with Postgres full-text on captions. `mode=fast` measured at p95 0.25 s (30 fresh queries, `ml/evaluation/results/p7-latency.md`). The `mode=fast` p95 ≤ 1 s criterion is met.
 - [x] SigLIP 2 text encoder on CPU; visual queries against `frames` and `tracks` with payload filters from the plan.
 - [x] Dense + sparse search on `knowledge` (event captions) for text queries.
-- [ ] Reciprocal rank fusion; grouping hits into segment-window candidates (merge within 10 s per camera); top-K = 30.
+- [x] Reciprocal rank fusion; grouping hits into segment-window candidates (merge within 10 s per camera); top-K = 30. (`candidate_pool`, default 30, 2026-10-26; the rerank reads the best 10.)
 - [x] `mode=fast` returns in p95 ≤ 1 s on the Phase 2 archive (measured).
 - [x] Per-stage timings included in response for logging.
 
@@ -642,7 +642,7 @@
 > **Status 2026-10-04 — partly built:** twin excerpts, batched rerank (5 per call, top 10), score + ≤ 60-word trace + `missing[]`, weighted blend. **Not done:** emitting `candidate.v1` to JIT (nothing consumes `missing[]` yet), reasoning weights read from config rather than settings.
 - [x] Loads twin excerpts (only matched tracks ± context, token-capped) for candidates; batched prompts (5 candidates/call).
 - [x] Output per candidate: score 0–1, trace ≤ 60 words, `missing[]` sub-questions; validated with retry.
-- [ ] Final ranking = weighted fused + reasoning score; weights configurable; emits `candidate.v1` to JIT for top-N with `missing`.
+- [x] Final ranking = weighted fused + reasoning score; weights configurable; emits `candidate.v1` to JIT for top-N with `missing`. (Weight: `VMS_RETRIEVAL_REASONING_WEIGHT`. The hand-over to JIT is in-process, not a message: ADR-015 — `SearchResult.missing`/`jit_answers` replace `candidate.v1`.)
 
 ### P4-D4 · Search UI — 5 pts · Must · E11 · FR-SRC-01, FR-SRC-08
 > **Status 2026-10-04 — built, driven in a real browser (Brave) for fast and reason mode:** query bar, camera/time filters, fast/reason toggle, result cards with the collapsible trace, "Open in playback" at the result's time (Playback now honours `?camera=&start=&end=`), fast results first then the reasoned ranking, empty/error states. No component tests were written.
@@ -666,9 +666,9 @@
 
 ### P4-J3 · JIT refinement — 5 pts · Must · E11 · FR-SRC-05
 > **Status 2026-10-04 — partly built (opt-in):** with `jit: true` the rerank's yes/no questions about missing facts are put to `jit_vqa` on the result's keyframe (≤ 3 results × 2 questions, 150 s budget), cached in `retrieval.jit_cache` (migration 0013), and fed back to a rescoring pass; the UI shows them as "Checked in the picture". **Not done:** consuming `candidate.v1`, indexing answers into `knowledge`, the 8 s default budget (a text→vision model swap alone is ~20 s here); some vision replies come back empty and are skipped.
-- [ ] Consumes `candidate.v1` with `missing[]`; asks `jit_vqa` on candidate keyframes; answers stored in `retrieval.jit_cache` keyed by `(segment_id, question_hash)`.
-- [ ] Returns answers to the rerank stage; time budget per search (default 8 s), skipped gracefully when exceeded.
-- [ ] Answers also indexed into `knowledge` (doc_type `jit_answer`) so later searches benefit.
+- [x] Consumes `candidate.v1` with `missing[]`; asks `jit_vqa` on candidate keyframes; answers stored in `retrieval.jit_cache` keyed by `(segment_id, question_hash)`. (In-process instead of a message, ADR-015.)
+- [x] Returns answers to the rerank stage; time budget per search (default 8 s), skipped gracefully when exceeded. (Default 8 s since 2026-10-26; the demo launcher sets 150 s because a text→vision model swap alone is ~20 s on the 4 GB GPU.)
+- [x] Answers also indexed into `knowledge` (doc_type `jit_answer`) so later searches benefit. (Only "yes" answers: a "no" would be found by the queries it rules out. Unit-tested with fakes, and checked against the live Qdrant `knowledge` collection: upserted, found by meaning with the camera filter, and removed after.)
 
 ### P4-J4 · Search API, logging & event-caption indexing — 3 pts · Must · E11 · FR-SRC-09
 > **Status 2026-10-04 — partly built:** the api proxies `/search*` with auth, presigned urls and timeouts; `retrieval.search_logs` is written. Event captions are indexed into `knowledge` by the indexer (see P6-J3).

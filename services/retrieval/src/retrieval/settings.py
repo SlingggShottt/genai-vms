@@ -47,6 +47,8 @@ class RetrievalSettings(VMSBaseSettings):
     hits_per_query: int = Field(default=80, ge=10, le=500)
     # Hits closer than this on one camera are one candidate window (design §10.1).
     window_s: float = Field(default=10.0, gt=0)
+    # Candidate windows kept after fusion, before the reasoning rerank reads the best few.
+    candidate_pool: int = Field(default=30, ge=1, le=100)
     # `reason` mode: how many fused candidates the LLM rereads, and how many per call.
     rerank_top_n: int = Field(default=10, ge=1, le=30)
     rerank_batch: int = Field(default=5, ge=1, le=10)
@@ -56,10 +58,12 @@ class RetrievalSettings(VMSBaseSettings):
     llm_budget_s: float = Field(default=75.0, gt=0)
     decompose_budget_s: float = Field(default=25.0, gt=0)
     # JIT refinement (opt-in per search): candidates checked, questions per candidate, and the
-    # time the vision checks may take in all. A text→vision model swap alone costs ~20 s here.
+    # time the vision checks may take in all (design §10.1: 8 s, with both models resident). On
+    # the 4 GB laptop a text→vision model swap alone costs ~20 s, so the demo sets 150 s
+    # (`deploy/demo/start.sh`); past the budget the checks stop and the reasoned order stands.
     jit_top_n: int = Field(default=3, ge=1, le=10)
     jit_questions: int = Field(default=2, ge=1, le=4)
-    jit_budget_s: float = Field(default=150.0, gt=0)
+    jit_budget_s: float = Field(default=8.0, gt=0)
 
     qdrant: QdrantSettings = Field(default_factory=QdrantSettings)
     knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)

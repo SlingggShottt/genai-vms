@@ -13,6 +13,7 @@ from qdrant_client import AsyncQdrantClient
 from vms_common.http_metrics import HttpMetricsMiddleware
 from vms_common.llm import LLMGateway
 from vms_common.logging import configure_logging, get_logger
+from vms_common.qdrant.knowledge import KnowledgeDoc, upsert_docs
 from vms_common.storage.s3 import S3Client
 from vms_db.session import create_engine, create_session_factory
 
@@ -52,9 +53,13 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
         )
         gateway = LLMGateway.from_settings(redis_settings=settings.redis)
         encoder = SiglipQueryEncoder(settings.siglip_model, settings.encoder_device)
-        jit = JitRefiner(gateway, Catalog(sessions), s3)
         embedder = make_embedder(settings.knowledge.cache_dir)
         knowledge = KnowledgeSearch(qdrant, embedder)
+
+        async def index_doc(doc: KnowledgeDoc) -> None:
+            await upsert_docs(qdrant, embedder, [doc])
+
+        jit = JitRefiner(gateway, Catalog(sessions), s3, index=index_doc)
         pipeline = SearchPipeline(
             settings=settings,
             encoder=encoder,
