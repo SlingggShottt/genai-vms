@@ -44,3 +44,12 @@ export function planSummary(plan) {
   }
   return bits.join(' · ');
 }
+
+/** The period a link carries (`?start=&end=`, as the timeline's "Search in range" makes it), or
+ * null when it carries none or one that makes no sense. Both ends are returned as ISO times. */
+export function periodFromParams(params) {
+  const start = new Date(params.get('start') ?? '');
+  const end = new Date(params.get('end') ?? '');
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return null;
+  return { start: start.toISOString(), end: end.toISOString() };
+}

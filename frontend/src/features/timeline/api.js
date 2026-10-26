@@ -37,6 +37,7 @@ const timelineSchema = z.object({
       start: z.string(),
       end: z.string(),
       events: z.number(),
+      event_ids: z.array(z.string()).default([]),
     }),
   ),
 });

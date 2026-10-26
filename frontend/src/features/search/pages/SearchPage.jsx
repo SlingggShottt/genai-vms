@@ -9,7 +9,8 @@ import { errorMessage } from '@/lib/errorMessage';
 import { cn } from '@/lib/utils';
 import { runImageSearch, runSearch } from '../api';
 import { ResultCard } from '../components/ResultCard';
-import { TIME_RANGES, planSummary, rangeFilter } from '../lib';
+import { TIME_RANGES, periodFromParams, planSummary, rangeFilter } from '../lib';
+import { formatClock, formatDateTime } from '@/lib/time';
 
 const EXAMPLES = [
   'a person in a red top near the service door',
@@ -28,7 +29,9 @@ export function SearchPage() {
   const [text, setText] = useState(params.get('q') ?? '');
   const [mode, setMode] = useState('reason');
   const [jit, setJit] = useState(false);
-  const [camera, setCamera] = useState('');
+  const [camera, setCamera] = useState(() => params.get('camera') ?? '');
+  // a period from a link (the timeline's "Search in range"), instead of one of the presets
+  const [period, setPeriod] = useState(() => periodFromParams(params));
   const [range, setRange] = useState('any');
   const [submitted, setSubmitted] = useState(null); // { id, kind, label, mode, filters }
   const [image, setImage] = useState(null);
@@ -45,7 +48,7 @@ export function SearchPage() {
 
   const filters = () => ({
     cameras: camera ? [camera] : [],
-    ...rangeFilter(range),
+    ...(period ? { start: period.start, end: period.end } : rangeFilter(range)),
   });
 
   function submitText(event) {
@@ -191,6 +194,7 @@ export function SearchPage() {
             When
             <select
               value={range}
+              disabled={Boolean(period)}
               onChange={(e) => setRange(e.target.value)}
               className="h-9 rounded-panel border border-rule bg-surface px-2 text-sm text-text"
             >
@@ -221,6 +225,23 @@ export function SearchPage() {
           </span>
         </div>
       </form>
+
+      {period && (
+        <p className="flex items-center gap-2 text-sm text-text-muted">
+          Only footage from{' '}
+          <strong className="text-text">
+            {formatDateTime(new Date(period.start))} to {formatClock(new Date(period.end))}
+          </strong>
+          <button
+            type="button"
+            aria-label="Search all times"
+            onClick={() => setPeriod(null)}
+            className="rounded-tile p-1 hover:bg-surface-raised"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        </p>
+      )}
 
       {image && (
         <p className="flex items-center gap-2 text-sm text-text-muted">

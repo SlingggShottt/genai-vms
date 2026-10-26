@@ -71,7 +71,7 @@ async def timeline(
         await session.execute(
             text(
                 "SELECT id::text, camera_ids, max_severity, start_ts, end_ts, "
-                "cardinality(event_ids) FROM events.correlation_groups WHERE status <> 'merged' "
+                "event_ids FROM events.correlation_groups WHERE status <> 'merged' "
                 "AND cardinality(camera_ids) > 1 AND end_ts >= :t0 AND start_ts < :t1 "
                 "ORDER BY start_ts LIMIT 200"
             ),
@@ -126,7 +126,8 @@ async def timeline(
                 "severity": r[2],
                 "start": iso(r[3]),
                 "end": iso(r[4]),
-                "events": r[5],
+                "events": len(r[5]),
+                "event_ids": list(r[5]),
             }
             for r in groups
         ],

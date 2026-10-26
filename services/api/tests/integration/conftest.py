@@ -272,8 +272,9 @@ def seed_group(
         cameras: tuple[str, ...] = ("cam02",),
         severity: str = "high",
         revision: int = 1,
+        start_ts: datetime | None = None,
     ) -> CorrelationGroup:
-        start = datetime.now(UTC)
+        start = start_ts or datetime.now(UTC)
         group = CorrelationGroup(
             id=uuid.uuid4(),
             site_id="rvce-campus",

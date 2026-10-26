@@ -11,7 +11,15 @@ import { formatClock, formatDateTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { SyncedPlayer } from '@/features/playback/components/SyncedPlayer';
 import { useTimeline } from '../api';
-import { PRESETS, pct, selectionRange, span, ticks } from '../lib';
+import {
+  PRESETS,
+  linkedEventIds,
+  pct,
+  searchInRangeHref,
+  selectionRange,
+  span,
+  ticks,
+} from '../lib';
 
 // Playing cameras together asks the recorder for one playlist per camera: keep the period short.
 const TOGETHER_MAX_MS = 30 * 60e3;
@@ -23,7 +31,7 @@ const SEV_FILL = {
   critical: 'bg-sev-critical',
 };
 
-function Lane({ camera, view, data, selection, onSelect, onPick }) {
+function Lane({ camera, view, data, selection, onSelect, onPick, linked }) {
   const track = useRef(null);
   const drag = useRef(null);
   const { start, end } = view;
@@ -94,11 +102,46 @@ function Lane({ camera, view, data, selection, onSelect, onPick }) {
               key={e.id}
               type="button"
               aria-label={`${eventTypeLabel(e.event_type)} event at ${formatClock(new Date(e.start))}`}
-              title={`${eventTypeLabel(e.event_type)} · ${formatClock(new Date(e.start))}`}
+              title={`${eventTypeLabel(e.event_type)} · ${formatClock(new Date(e.start))}${linked.has(e.id) ? ' · linked to events on other cameras' : ''}`}
               onClick={() => onPick({ type: 'event', item: e })}
               className={cn(
-                'absolute top-2 h-5 min-w-[6px] rounded-tile ring-1 ring-surface',
+                'absolute top-2 h-5 min-w-[6px] rounded-tile',
+                linked.has(e.id) ? 'ring-2 ring-accent' : 'ring-1 ring-surface',
                 SEV_FILL[e.severity],
+              )}
+              style={{ left: `${s.left}%`, width: `${s.width}%` }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Events that were linked across cameras, drawn as one bar each under the lanes, over the time
+ * they span: press one to see which cameras it joins. */
+function LinkRow({ groups, view, onPick }) {
+  if (groups.length === 0) return null;
+  return (
+    <div className="grid grid-cols-[5rem_1fr] items-stretch gap-2">
+      <div className="flex items-center font-condensed text-sm text-text">Linked</div>
+      <div
+        role="group"
+        aria-label="Events linked across cameras"
+        className="relative h-8 rounded-panel border border-rule bg-surface"
+      >
+        {groups.map((g) => {
+          const s = span(g.start, g.end, view.start, view.end, 0.8);
+          return (
+            <button
+              key={g.id}
+              type="button"
+              aria-label={`${g.events} events linked across ${g.camera_ids.join(', ')}`}
+              title={`${g.events} events linked across ${g.camera_ids.join(', ')}`}
+              onClick={() => onPick({ type: 'group', item: g })}
+              className={cn(
+                'absolute top-2 h-4 rounded-pill ring-1 ring-accent',
+                SEV_FILL[g.severity],
               )}
               style={{ left: `${s.left}%`, width: `${s.width}%` }}
             />
@@ -136,6 +179,7 @@ export function TimelinePage() {
     new Date(view.end).toISOString(),
   );
   const axis = ticks(view.start, view.end);
+  const linked = useMemo(() => linkedEventIds(data?.groups ?? []), [data]);
   const multi = view.end - view.start > 24 * 3600e3;
 
   function choose(value) {
@@ -232,17 +276,14 @@ export function TimelinePage() {
               selection={selection}
               onSelect={setSelection}
               onPick={setPicked}
+              linked={linked}
             />
           ))}
-          {data.groups.length > 0 && (
-            <p className="text-xs text-text-muted">
-              {data.groups.length} group{data.groups.length === 1 ? '' : 's'} of events linked
-              across cameras in this period.
-            </p>
-          )}
+          <LinkRow groups={data.groups} view={view} onPick={setPicked} />
           <p className="text-xs text-text-muted">
             Bars above are events, thin bars below are incident reports; colour and the marker title
-            give the severity.
+            give the severity. An outlined event is linked to events on other cameras, shown on the
+            Linked row.
           </p>
         </section>
       )}
@@ -271,6 +312,9 @@ export function TimelinePage() {
               <Link to={playbackHref}>Open recording</Link>
             </Button>
           )}
+          <Button size="sm" variant="outline" asChild>
+            <Link to={searchInRangeHref(selection)}>Search in range</Link>
+          </Button>
           {data && data.cameras.length > 1 && (
             <Button
               size="sm"
@@ -327,7 +371,36 @@ export function TimelinePage() {
           aria-label="Selected marker"
           className="flex flex-col gap-2 rounded-panel border border-rule bg-surface p-3 text-sm"
         >
-          {picked.type === 'event' ? (
+          {picked.type === 'group' ? (
+            <>
+              <div className="flex flex-wrap items-center gap-2">
+                <SeverityBadge severity={picked.item.severity} />
+                <strong className="font-medium text-text">
+                  {picked.item.events} events linked across {picked.item.camera_ids.join(', ')}
+                </strong>
+                <span className="tabular-nums text-text-muted">
+                  {formatDateTime(new Date(picked.item.start))} to{' '}
+                  {formatClock(new Date(picked.item.end))}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setSelection({
+                      camera: picked.item.camera_ids[0],
+                      start: new Date(picked.item.start).getTime(),
+                      end: new Date(picked.item.end).getTime(),
+                    });
+                    setPicked(null);
+                  }}
+                >
+                  Select this period
+                </Button>
+              </div>
+            </>
+          ) : picked.type === 'event' ? (
             <>
               <div className="flex flex-wrap items-center gap-2">
                 <SeverityBadge severity={picked.item.severity} />

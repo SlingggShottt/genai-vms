@@ -38,3 +38,19 @@ export function selectionRange(a, b, start, end) {
   const [lo, hi] = a <= b ? [a, b] : [b, a];
   return { start: start + lo * (end - start), end: start + hi * (end - start) };
 }
+
+/** The ids of the events some correlation group links across cameras. */
+export function linkedEventIds(groups) {
+  return new Set(groups.flatMap((g) => g.event_ids));
+}
+
+/** The search page for a period on a camera ("Search in range"): the filters travel in the link,
+ * the words to look for are typed there. */
+export function searchInRangeHref({ camera, start, end }) {
+  const params = new URLSearchParams({
+    camera,
+    start: new Date(start).toISOString(),
+    end: new Date(end).toISOString(),
+  });
+  return `/search?${params.toString()}`;
+}
