@@ -655,8 +655,8 @@
 
 ### P4-J1 · Image query path — 2 pts · Must · E11 · FR-SRC-06
 > **Status 2026-10-04 — partly built:** `POST /search/image` takes an upload (SigLIP 2 vision on CPU, `tracks`); the UI has *Search by image*. **Not done:** `{frame_uri, bbox}` crops and the "Find similar" tool on a paused frame.
-- [ ] `POST /search/image` accepts upload or `{frame_uri, bbox}`; crops, embeds with SigLIP 2 vision (CPU), searches `tracks` with filters.
-- [ ] Results grouped by track, sorted by score then time, same response shape as text search.
+- [x] `POST /search/image` accepts upload or `{frame_uri, bbox}`; crops, embeds with SigLIP 2 vision (CPU), searches `tracks` with filters. (2026-10-26: the upload stays on `/search/image`; the box is `POST /search/image/crop`, which names the frame by event keyframe, search result or camera + moment rather than a storage uri, so the browser never holds one. Contract `CropSearchRequest`, fixture, unit and integration tests, mutation-checked; not yet run against a live Qdrant.)
+- [x] Results grouped by track, sorted by score then time, same response shape as text search. (Same `SearchResponse`, `kind: image`.)
 
 ### P4-J2 · Object-level grounding — 5 pts · Must · E11 · FR-SRC-07
 > **Status 2026-10-04 — partly built, in retrieval rather than perception:** `POST /search/grounding` (api proxy) turns `(search_id, result_id)` into SAM 2.1-tiny masks of the objects the result matched, run-length encoded, cached in `vms-masks`. It runs on **CPU in the retrieval process** (~1.2 s warm, so the p95 ≤ 700 ms target is not met; the GPU stays free for the language models).

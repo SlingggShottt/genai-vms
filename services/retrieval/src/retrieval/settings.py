@@ -47,6 +47,8 @@ class RetrievalSettings(VMSBaseSettings):
     hits_per_query: int = Field(default=80, ge=10, le=500)
     # Hits closer than this on one camera are one candidate window (design §10.1).
     window_s: float = Field(default=10.0, gt=0)
+    # "Find similar" on a paused recording: the stored keyframe must be this close to the moment.
+    crop_frame_window_s: float = Field(default=4.0, gt=0, le=30)
     # Candidate windows kept after fusion, before the reasoning rerank reads the best few.
     candidate_pool: int = Field(default=30, ge=1, le=100)
     # `reason` mode: how many fused candidates the LLM rereads, and how many per call.

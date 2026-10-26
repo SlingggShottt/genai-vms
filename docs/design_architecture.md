@@ -640,7 +640,7 @@ Base path `/api/v1`. JSON errors use the envelope in `style_guide.md §A.5`.
 | Events | `GET /events?camera&type&severity&status&start&end`, `GET /events/{id}`, `POST /events/{id}/analyze` | all; analyze: operator+ |
 | Alerts | `GET /alerts`, `POST /alerts/{id}/ack`, `POST /alerts/{id}/resolve`, `WS /ws?token=` | operator+ |
 | Correlations | `GET /correlations?start&end`, `GET /correlations/{id}` | all |
-| Search (proxy → retrieval) | `POST /search` (text), `POST /search/image` (multipart or `{frame_uri, bbox}`), `POST /search/grounding` | all |
+| Search (proxy → retrieval) | `POST /search` (text), `POST /search/image` (multipart upload), `POST /search/image/crop` (`{event_id, keyframe_index}` or `{search_id, result_id}` or `{camera_id, at}`, plus `bbox` as fractions of the frame — the server cuts it from the stored keyframe, so the browser never holds a storage uri), `GET /search/frame?camera_id&at` (the stored frame nearest a moment, presigned, and when it was taken), `POST /search/grounding` | all |
 | Reasoning (proxy → reasoning) | `GET /reasoning/jobs`, `GET /reasoning/jobs/{id}` | all |
 | Incidents | `GET /incidents`, `GET /incidents/{id}`, `PATCH /incidents/{id}` (status/notes), `GET /incidents/{id}/pdf`, `GET /incidents/{id}/similar` | all; patch: operator+ |
 | Assistant (proxy, **D**) | `GET/POST /assistant/sessions`, `GET /assistant/sessions/{id}`, `POST /assistant/sessions/{id}/messages` → SSE | all |

@@ -1,14 +1,20 @@
 import { useState } from 'react';
+import { FindSimilarDialog } from '@/features/search/components/FindSimilarDialog';
 
 /** The event's keyframes (presigned urls, good for 15 minutes). If one cannot be loaded — most
  * likely because the page has been open past that — say so and how to fix it, instead of
  * showing a broken image.
  *
- * @param {{urls: string[], count: number, camera: string}} props  `count` is how many the event
- *   has, which can exceed `urls.length` only if the api sent none (then there is nothing to show)
+ * With an `eventId`, each keyframe offers "Find similar": draw a box over a person or object and
+ * see where else it appears (P4-J1).
+ *
+ * @param {{urls: string[], count: number, camera: string, eventId?: string}} props  `count` is how
+ *   many the event has, which can exceed `urls.length` only if the api sent none (then there is
+ *   nothing to show)
  */
-export function KeyframeStrip({ urls, count, camera }) {
+export function KeyframeStrip({ urls, count, camera, eventId }) {
   const [failed, setFailed] = useState(() => new Set());
+  const [searching, setSearching] = useState(null); // index of the keyframe being searched from
 
   if (count === 0) {
     return <p className="text-sm text-text-muted">This event has no keyframes.</p>;
@@ -35,9 +41,31 @@ export function KeyframeStrip({ urls, count, camera }) {
                 className="aspect-video w-full object-cover"
               />
             )}
+            {eventId && !failed.has(url) && (
+              <button
+                type="button"
+                onClick={() => setSearching(index)}
+                aria-label={`Find similar to something in keyframe ${index + 1}`}
+                className="w-full bg-surface px-2 py-1 text-left text-xs text-accent hover:underline"
+              >
+                Find similar
+              </button>
+            )}
           </li>
         ))}
       </ul>
+      <FindSimilarDialog
+        frame={
+          searching == null
+            ? null
+            : {
+                imageUrl: urls[searching],
+                label: `Keyframe ${searching + 1} from ${camera}`,
+                ref: { event_id: eventId, keyframe_index: searching },
+              }
+        }
+        onClose={() => setSearching(null)}
+      />
       {failed.size > 0 && (
         <p className="text-xs text-text-muted">
           Keyframe links expire after 15 minutes. Reload the page to get fresh ones.

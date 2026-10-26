@@ -19,6 +19,7 @@ from vms_db.session import create_engine, create_session_factory
 
 from retrieval.adapters.catalog import Catalog
 from retrieval.adapters.encoder import SiglipQueryEncoder
+from retrieval.adapters.frames import FrameReader
 from retrieval.adapters.grounding import Grounder
 from retrieval.adapters.knowledge import KnowledgeSearch, make_embedder
 from retrieval.adapters.twins import TwinReader
@@ -70,6 +71,7 @@ def create_app(settings: RetrievalSettings | None = None) -> FastAPI:
             profile=gateway.profile,
             knowledge=knowledge,
             jit=jit,
+            frames=FrameReader(s3),
         )
         app.state.knowledge = knowledge
         app.state.pipeline, app.state.encoder, app.state.profile = (

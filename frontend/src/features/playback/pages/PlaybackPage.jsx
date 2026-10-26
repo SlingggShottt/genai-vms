@@ -4,7 +4,10 @@ import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useCameras } from '@/features/cameras/api';
-import { formatDateTime } from '@/lib/time';
+import { getFrameNear } from '@/features/search/api';
+import { FindSimilarDialog } from '@/features/search/components/FindSimilarDialog';
+import { errorMessage } from '@/lib/errorMessage';
+import { formatClock, formatDateTime } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import {
   hlsAuthConfig,
@@ -73,6 +76,9 @@ export function PlaybackPage() {
   const [playerError, setPlayerError] = useState(null);
   const [overlayEnabled, setOverlayEnabled] = useState(true);
   const [selectedTrackId, setSelectedTrackId] = useState(null);
+  const [similarFrame, setSimilarFrame] = useState(null);
+  const [findingFrame, setFindingFrame] = useState(false);
+  const [similarError, setSimilarError] = useState(null);
 
   const videoRef = useRef(null);
   const fragmentsRef = useRef([]);
@@ -172,6 +178,32 @@ export function PlaybackPage() {
     setSelectedTrackId(null);
   }
 
+  /** Pause, and offer the stored frame nearest the playhead to draw a "find similar" box on:
+   * only keyframes are indexed, so that is the picture the search can start from. */
+  async function findSimilarHere() {
+    videoRef.current?.pause();
+    setSimilarError(null);
+    setFindingFrame(true);
+    try {
+      const at = new Date(playheadMs ?? activeRange.startDate.getTime()).toISOString();
+      const frame = await getFrameNear({ cameraId: cameraCode, at });
+      setSimilarFrame({
+        imageUrl: frame.url,
+        label: `${cameraCode} at ${formatClock(new Date(frame.at))}`,
+        ref: { camera_id: cameraCode, at: frame.at },
+      });
+    } catch (error) {
+      setSimilarError(
+        errorMessage(error, {
+          forbidden: 'You do not have access to search.',
+          fallback: 'The frame could not be fetched. Check your connection and try again.',
+        }),
+      );
+    } finally {
+      setFindingFrame(false);
+    }
+  }
+
   function handleScrub(wallClockMs) {
     setPlayheadMs(wallClockMs);
     const playerTime = wallClockToPlayerTime(fragmentsRef.current, wallClockMs);
@@ -246,7 +278,23 @@ export function PlaybackPage() {
         >
           {overlayEnabled ? 'Detections on' : 'Detections off'}
         </Button>
+
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!activeRange || !cameraCode || findingFrame}
+          onClick={findSimilarHere}
+        >
+          {findingFrame ? 'Finding the frame' : 'Find similar here'}
+        </Button>
       </form>
+
+      {similarError && (
+        <p role="alert" className="text-sm text-sev-critical">
+          {similarError}
+        </p>
+      )}
+      <FindSimilarDialog frame={similarFrame} onClose={() => setSimilarFrame(null)} />
 
       <div className="flex gap-4">
         <div

@@ -144,6 +144,14 @@ class VectorSearch:
     ) -> str | None:
         """The keyframe of `camera_id` closest to `ts_ms` — a window found only through track
         crops has no frame of its own, and a result card should still show the scene."""
+        found = await self.nearest_frame(camera_id, ts_ms, within_s=within_s)
+        return found[0] if found else None
+
+    async def nearest_frame(
+        self, camera_id: str, ts_ms: int, *, within_s: float = 4.0
+    ) -> tuple[str, int] | None:
+        """(keyframe uri, the moment it was taken) for the stored frame of `camera_id` closest to
+        `ts_ms`, if one is within `within_s`."""
         pad = int(within_s * 1000)
         points, _ = await self._client.scroll(
             FRAMES_COLLECTION,
@@ -163,4 +171,6 @@ class VectorSearch:
         if not points:
             return None
         best = min(points, key=lambda p: abs(int((p.payload or {})["ts"]) - ts_ms))
-        return (best.payload or {}).get("keyframe_uri")
+        payload = best.payload or {}
+        uri = payload.get("keyframe_uri")
+        return (uri, int(payload["ts"])) if uri else None

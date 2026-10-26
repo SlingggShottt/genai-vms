@@ -19,10 +19,16 @@ from fastapi import (
 )
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
-from vms_common.contracts.search import SearchFilters, SearchRequest, SearchResponse
+from vms_common.contracts.search import (
+    CropSearchRequest,
+    SearchFilters,
+    SearchRequest,
+    SearchResponse,
+)
 
+from retrieval.adapters.frames import FrameNotAllowedError
 from retrieval.grounding_service import GroundingRequest
-from retrieval.pipeline import SearchPipeline
+from retrieval.pipeline import FrameUnavailableError, SearchPipeline
 
 router = APIRouter()
 
@@ -88,6 +94,37 @@ async def search_image(
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST, "that file is not a readable image"
         ) from exc
+
+
+@router.get("/search/frame")
+async def search_frame(camera_id: str, at: datetime, request: Request) -> dict[str, str]:
+    """The stored frame nearest a moment of a camera: the picture to draw a "find similar" box on
+    when the operator has paused a recording. `at` in the answer is when that frame was taken;
+    send it back to `/search/crop` so the box lands on the frame it was drawn on."""
+    if at.tzinfo is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "`at` needs a time zone")
+    try:
+        uri, taken = await _pipeline(request).frame_near(camera_id, at)
+    except FrameUnavailableError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    return {"keyframe_uri": uri, "at": taken.isoformat()}
+
+
+@router.post("/search/crop", response_model=SearchResponse)
+async def search_crop(
+    body: CropSearchRequest,
+    request: Request,
+    x_user_id: Annotated[str | None, Header()] = None,
+) -> SearchResponse:
+    """Images like part of a stored frame: the box the operator drew, cut out and searched."""
+    try:
+        return await _pipeline(request).crop(body, user_id=x_user_id)
+    except FrameNotAllowedError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    except FrameUnavailableError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except OSError as exc:  # PIL: the stored object is not a readable image
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "that frame cannot be read") from exc
 
 
 @router.get("/incidents/{incident_id}/similar")

@@ -36,6 +36,10 @@ query ─▶ plan ─▶ SigLIP 2 text vectors (CPU) ─▶ Qdrant frames + trac
   `0.4 × fused + 0.6 × model`. Windows the model never saw are capped below the lowest judged one.
   The whole LLM part is bounded by `llm_budget_s`; on timeout the fused order is returned.
 - **Image search.** `POST /search/image` embeds the upload with SigLIP 2 vision and searches `tracks`.
+  `POST /search/crop` does the same for a box drawn over a stored frame ("find similar"): the frame is named by
+  `keyframe_uri` (only the `vms-keyframes` bucket is read), by `search_id` + `result_id`, or by `camera_id` + `at`
+  (the nearest stored keyframe, `GET /search/frame` says which and when); `bbox` is fractions of the frame, widened
+  by 8 % on each side before it is embedded (`domain/crop.py`).
 - Every search is written to `retrieval.search_logs` (plan, results, per-stage timings).
 
 ## Assistant
@@ -71,7 +75,6 @@ Measured on the build machine (`ml/evaluation/results/p7-latency.md`): fast sear
 
 ## Not built
 
-`candidate.v1` hand-over to a separate JIT worker (JIT runs in-process), crop-from-frame image
-queries (`P4-J1` takes uploads only), the retrieval evaluation harness against labelled queries
+`candidate.v1` hand-over to a separate JIT worker (JIT runs in-process, ADR-015), the retrieval evaluation harness against labelled queries
 (`P4-J6`: needs human-labelled ground truth), object masks on the GPU in perception (they run on CPU
 here), and tests of the assistant against recorded `FakeGateway` conversations.

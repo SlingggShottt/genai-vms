@@ -135,6 +135,7 @@ export function EventDetailPage() {
               urls={alert.keyframe_urls}
               count={alert.keyframe_count}
               camera={alert.camera_code}
+              eventId={alert.event_id}
             />
           </Section>
         </div>

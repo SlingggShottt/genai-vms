@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { playbackLink } from '../lib';
 import { useCurrentUser } from '@/features/auth/api';
 import { AddToCaseDialog } from '@/features/cases/components/AddToCaseDialog';
+import { FindSimilarDialog } from './FindSimilarDialog';
 import { MaskOverlay } from './MaskOverlay';
 
 function Chip({ children }) {
@@ -70,11 +71,12 @@ function ReasoningTrace({ result }) {
 }
 
 /** One ranked window of footage: the scene, who/what matched, and a way into the recording. */
-export function ResultCard({ result, rank, searchId }) {
+export function ResultCard({ result, rank, searchId, canFindSimilar = true }) {
   const [imgFailed, setImgFailed] = useState(false);
   const { data: user } = useCurrentUser();
   const canSave = user?.role === 'admin' || user?.role === 'operator';
   const [saving, setSaving] = useState(null);
+  const [similar, setSimilar] = useState(false);
   const start = new Date(result.start_ts);
   const end = new Date(result.end_ts);
   const percent = Math.round(result.score * 100);
@@ -149,6 +151,15 @@ export function ResultCard({ result, rank, searchId }) {
           <Link to={playbackLink(result)} className="text-accent hover:underline">
             Open in playback
           </Link>
+          {canFindSimilar && searchId && result.keyframe_url && !imgFailed && (
+            <button
+              type="button"
+              className="text-accent hover:underline"
+              onClick={() => setSimilar(true)}
+            >
+              Find similar
+            </button>
+          )}
           {canSave && (
             <button
               type="button"
@@ -183,6 +194,16 @@ export function ResultCard({ result, rank, searchId }) {
         </div>
       </div>
       <AddToCaseDialog item={saving} onClose={() => setSaving(null)} />
+      {similar && (
+        <FindSimilarDialog
+          frame={{
+            imageUrl: result.keyframe_url,
+            label: `Frame from ${result.camera_id} at ${formatClock(start)}`,
+            ref: { search_id: searchId, result_id: result.result_id },
+          }}
+          onClose={() => setSimilar(false)}
+        />
+      )}
     </article>
   );
 }

@@ -12,6 +12,7 @@ from time import perf_counter
 from zoneinfo import ZoneInfo
 
 from vms_common.contracts.search import (
+    CropSearchRequest,
     QueryPlan,
     SearchFilters,
     SearchRequest,
@@ -24,9 +25,11 @@ from vms_common.logging import get_logger
 from retrieval import llm_steps
 from retrieval.adapters.catalog import Catalog
 from retrieval.adapters.encoder import SiglipQueryEncoder
+from retrieval.adapters.frames import FrameNotAllowedError, FrameReader
 from retrieval.adapters.knowledge import KnowledgeSearch
 from retrieval.adapters.twins import TwinReader, excerpt_lines
 from retrieval.adapters.vectors import VectorSearch
+from retrieval.domain.crop import crop_jpeg
 from retrieval.domain.fusion import Hit, Window, group_windows
 from retrieval.domain.plan import (
     finalize_plan,
@@ -46,6 +49,10 @@ def _dt(ms: int) -> datetime:
     return datetime.fromtimestamp(ms / 1000, tz=UTC)
 
 
+class FrameUnavailableError(LookupError):
+    """The frame to cut from cannot be had: gone, never stored, or the result expired."""
+
+
 class SearchPipeline:
     def __init__(
         self,
@@ -59,6 +66,7 @@ class SearchPipeline:
         profile: str,
         knowledge: KnowledgeSearch | None = None,
         jit: JitRefiner | None = None,
+        frames: FrameReader | None = None,
     ) -> None:
         self._s = settings
         self._encoder = encoder
@@ -67,6 +75,7 @@ class SearchPipeline:
         self._twins = twins
         self._knowledge = knowledge
         self._jit = jit
+        self._frames = frames
         self.recent: OrderedDict[tuple[str, str], tuple[str | None, list[str], list[str]]] = (
             OrderedDict()
         )
@@ -283,6 +292,46 @@ class SearchPipeline:
         self._observe("image", "fast", timings)
         await self._log(response, kind="image", user_id=user_id, candidates=candidates)
         return response
+
+    async def crop(self, req: CropSearchRequest, *, user_id: str | None = None) -> SearchResponse:
+        """ "Find similar" on a box drawn over a stored frame: the box is cut out, embedded like an
+        uploaded image and searched against the tracks."""
+        if self._frames is None:
+            raise FrameUnavailableError("keyframes cannot be read here")
+        uri, label = await self._frame_of(req)
+        try:
+            frame = await self._frames.read(uri)
+        except FrameNotAllowedError:
+            raise
+        except Exception as exc:  # storage down, or the keyframe was removed by retention
+            raise FrameUnavailableError("that frame is no longer available") from exc
+        piece = await asyncio.to_thread(crop_jpeg, frame, req.bbox)
+        return await self.image(
+            piece, filters=req.filters, top_k=req.top_k, label=label, user_id=user_id
+        )
+
+    async def _frame_of(self, req: CropSearchRequest) -> tuple[str, str]:
+        """(keyframe uri, what to call the search) for the way the request names its frame."""
+        if req.keyframe_uri is not None:
+            return req.keyframe_uri, "part of a frame"
+        if req.search_id is not None and req.result_id is not None:
+            recent = self.recent.get((req.search_id, req.result_id))
+            if recent is None or not recent[0]:
+                raise FrameUnavailableError("that result is no longer available; search again")
+            return recent[0], "part of a result"
+        assert req.camera_id is not None and req.at is not None  # noqa: S101 - the contract
+        uri, taken = await self.frame_near(req.camera_id, req.at)
+        return uri, f"part of {req.camera_id} at {taken.astimezone(self._tz):%H:%M:%S}"
+
+    async def frame_near(self, camera_id: str, at: datetime) -> tuple[str, datetime]:
+        """The stored frame of `camera_id` closest to `at`, and when it was taken: what a paused
+        recording can be searched from, since only keyframes are indexed."""
+        found = await self._vectors.nearest_frame(
+            camera_id, int(at.timestamp() * 1000), within_s=self._s.crop_frame_window_s
+        )
+        if found is None:
+            raise FrameUnavailableError("no stored frame of that camera is close to that moment")
+        return found[0], _dt(found[1])
 
     # --- shared -------------------------------------------------------------------------
 

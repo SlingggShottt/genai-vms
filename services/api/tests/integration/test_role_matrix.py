@@ -81,6 +81,8 @@ ROUTER_TABLE: list[tuple[str, str, frozenset[str] | None]] = [
 AUTH_REQUIRED: list[tuple[str, str, bool]] = [
     ("POST", "/api/v1/search", False),
     ("POST", "/api/v1/search/image", False),
+    ("POST", "/api/v1/search/image/crop", False),
+    ("GET", "/api/v1/search/frame", False),
     ("POST", "/api/v1/search/grounding", False),
     ("GET", "/api/v1/assistant/starters", False),
     ("GET", "/api/v1/assistant/sessions", False),

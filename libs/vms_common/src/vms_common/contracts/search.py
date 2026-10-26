@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 SearchMode = Literal["fast", "reason"]
 
@@ -70,6 +70,49 @@ class SearchFilters(BaseModel):
     cameras: list[str] = Field(default_factory=list)
     start: AwareDatetime | None = None
     end: AwareDatetime | None = None
+
+
+MIN_CROP_SIDE = 0.02  # of the frame: a few pixels would embed to noise
+
+
+class CropSearchRequest(BaseModel):
+    """ "Find similar" on part of a frame (P4-J1): where the frame is, and which part of it.
+
+    The frame is named in exactly one of three ways: `keyframe_uri` (one of the stored keyframes),
+    `search_id` + `result_id` (the keyframe of a result of a recent search), or `camera_id` + `at`
+    (the keyframe nearest that moment, for a paused recording). `bbox` is `[x0, y0, x1, y1]` as
+    fractions of the frame width and height, so it does not depend on the size the browser drew."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    bbox: list[float] = Field(min_length=4, max_length=4)
+    keyframe_uri: str | None = None
+    search_id: str | None = None
+    result_id: str | None = None
+    camera_id: str | None = None
+    at: AwareDatetime | None = None
+    filters: SearchFilters = Field(default_factory=SearchFilters)
+    top_k: int = Field(default=12, ge=1, le=30)
+
+    @model_validator(mode="after")
+    def _one_frame_and_a_real_box(self) -> CropSearchRequest:
+        x0, y0, x1, y1 = self.bbox
+        if not all(0.0 <= v <= 1.0 for v in self.bbox):
+            raise ValueError("bbox values are fractions of the frame, between 0 and 1")
+        if x1 - x0 < MIN_CROP_SIDE or y1 - y0 < MIN_CROP_SIDE:
+            raise ValueError("bbox is too small to search with; draw a larger box")
+        by_uri = self.keyframe_uri is not None
+        by_result = self.search_id is not None or self.result_id is not None
+        by_time = self.camera_id is not None or self.at is not None
+        if by_uri + by_result + by_time != 1:
+            raise ValueError(
+                "name the frame one way: keyframe_uri, search_id + result_id, or camera_id + at"
+            )
+        if by_result and (self.search_id is None or self.result_id is None):
+            raise ValueError("search_id and result_id go together")
+        if by_time and (self.camera_id is None or self.at is None):
+            raise ValueError("camera_id and at go together")
+        return self
 
 
 class SearchRequest(BaseModel):
