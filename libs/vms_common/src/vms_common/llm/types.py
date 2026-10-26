@@ -75,6 +75,8 @@ class ChatResult(BaseModel):
     attempts: int = 1
     # 0 = the task's primary model answered; 1.. = that many fallbacks were needed.
     fallback_index: int = 0
+    # The LoRA adapter that served the call (`hf_local` only); None = the plain base model.
+    adapter: str | None = None
 
 
 class ChatChunk(BaseModel):

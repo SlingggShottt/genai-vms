@@ -1,14 +1,15 @@
 """Step 1 — temporal grounding: where do the stages of the incident fall in the window?
 
-The design's TG adapter answers with spans directly. Until it is trained, the zero-shot base
-model is asked a simpler question — which stage does each of these frames show? — and the spans
-are derived from the answers (`domain.timeline`). If the model cannot be reached or answers
-nonsense, the timeline comes from the detector's own timing, and `fallback_used` says so."""
+The model — the trained adapter or the zero-shot base, whichever the registry's `phase_tg` entry
+names, with its own fallbacks — is asked a simple question: which stage does each of these frames
+show? The spans are derived from the answers (`domain.timeline`). If no model can be reached or
+the answer is nonsense, the timeline comes from the detector's own timing, and `fallback_used`
+says so."""
 
 from __future__ import annotations
 
 from vms_common.contracts.reasoning import PhaseSpan
-from vms_common.llm import Gateway, ImageInput, LLMError, render_prompt
+from vms_common.llm import ChatResult, Gateway, ImageInput, LLMError, render_prompt
 from vms_common.logging import get_logger
 
 from reasoning.adapters.footage import Footage, FootFrame
@@ -19,6 +20,21 @@ from reasoning.domain.timeline import FrameLabels, rule_spans, spans_from_labels
 log = get_logger(__name__)
 
 PROMPT_VERSION = "1.0"
+
+
+def tg_source(result: ChatResult) -> str:
+    """Who located the stages, for the report's provenance. The chain is the task's models in the
+    registry (the trained adapter, then the plain base, then a cloud model), and the detector's
+    timing after that: this says which link answered, and how many before it did not."""
+    if result.adapter:
+        who = f"adapter:{'/'.join(result.adapter.rstrip('/').split('/')[-2:])}"
+    else:
+        who = "zero-shot"
+    source = f"{who}:{result.provider}/{result.model}"
+    if result.fallback_index:
+        plural = "s" if result.fallback_index > 1 else ""
+        source += f" (after {result.fallback_index} fallback{plural})"
+    return source
 
 
 async def locate_phases(
@@ -61,7 +77,7 @@ async def locate_phases(
 
     labels = result.parsed
     assert isinstance(labels, FrameLabels)  # noqa: S101 - validated by the gateway
-    source = f"zero-shot:{result.provider}/{result.model}"
+    source = tg_source(result)
     spans = spans_from_labels(
         labels.phases,
         [f.ts for f in chosen],

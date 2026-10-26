@@ -852,3 +852,54 @@ async def test_a_gateway_closes_a_redis_client_it_created(monkeypatch: pytest.Mo
     gateway = LLMGateway.from_settings(LLMSettings(_env_file=None))
     await gateway.aclose()
     assert closed == [True]
+
+
+# --- which adapter answered ----------------------------------------------------------------
+
+
+ADAPTER = "s3://vms-models/tg/v1"
+ADAPTER_REGISTRY: dict[str, Any] = {
+    "tasks": {"tg": {}},
+    "profiles": {
+        "local": {
+            "tg": {
+                "provider": "hf_local", "base": "Qwen/Qwen2.5-VL-3B-Instruct", "adapter": ADAPTER,
+                "fallback": ["ollama/qwen2.5vl:3b"],
+            },
+        },
+        "hybrid": {"extends": "local"},
+        "cloud": {"extends": "hybrid"},
+    },
+}  # fmt: skip
+
+
+def adapter_gateway() -> tuple[LLMGateway, ScriptedBackend, ScriptedBackend]:
+    hf, ollama = ScriptedBackend(), ScriptedBackend()
+    gateway = LLMGateway(
+        ModelRegistry.from_dict(ADAPTER_REGISTRY, profile="local"),
+        {"hf_local": hf, "ollama": ollama},
+        lease=None,
+        cache=None,
+    )
+    return gateway, hf, ollama
+
+
+async def test_a_result_says_which_adapter_answered() -> None:
+    gateway, hf, _ = adapter_gateway()
+    hf._replies.append("from the adapter")
+
+    result = await gateway.chat("tg", MSGS)
+
+    assert result.adapter == ADAPTER and result.fallback_index == 0
+    assert (result.provider, result.model) == ("hf_local", "Qwen/Qwen2.5-VL-3B-Instruct")
+
+
+async def test_when_the_adapter_fails_the_result_names_the_base_that_answered_instead() -> None:
+    gateway, hf, ollama = adapter_gateway()
+    hf._replies.append(BackendError("unavailable", "the GPU ran out of memory"))
+    ollama._replies.append("from the plain base")
+
+    result = await gateway.chat("tg", MSGS)
+
+    assert result.adapter is None and result.fallback_index == 1
+    assert (result.provider, result.model) == ("ollama", "qwen2.5vl:3b")

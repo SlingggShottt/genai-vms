@@ -94,7 +94,10 @@ profiles:
     # answer than zero-shot, but not better than the rules timeline on judged labels, so it is not the
     # default). Serve it with the frame size it was trained on: the adapter saw 640x360 frames and the
     # task's `max_image_edge: 360` would shrink them to 360x202.
-    #   phase_tg: {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/tg/v1", max_image_edge: 640}
+    #   phase_tg: {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/tg/v1", max_image_edge: 640, fallback: ["ollama/qwen2.5vl:3b", "gemini/gemini-2.5-flash"]}
+    # That is the chain adapter -> zero-shot base -> cloud model; after it the reasoning service uses the detector's
+    # own timing. An incident's provenance says which link answered (`tg`: "adapter:tg/v1:hf_local/..." or
+    # "zero-shot:ollama/qwen2.5vl:3b (after 1 fallback)" or "rules").
     #   phase_vr: {provider: hf_local, base: "Qwen/Qwen2.5-VL-3B-Instruct", adapter: "s3://vms-models/phavr/v1"}
 
   hybrid:               # local vision, cloud text reasoning

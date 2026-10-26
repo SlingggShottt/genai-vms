@@ -73,3 +73,57 @@ async def test_a_view_the_model_could_not_read_is_left_out_not_invented() -> Non
         gateway, _Footage(), ctx, span, "cam02", FRAMES, QUESTIONS, n_frames=2
     )
     assert reading is None
+
+
+# ---- which link of the chain located the stages --------------------------------------------
+
+LABELS = '{"phases": ["baseline", "baseline", "precursor", "action", "action", "aftermath"]}'
+
+
+def _answer(**over):  # noqa: ANN003, ANN202
+    """A model's reply to the stage question, as the gateway would hand it back."""
+    from reasoning.domain.timeline import FrameLabels  # noqa: PLC0415
+    from vms_common.llm import ChatResult  # noqa: PLC0415
+
+    return ChatResult(
+        task="phase_tg", text=LABELS, parsed=FrameLabels.model_validate_json(LABELS),
+        **{"provider": "ollama", "model": "qwen2.5vl:3b", **over},
+    )  # fmt: skip
+
+
+def test_the_source_names_the_adapter_that_located_the_stages() -> None:
+    from reasoning.steps.phases import tg_source  # noqa: PLC0415
+
+    got = tg_source(
+        _answer(
+            provider="hf_local",
+            model="Qwen/Qwen2.5-VL-3B-Instruct",
+            adapter="s3://vms-models/tg/v1",
+        )
+    )
+    assert got == "adapter:tg/v1:hf_local/Qwen/Qwen2.5-VL-3B-Instruct"
+
+
+def test_the_source_of_the_plain_base_is_zero_shot_and_counts_the_links_that_failed() -> None:
+    from reasoning.steps.phases import tg_source  # noqa: PLC0415
+
+    assert (
+        tg_source(_answer(provider="ollama", model="qwen2.5vl:3b"))
+        == "zero-shot:ollama/qwen2.5vl:3b"
+    )
+    assert (
+        tg_source(_answer(provider="ollama", model="qwen2.5vl:3b", fallback_index=1))
+        == "zero-shot:ollama/qwen2.5vl:3b (after 1 fallback)"
+    )
+    assert tg_source(_answer(provider="gemini", model="flash", fallback_index=2)).endswith(
+        "(after 2 fallbacks)"
+    )
+
+
+async def test_the_timeline_carries_the_source_of_the_model_that_answered() -> None:
+    spans, fallback, source = await locate_phases(
+        FakeGateway({"phase_tg": [_answer(provider="hf_local", model="m", adapter="s3://b/tg/v1")]}),
+        _Footage(), _ctx(), FRAMES, n_frames=6,
+    )  # fmt: skip
+    assert fallback is False and source == "adapter:tg/v1:hf_local/m"
+    assert spans and {s.source for s in spans} == {source}
