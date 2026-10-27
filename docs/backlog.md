@@ -219,6 +219,11 @@
       confirmation lag in `ByteTrack`'s output (a new object doesn't appear until the *next* frame), and verified
       restart + IoU re-association recovers the right track_num — see `adapters/tracker.py`'s docstring.
 - [x] Handles out-of-order segments by skipping state update and logging.
+      2026-10-27, found by the retrieval benchmark: with no checkpoint (its 7-day TTL had expired, or Redis was
+      flushed) the counter restarted at 0, reusing the numbers of tracks stored by an earlier run of the same camera;
+      the indexer's idempotent writes then dropped the new tracks (9 of ~2,800 kept in `vision.tracks`). With no
+      checkpoint the counter now starts at the clock in milliseconds (`PersistentTracker.restore`), so two runs
+      cannot share a number; unit-tested and mutation-checked. Rows written before the fix keep their ids.
 
 ### P2-D3 · Attributes, motion & zones — 3 pts · Must · E05 · FR-PER-04
 - [x] Upper/lower dominant colour for persons, dominant colour for vehicles/bags (11 named colours).
