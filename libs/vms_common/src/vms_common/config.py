@@ -178,6 +178,11 @@ class LLMSettings(LLMProfileSettings):
     lease_wait_seconds: float = Field(
         default=120.0, ge=0, description="How long a call queues for the GPU before giving up"
     )
+    lease_max_hold_seconds: float = Field(
+        default=900.0,
+        gt=0,
+        description="A holder is not renewed past this: a stuck call cannot wedge the GPU",
+    )
 
     @property
     def effective_ollama_url(self) -> str:

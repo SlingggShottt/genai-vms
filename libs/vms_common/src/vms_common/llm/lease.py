@@ -8,7 +8,10 @@ A 4 GB GPU holds one GenAI model family at a time. The lease arbitrates between 
 - A waiting family goes first in line: while one is queued, the current family admits no
   new holders, so a steady stream of cheap calls cannot starve an expensive one.
 - Each holder carries a TTL that a heartbeat renews. A crashed process stops renewing, so
-  the GPU is never wedged for longer than `ttl_s`.
+  the GPU is never wedged for longer than `ttl_s`. A holder that is alive but stuck (a call that
+  never returns) stops being renewed after `max_hold_s`, so it cannot wedge the GPU either: found
+  2026-10-27, when one such holder in the retrieval service kept every vision call waiting until
+  the process was restarted.
 - The lease remembers which family was last *loaded*. When a different family is granted
   the lease, the gateway uses that to unload the previous one (Ollama `keep_alive: 0`).
 
@@ -107,9 +110,11 @@ class GPULease:
         node: str = "local",
         ttl_s: float = 30.0,
         poll_s: float = 0.25,
+        max_hold_s: float = 900.0,
     ) -> None:
-        if ttl_s <= 0 or poll_s <= 0:
-            raise ValueError("ttl_s and poll_s must be positive")
+        if ttl_s <= 0 or poll_s <= 0 or max_hold_s <= 0:
+            raise ValueError("ttl_s, poll_s and max_hold_s must be positive")
+        self._max_hold_s = max_hold_s
         self._client = client
         self._node = node
         self._ttl_ms = int(ttl_s * 1000)
@@ -142,7 +147,10 @@ class GPULease:
         holder = uuid7().hex
         member = f"{family}|{holder}"
         grant = await self._acquire(family, holder, wait_s)
-        beat = asyncio.create_task(self._heartbeat(member), name=f"gpu-lease-beat-{holder[:8]}")
+        beat = asyncio.create_task(
+            self._heartbeat(member, give_up_at=time.monotonic() + self._max_hold_s),
+            name=f"gpu-lease-beat-{holder[:8]}",
+        )
         try:
             yield grant
         finally:
@@ -199,10 +207,18 @@ class GPULease:
             # Harmless: the marker lapses by itself within a couple of seconds.
             log.warning("gpu_lease_withdraw_failed", node=self._node, error=type(exc).__name__)
 
-    async def _heartbeat(self, member: str) -> None:
+    async def _heartbeat(self, member: str, give_up_at: float = float("inf")) -> None:
         interval = self._ttl_ms / 3000
         while True:
             await asyncio.sleep(interval)
+            if time.monotonic() >= give_up_at:
+                log.warning(
+                    "gpu_lease_hold_too_long",
+                    node=self._node,
+                    family=member.rsplit("|", 1)[0],
+                    max_hold_s=self._max_hold_s,
+                )
+                return  # stop renewing: the entry lapses within ttl_s and the GPU is free again
             try:
                 alive = await self._heartbeat_script(
                     keys=[self._holders_key], args=[member, self._ttl_ms]

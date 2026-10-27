@@ -187,6 +187,40 @@ async def test_the_heartbeat_keeps_a_long_call_from_expiring(redis_client) -> No
                 pytest.fail("the live holder must still own the GPU")
 
 
+async def test_a_holder_that_never_returns_stops_being_renewed_and_frees_the_gpu(
+    redis_client,
+) -> None:
+    """A call stuck inside the hold (alive, heartbeating, going nowhere) must not wedge the GPU
+    until its process is restarted: after `max_hold_s` the entry is left to lapse."""
+    stuck = lease_for(redis_client, ttl_s=0.3, max_hold_s=0.5)
+    other = lease_for(redis_client, ttl_s=0.3)
+    async with stuck.hold(VL, wait_s=1):
+        await asyncio.sleep(0.3)
+        assert await stuck.current_family() == VL  # still renewed within the maximum
+        started = time.monotonic()
+        async with other.hold(TXT, wait_s=3) as grant:  # waits for the lapse, then gets in
+            waited = time.monotonic() - started
+            assert grant.previous_family == VL
+        assert 0.2 <= waited < 2.0  # not forever: ~max_hold_s plus a TTL, not the full wait
+
+
+async def test_a_holder_within_the_maximum_keeps_the_gpu_for_as_long_as_it_needs(
+    redis_client,
+) -> None:
+    lease = lease_for(redis_client, ttl_s=0.3, max_hold_s=60.0)
+    other = lease_for(redis_client, ttl_s=0.3)
+    async with lease.hold(VL, wait_s=1):
+        await asyncio.sleep(0.9)
+        with pytest.raises(GPULeaseTimeoutError):
+            async with other.hold(TXT, wait_s=0.05):
+                pytest.fail("a holder within its maximum owns the GPU")
+
+
+def test_a_maximum_hold_must_be_positive(redis_client) -> None:
+    with pytest.raises(ValueError):
+        GPULease(redis_client, node="t", max_hold_s=0)
+
+
 async def test_a_released_lease_cannot_be_renewed_back_to_life(redis_client) -> None:
     lease = lease_for(redis_client, ttl_s=0.3)
     async with lease.hold(VL, wait_s=1):

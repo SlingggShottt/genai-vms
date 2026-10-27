@@ -141,7 +141,12 @@ class LLMGateway:
         return cls(
             registry,
             backends,
-            lease=GPULease(client, node=settings.lease_node, ttl_s=settings.lease_ttl_seconds),
+            lease=GPULease(
+                client,
+                node=settings.lease_node,
+                ttl_s=settings.lease_ttl_seconds,
+                max_hold_s=settings.lease_max_hold_seconds,
+            ),
             cache=ResponseCache(client),
             lease_wait_s=settings.lease_wait_seconds,
             redis_to_close=None if redis is not None else client,
