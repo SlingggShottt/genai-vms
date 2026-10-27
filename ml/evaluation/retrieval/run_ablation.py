@@ -62,16 +62,30 @@ SCORE_KEYS = ("R@1", "R@5", "R@10", "AP@10", "tIoU@0.3", "tIoU@0.5")
 Search = Callable[[dict], Awaitable[dict]]
 
 
-def payload(query: qs.Query, config: dict, top_k: int) -> dict:
-    """The body of `POST /search` for one query under one configuration."""
+def payload(
+    query: qs.Query, config: dict, top_k: int, window: tuple[float, float] | None = None
+) -> dict:
+    """The body of `POST /search` for one query under one configuration.
+
+    `window` (epoch seconds) is the recording under test. Every configuration searches inside it,
+    because the archive also holds earlier recordings of the same camera, and a window from one of
+    those is "wrong" for a reason that has nothing to do with the system being measured. It is the
+    benchmark's boundary, not a filter an operator gave, so `embed` carries it too; only the camera
+    filter belongs to `embed+filters` and later."""
     body: dict[str, Any] = {
         "query": query.text,
         "mode": config["mode"],
         "jit": config["jit"],
         "top_k": top_k,
     }
+    filters: dict[str, Any] = {}
+    if window is not None:
+        filters["start"] = datetime.fromtimestamp(window[0], UTC).isoformat()
+        filters["end"] = datetime.fromtimestamp(window[1], UTC).isoformat()
     if config["filters"] and query.cameras:
-        body["filters"] = {"cameras": list(query.cameras)}
+        filters["cameras"] = list(query.cameras)
+    if filters:
+        body["filters"] = filters
     return body
 
 
@@ -122,6 +136,7 @@ async def run_config(
     origin: float | None,
     *,
     top_k: int = 10,
+    window: tuple[float, float] | None = None,
     log: Callable[[str], None] = print,
 ) -> dict:
     config = CONFIGS[name]
@@ -129,7 +144,7 @@ async def run_config(
     for q in queries:
         started = time.perf_counter()
         try:
-            body = await search(payload(q, config, top_k))
+            body = await search(payload(q, config, top_k, window))
             error = None
         except Exception as exc:  # noqa: BLE001 - one failed search is a row, not the run
             body, error = {"results": [], "timings_ms": {}}, f"{type(exc).__name__}: {exc}"[:200]
@@ -265,6 +280,7 @@ async def main() -> None:
     if cal["score"] < 1.5 * max(cal["runner_up_score"], 1.0):
         print("WARNING: the timeline alignment is weak; do not trust the numbers")
     origin = cal["t0"]
+    window = (segments[0][0] - 5.0, segments[-1][1] + 5.0)
 
     report: dict[str, Any] = {
         "finished_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
@@ -273,6 +289,7 @@ async def main() -> None:
         "n_queries": len(queries),
         "implicit": sum(q.kind == "implicit" for q in queries),
         "calibration": cal,
+        "window": [datetime.fromtimestamp(w, UTC).isoformat() for w in window],
         "configs": {},
     }
     async with httpx.AsyncClient(base_url=args.retrieval_url, timeout=900) as client:
@@ -287,7 +304,7 @@ async def main() -> None:
             subset = queries[: args.jit_limit] if name == "+jit" else queries
             print(f"configuration {name} ({len(subset)} queries)")
             report["configs"][name] = await run_config(
-                search, name, subset, origin, top_k=args.top_k
+                search, name, subset, origin, top_k=args.top_k, window=window
             )
     if "+jit" in report["configs"] and "+rerank" in report["configs"]:
         n = report["configs"]["+jit"]["summary"]["n"]

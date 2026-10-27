@@ -67,6 +67,17 @@ def test_a_query_without_filters_sends_none_even_to_the_configurations_that_use_
     assert "filters" not in ra.payload(q, ra.CONFIGS["+rerank"], 10)
 
 
+def test_every_configuration_searches_inside_the_recording_under_test() -> None:
+    q = query()
+    window = (T0 - 5.0, T0 + 2000.0)
+    for name, config in ra.CONFIGS.items():
+        filters = ra.payload(q, config, 10, window)["filters"]
+        assert filters["start"] == "2026-10-25T08:59:55+00:00", name
+        assert filters["end"] == "2026-10-25T09:33:20+00:00", name
+        # only the later configurations also carry the camera the query names
+        assert ("cameras" in filters) is config["filters"], name
+
+
 def test_places_on_the_recordings_clock_need_an_origin() -> None:
     q = query(places=((10.0, 20.0), (30.0, 40.0)))
     assert ra.places_of(q, T0) == {"meva-ex": [(T0 + 10, T0 + 20), (T0 + 30, T0 + 40)]}
