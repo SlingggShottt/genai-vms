@@ -79,3 +79,11 @@ uv run --package vms-perception python -m perception.main
 
 Or via Compose (profile `perception`, not yet added — lands with this
 story's compose wiring).
+
+## Track numbers (changed 2026-10-27)
+
+A track is stored as `{camera}-t{n}`, and the stores write by that key without overwriting, so a number
+must never be used twice for one camera. `n` continues from the Redis checkpoint (7-day TTL). When there
+is none (a first run, a flush, an outage longer than the TTL) the counter starts at the clock in
+milliseconds, not at 0: counting from 0 again reused the numbers of tracks already stored, and a second
+recording of a camera kept 9 of about 2,800 tracks in `vision.tracks`. Existing ids stay as they are.

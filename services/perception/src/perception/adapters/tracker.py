@@ -46,7 +46,9 @@ for the bigger picture.
 from __future__ import annotations
 
 import json
+import time
 import warnings
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
@@ -97,9 +99,16 @@ def _iou(a: tuple[float, float, float, float], b: tuple[float, float, float, flo
 class PersistentTracker:
     """One ByteTrack instance for one camera, with Redis checkpoint/restore."""
 
-    def __init__(self, camera_id: str, *, redis_client: Redis) -> None:
+    def __init__(
+        self,
+        camera_id: str,
+        *,
+        redis_client: Redis,
+        clock_ms: Callable[[], int] | None = None,
+    ) -> None:
         self._camera_id = camera_id
         self._redis = redis_client
+        self._clock_ms = clock_ms or (lambda: int(time.time() * 1000))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", FutureWarning)  # ByteTrack deprecation, see docstring
             self._bytetrack = sv.ByteTrack()
@@ -112,6 +121,18 @@ class PersistentTracker:
         """Load the last checkpoint from Redis, if any. Call once at startup."""
         raw = await self._redis.get(f"{REDIS_KEY_PREFIX}{self._camera_id}")
         if raw is None:
+            # No checkpoint: a first run, or one that outlived the state's TTL or a Redis flush.
+            # Counting from 0 again would reuse the numbers of tracks already stored for this
+            # camera, and the indexer's idempotent writes would then drop the new tracks and
+            # overwrite the old ones' vectors (found 2026-10-27: a second recording of a camera
+            # kept 9 of ~2,800 tracks). Starting at the clock in milliseconds cannot collide with
+            # an earlier run: a run makes far fewer than one track per millisecond.
+            self._next_track_num = self._clock_ms()
+            log.info(
+                "tracker_numbering_seeded",
+                camera_id=self._camera_id,
+                next_track_num=self._next_track_num,
+            )
             return
         state = json.loads(raw)
         self._next_track_num = state.get("next_track_num", 0)

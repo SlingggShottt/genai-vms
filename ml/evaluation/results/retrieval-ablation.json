@@ -1,0 +1,4093 @@
+{
+ "finished_at": "2026-10-27 14:35 UTC",
+ "profile": "local",
+ "camera": "meva-ex",
+ "n_queries": 50,
+ "implicit": 20,
+ "calibration": {
+  "t0": 1793026492.0,
+  "score": -9.0,
+  "runner_up_score": -9.0,
+  "late_join_s": 14.581149101257324,
+  "tracks_starting_in_black": 1.0,
+  "used_prior": true,
+  "disagreed_with": -75.41885089874268
+ },
+ "configs": {
+  "embed": {
+   "config": "embed",
+   "rows": [
+    {
+     "id": "q001",
+     "kind": "explicit",
+     "query": "a person gets into a car",
+     "wall_s": 0.99,
+     "timings_ms": {
+      "plan": 0.4,
+      "encode": 111.9,
+      "retrieve": 165.4,
+      "fuse": 705.8,
+      "total": 983.5
+     },
+     "notes": [
+      "29 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q002",
+     "kind": "implicit",
+     "query": "someone climbs into the driver's seat",
+     "wall_s": 0.66,
+     "timings_ms": {
+      "plan": 0.4,
+      "encode": 111.3,
+      "retrieve": 117.1,
+      "fuse": 424.2,
+      "total": 653.0
+     },
+     "notes": [
+      "26 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q003",
+     "kind": "explicit",
+     "query": "a person gets out of a car",
+     "wall_s": 0.65,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 118.9,
+      "retrieve": 75.9,
+      "fuse": 450.0,
+      "total": 645.1
+     },
+     "notes": [
+      "28 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q004",
+     "kind": "implicit",
+     "query": "the driver steps out onto the road",
+     "wall_s": 0.66,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 102.7,
+      "retrieve": 135.0,
+      "fuse": 416.5,
+      "total": 654.5
+     },
+     "notes": [
+      "25 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q005",
+     "kind": "explicit",
+     "query": "a person opens a car door",
+     "wall_s": 0.64,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 96.5,
+      "retrieve": 71.2,
+      "fuse": 466.6,
+      "total": 634.6
+     },
+     "notes": [
+      "25 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q006",
+     "kind": "explicit",
+     "query": "a person closes a car door",
+     "wall_s": 0.69,
+     "timings_ms": {
+      "plan": 0.5,
+      "encode": 144.7,
+      "retrieve": 42.6,
+      "fuse": 494.4,
+      "total": 682.2
+     },
+     "notes": [
+      "27 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q007",
+     "kind": "explicit",
+     "query": "someone opens the trunk of a car",
+     "wall_s": 0.63,
+     "timings_ms": {
+      "plan": 0.5,
+      "encode": 112.3,
+      "retrieve": 58.3,
+      "fuse": 446.4,
+      "total": 617.5
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q008",
+     "kind": "implicit",
+     "query": "the boot lid of a car swings up",
+     "wall_s": 0.63,
+     "timings_ms": {
+      "plan": 0.4,
+      "encode": 118.6,
+      "retrieve": 56.0,
+      "fuse": 450.4,
+      "total": 625.4
+     },
+     "notes": [
+      "20 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q009",
+     "kind": "explicit",
+     "query": "someone closes the trunk of a car",
+     "wall_s": 0.62,
+     "timings_ms": {
+      "plan": 0.5,
+      "encode": 115.0,
+      "retrieve": 39.7,
+      "fuse": 459.1,
+      "total": 614.3
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.1111111111111111,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q010",
+     "kind": "implicit",
+     "query": "someone slams the boot shut",
+     "wall_s": 0.55,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 77.9,
+      "retrieve": 93.6,
+      "fuse": 367.4,
+      "total": 539.2
+     },
+     "notes": [
+      "30 older matches hidden: the recording has been removed by the retention policy",
+      "nothing in the archive matched; try fewer details or a wider time range"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q011",
+     "kind": "explicit",
+     "query": "someone loading bags or boxes into a vehicle",
+     "wall_s": 0.46,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 88.9,
+      "retrieve": 45.7,
+      "fuse": 317.1,
+      "total": 452.0
+     },
+     "notes": [
+      "25 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q012",
+     "kind": "implicit",
+     "query": "someone putting shopping into the back of a car",
+     "wall_s": 0.41,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 85.2,
+      "retrieve": 40.4,
+      "fuse": 282.9,
+      "total": 408.8
+     },
+     "notes": [
+      "19 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q013",
+     "kind": "explicit",
+     "query": "a person taking things out of a vehicle",
+     "wall_s": 0.41,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 103.4,
+      "retrieve": 38.9,
+      "fuse": 259.5,
+      "total": 402.0
+     },
+     "notes": [
+      "20 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q014",
+     "kind": "implicit",
+     "query": "a person removing luggage from the back of a car",
+     "wall_s": 0.38,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 72.1,
+      "retrieve": 42.2,
+      "fuse": 257.7,
+      "total": 372.3
+     },
+     "notes": [
+      "22 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q015",
+     "kind": "explicit",
+     "query": "a car stops and picks up a person",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 65.7,
+      "retrieve": 25.4,
+      "fuse": 219.9,
+      "total": 311.2
+     },
+     "notes": [
+      "23 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.041666666666666664,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q016",
+     "kind": "explicit",
+     "query": "a car stops and drops off a person",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 56.1,
+      "retrieve": 28.8,
+      "fuse": 229.5,
+      "total": 314.6
+     },
+     "notes": [
+      "25 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 1.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.25,
+     "tIoU@0.3": 1.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q017",
+     "kind": "explicit",
+     "query": "a car driving in reverse",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 68.3,
+      "retrieve": 39.1,
+      "fuse": 207.6,
+      "total": 315.2
+     },
+     "notes": [
+      "24 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q018",
+     "kind": "implicit",
+     "query": "a car backing out of its space",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 57.7,
+      "retrieve": 32.2,
+      "fuse": 225.5,
+      "total": 315.6
+     },
+     "notes": [
+      "21 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.20833333333333331,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q019",
+     "kind": "explicit",
+     "query": "a parked car starts to move",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 59.5,
+      "retrieve": 21.2,
+      "fuse": 228.5,
+      "total": 309.4
+     },
+     "notes": [
+      "18 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q020",
+     "kind": "implicit",
+     "query": "a stationary car pulls away",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 67.4,
+      "retrieve": 27.3,
+      "fuse": 216.6,
+      "total": 311.5
+     },
+     "notes": [
+      "27 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q021",
+     "kind": "explicit",
+     "query": "a moving car comes to a stop",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 70.3,
+      "retrieve": 31.1,
+      "fuse": 225.7,
+      "total": 327.3
+     },
+     "notes": [
+      "27 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q022",
+     "kind": "explicit",
+     "query": "a car turning left",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 60.9,
+      "retrieve": 26.5,
+      "fuse": 233.0,
+      "total": 320.6
+     },
+     "notes": [
+      "20 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q023",
+     "kind": "explicit",
+     "query": "a car turning right",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 61.1,
+      "retrieve": 19.6,
+      "fuse": 230.5,
+      "total": 311.4
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q024",
+     "kind": "explicit",
+     "query": "a car making a u-turn",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 67.5,
+      "retrieve": 32.7,
+      "fuse": 217.4,
+      "total": 317.8
+     },
+     "notes": [
+      "25 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q025",
+     "kind": "implicit",
+     "query": "a car swings round to face the other way",
+     "wall_s": 0.29,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 53.0,
+      "retrieve": 28.8,
+      "fuse": 208.3,
+      "total": 290.3
+     },
+     "notes": [
+      "30 older matches hidden: the recording has been removed by the retention policy",
+      "nothing in the archive matched; try fewer details or a wider time range"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q026",
+     "kind": "explicit",
+     "query": "a person walks into a building through a door",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.5,
+      "encode": 55.4,
+      "retrieve": 44.4,
+      "fuse": 223.1,
+      "total": 323.4
+     },
+     "notes": [
+      "20 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q027",
+     "kind": "implicit",
+     "query": "a person goes through a doorway into a house",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 63.6,
+      "retrieve": 27.6,
+      "fuse": 221.2,
+      "total": 312.6
+     },
+     "notes": [
+      "20 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q028",
+     "kind": "explicit",
+     "query": "a person walks out of a building through a door",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 60.5,
+      "retrieve": 35.4,
+      "fuse": 227.3,
+      "total": 323.4
+     },
+     "notes": [
+      "19 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q029",
+     "kind": "explicit",
+     "query": "a person opens the door of a building",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 68.7,
+      "retrieve": 29.7,
+      "fuse": 213.7,
+      "total": 312.3
+     },
+     "notes": [
+      "21 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q030",
+     "kind": "explicit",
+     "query": "two people standing and talking to each other",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 57.4,
+      "retrieve": 46.0,
+      "fuse": 212.9,
+      "total": 316.5
+     },
+     "notes": [
+      "28 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q031",
+     "kind": "implicit",
+     "query": "a pair of pedestrians chatting",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 62.3,
+      "retrieve": 38.9,
+      "fuse": 222.7,
+      "total": 324.1
+     },
+     "notes": [
+      "30 older matches hidden: the recording has been removed by the retention policy",
+      "nothing in the archive matched; try fewer details or a wider time range"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q032",
+     "kind": "explicit",
+     "query": "two people hugging",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.1,
+      "encode": 65.2,
+      "retrieve": 36.8,
+      "fuse": 206.5,
+      "total": 308.6
+     },
+     "notes": [
+      "29 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q033",
+     "kind": "implicit",
+     "query": "friends greeting each other with a hug",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 68.9,
+      "retrieve": 35.0,
+      "fuse": 215.9,
+      "total": 320.0
+     },
+     "notes": [
+      "29 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q034",
+     "kind": "explicit",
+     "query": "two people shaking hands",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 58.6,
+      "retrieve": 31.9,
+      "fuse": 224.2,
+      "total": 314.9
+     },
+     "notes": [
+      "26 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q035",
+     "kind": "implicit",
+     "query": "two men greeting with a handshake",
+     "wall_s": 0.34,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 63.7,
+      "retrieve": 45.7,
+      "fuse": 222.3,
+      "total": 331.9
+     },
+     "notes": [
+      "26 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q036",
+     "kind": "explicit",
+     "query": "one person hands an object to another person",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 69.7,
+      "retrieve": 28.5,
+      "fuse": 217.1,
+      "total": 315.5
+     },
+     "notes": [
+      "18 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q037",
+     "kind": "implicit",
+     "query": "a man passes a parcel to someone",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 70.2,
+      "retrieve": 27.2,
+      "fuse": 232.1,
+      "total": 329.7
+     },
+     "notes": [
+      "26 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q038",
+     "kind": "explicit",
+     "query": "a person buying something at a counter",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 55.9,
+      "retrieve": 27.9,
+      "fuse": 214.0,
+      "total": 298.0
+     },
+     "notes": [
+      "27 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q039",
+     "kind": "implicit",
+     "query": "a customer paying at a till",
+     "wall_s": 0.5,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 70.3,
+      "retrieve": 27.8,
+      "fuse": 393.2,
+      "total": 491.5
+     },
+     "notes": [
+      "28 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q040",
+     "kind": "explicit",
+     "query": "a person picks something up from the ground",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 59.9,
+      "retrieve": 34.6,
+      "fuse": 226.1,
+      "total": 320.8
+     },
+     "notes": [
+      "24 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q041",
+     "kind": "implicit",
+     "query": "someone bends down to grab an item off the floor",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 68.2,
+      "retrieve": 25.2,
+      "fuse": 224.2,
+      "total": 317.8
+     },
+     "notes": [
+      "19 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q042",
+     "kind": "explicit",
+     "query": "a person puts an object down",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 61.6,
+      "retrieve": 34.8,
+      "fuse": 219.2,
+      "total": 315.8
+     },
+     "notes": [
+      "25 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q043",
+     "kind": "implicit",
+     "query": "a person lowers a box onto the pavement",
+     "wall_s": 0.36,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 77.8,
+      "retrieve": 30.9,
+      "fuse": 248.1,
+      "total": 357.0
+     },
+     "notes": [
+      "23 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q044",
+     "kind": "explicit",
+     "query": "a person carrying a large heavy object",
+     "wall_s": 0.34,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 73.2,
+      "retrieve": 35.4,
+      "fuse": 226.9,
+      "total": 335.7
+     },
+     "notes": [
+      "26 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q045",
+     "kind": "implicit",
+     "query": "someone lugging a large load",
+     "wall_s": 0.35,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 72.0,
+      "retrieve": 41.6,
+      "fuse": 231.0,
+      "total": 344.8
+     },
+     "notes": [
+      "27 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.1111111111111111,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q046",
+     "kind": "explicit",
+     "query": "a person leaves a bag on the ground and walks away",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 63.0,
+      "retrieve": 31.7,
+      "fuse": 221.3,
+      "total": 316.2
+     },
+     "notes": [
+      "27 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q047",
+     "kind": "implicit",
+     "query": "a rucksack is left unattended and its owner leaves",
+     "wall_s": 0.36,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 70.6,
+      "retrieve": 38.4,
+      "fuse": 241.5,
+      "total": 350.8
+     },
+     "notes": [
+      "28 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q048",
+     "kind": "explicit",
+     "query": "someone steals an item",
+     "wall_s": 0.34,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 69.3,
+      "retrieve": 35.4,
+      "fuse": 233.7,
+      "total": 338.6
+     },
+     "notes": [
+      "25 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q049",
+     "kind": "implicit",
+     "query": "a thief taking a bag",
+     "wall_s": 0.35,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 74.4,
+      "retrieve": 42.4,
+      "fuse": 232.8,
+      "total": 349.8
+     },
+     "notes": [
+      "25 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q050",
+     "kind": "explicit",
+     "query": "a person sits down on a chair or bench",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 69.5,
+      "retrieve": 31.3,
+      "fuse": 220.0,
+      "total": 321.0
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.1,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    }
+   ],
+   "summary": {
+    "n": 50,
+    "errors": 0,
+    "overall": {
+     "R@1": 0.02,
+     "R@5": 0.1,
+     "R@10": 0.12,
+     "AP@10": 0.016,
+     "tIoU@0.3": 0.02,
+     "tIoU@0.5": 0.0
+    },
+    "explicit": {
+     "n": 30,
+     "R@1": 0.033,
+     "R@5": 0.1,
+     "R@10": 0.133,
+     "AP@10": 0.017,
+     "tIoU@0.3": 0.033,
+     "tIoU@0.5": 0.0
+    },
+    "implicit": {
+     "n": 20,
+     "R@1": 0.0,
+     "R@5": 0.1,
+     "R@10": 0.1,
+     "AP@10": 0.016,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    "wall_s_median": 0.33,
+    "latency": {
+     "encode": {
+      "median_ms": 69.1,
+      "p95_ms": 118.6,
+      "n": 50
+     },
+     "fuse": {
+      "median_ms": 227.9,
+      "p95_ms": 466.6,
+      "n": 50
+     },
+     "plan": {
+      "median_ms": 0.2,
+      "p95_ms": 0.5,
+      "n": 50
+     },
+     "retrieve": {
+      "median_ms": 35.4,
+      "p95_ms": 117.1,
+      "n": 50
+     },
+     "total": {
+      "median_ms": 323.8,
+      "p95_ms": 654.5,
+      "n": 50
+     }
+    }
+   }
+  },
+  "embed+filters": {
+   "config": "embed+filters",
+   "rows": [
+    {
+     "id": "q001",
+     "kind": "explicit",
+     "query": "a person gets into a car",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 66.9,
+      "retrieve": 22.9,
+      "fuse": 230.2,
+      "total": 320.2
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q002",
+     "kind": "implicit",
+     "query": "someone climbs into the driver's seat",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 66.6,
+      "retrieve": 21.0,
+      "fuse": 233.1,
+      "total": 320.9
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q003",
+     "kind": "explicit",
+     "query": "a person gets out of a car",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 74.2,
+      "retrieve": 26.7,
+      "fuse": 227.2,
+      "total": 328.3
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q004",
+     "kind": "implicit",
+     "query": "the driver steps out onto the road",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 68.2,
+      "retrieve": 19.4,
+      "fuse": 225.8,
+      "total": 313.6
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.375,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q005",
+     "kind": "explicit",
+     "query": "a person opens a car door",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 56.5,
+      "retrieve": 20.2,
+      "fuse": 221.1,
+      "total": 298.0
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q006",
+     "kind": "explicit",
+     "query": "a person closes a car door",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 59.8,
+      "retrieve": 18.1,
+      "fuse": 225.3,
+      "total": 303.4
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.08333333333333333,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q007",
+     "kind": "explicit",
+     "query": "someone opens the trunk of a car",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 62.9,
+      "retrieve": 21.8,
+      "fuse": 220.8,
+      "total": 305.7
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q008",
+     "kind": "implicit",
+     "query": "the boot lid of a car swings up",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 66.4,
+      "retrieve": 19.9,
+      "fuse": 227.9,
+      "total": 314.4
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q009",
+     "kind": "explicit",
+     "query": "someone closes the trunk of a car",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 65.4,
+      "retrieve": 17.3,
+      "fuse": 227.8,
+      "total": 310.7
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.2222222222222222,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q010",
+     "kind": "implicit",
+     "query": "someone slams the boot shut",
+     "wall_s": 0.29,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 46.5,
+      "retrieve": 18.5,
+      "fuse": 224.2,
+      "total": 289.4
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.03333333333333333,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q011",
+     "kind": "explicit",
+     "query": "someone loading bags or boxes into a vehicle",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 70.0,
+      "retrieve": 23.8,
+      "fuse": 222.6,
+      "total": 316.6
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q012",
+     "kind": "implicit",
+     "query": "someone putting shopping into the back of a car",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 63.5,
+      "retrieve": 21.5,
+      "fuse": 222.0,
+      "total": 307.2
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q013",
+     "kind": "explicit",
+     "query": "a person taking things out of a vehicle",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 60.5,
+      "retrieve": 25.9,
+      "fuse": 223.2,
+      "total": 309.9
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q014",
+     "kind": "implicit",
+     "query": "a person removing luggage from the back of a car",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 65.4,
+      "retrieve": 24.3,
+      "fuse": 231.6,
+      "total": 321.5
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q015",
+     "kind": "explicit",
+     "query": "a car stops and picks up a person",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 60.6,
+      "retrieve": 19.4,
+      "fuse": 229.3,
+      "total": 309.5
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.09126984126984126,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q016",
+     "kind": "explicit",
+     "query": "a car stops and drops off a person",
+     "wall_s": 0.33,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 66.4,
+      "retrieve": 27.0,
+      "fuse": 230.3,
+      "total": 323.9
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 1.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.25,
+     "tIoU@0.3": 1.0,
+     "tIoU@0.5": 1.0
+    },
+    {
+     "id": "q017",
+     "kind": "explicit",
+     "query": "a car driving in reverse",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 68.8,
+      "retrieve": 21.1,
+      "fuse": 221.8,
+      "total": 311.9
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.13333333333333333,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q018",
+     "kind": "implicit",
+     "query": "a car backing out of its space",
+     "wall_s": 0.34,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 51.1,
+      "retrieve": 24.8,
+      "fuse": 259.2,
+      "total": 335.3
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.225,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q019",
+     "kind": "explicit",
+     "query": "a parked car starts to move",
+     "wall_s": 0.35,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 68.8,
+      "retrieve": 28.5,
+      "fuse": 243.7,
+      "total": 341.3
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q020",
+     "kind": "implicit",
+     "query": "a stationary car pulls away",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 68.4,
+      "retrieve": 23.6,
+      "fuse": 227.7,
+      "total": 319.9
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q021",
+     "kind": "explicit",
+     "query": "a moving car comes to a stop",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 53.1,
+      "retrieve": 24.2,
+      "fuse": 232.3,
+      "total": 309.8
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q022",
+     "kind": "explicit",
+     "query": "a car turning left",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 48.1,
+      "retrieve": 22.4,
+      "fuse": 228.0,
+      "total": 298.7
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q023",
+     "kind": "explicit",
+     "query": "a car turning right",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 56.3,
+      "retrieve": 18.3,
+      "fuse": 226.5,
+      "total": 301.3
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q024",
+     "kind": "explicit",
+     "query": "a car making a u-turn",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 60.2,
+      "retrieve": 22.2,
+      "fuse": 233.1,
+      "total": 315.7
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q025",
+     "kind": "implicit",
+     "query": "a car swings round to face the other way",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 65.1,
+      "retrieve": 23.9,
+      "fuse": 222.2,
+      "total": 311.4
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q026",
+     "kind": "explicit",
+     "query": "a person walks into a building through a door",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 59.7,
+      "retrieve": 20.7,
+      "fuse": 222.2,
+      "total": 302.9
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q027",
+     "kind": "implicit",
+     "query": "a person goes through a doorway into a house",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 60.2,
+      "retrieve": 23.0,
+      "fuse": 221.0,
+      "total": 304.4
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q028",
+     "kind": "explicit",
+     "query": "a person walks out of a building through a door",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 48.3,
+      "retrieve": 21.8,
+      "fuse": 223.7,
+      "total": 294.0
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q029",
+     "kind": "explicit",
+     "query": "a person opens the door of a building",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.5,
+      "encode": 68.4,
+      "retrieve": 21.7,
+      "fuse": 214.1,
+      "total": 304.7
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q030",
+     "kind": "explicit",
+     "query": "two people standing and talking to each other",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 52.6,
+      "retrieve": 23.6,
+      "fuse": 220.3,
+      "total": 296.7
+     },
+     "notes": [
+      "12 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q031",
+     "kind": "implicit",
+     "query": "a pair of pedestrians chatting",
+     "wall_s": 0.49,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 65.8,
+      "retrieve": 24.5,
+      "fuse": 395.3,
+      "total": 485.8
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q032",
+     "kind": "explicit",
+     "query": "two people hugging",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 71.5,
+      "retrieve": 14.9,
+      "fuse": 232.0,
+      "total": 318.6
+     },
+     "notes": [
+      "11 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q033",
+     "kind": "implicit",
+     "query": "friends greeting each other with a hug",
+     "wall_s": 0.34,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 78.0,
+      "retrieve": 24.5,
+      "fuse": 235.9,
+      "total": 338.6
+     },
+     "notes": [
+      "11 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q034",
+     "kind": "explicit",
+     "query": "two people shaking hands",
+     "wall_s": 0.35,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 73.5,
+      "retrieve": 23.1,
+      "fuse": 247.7,
+      "total": 344.5
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q035",
+     "kind": "implicit",
+     "query": "two men greeting with a handshake",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 53.8,
+      "retrieve": 21.5,
+      "fuse": 218.6,
+      "total": 294.1
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q036",
+     "kind": "explicit",
+     "query": "one person hands an object to another person",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 65.4,
+      "retrieve": 20.1,
+      "fuse": 225.8,
+      "total": 311.5
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q037",
+     "kind": "implicit",
+     "query": "a man passes a parcel to someone",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 54.2,
+      "retrieve": 26.4,
+      "fuse": 212.7,
+      "total": 293.5
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q038",
+     "kind": "explicit",
+     "query": "a person buying something at a counter",
+     "wall_s": 0.29,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 52.6,
+      "retrieve": 20.2,
+      "fuse": 215.5,
+      "total": 288.5
+     },
+     "notes": [
+      "11 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q039",
+     "kind": "implicit",
+     "query": "a customer paying at a till",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 53.3,
+      "retrieve": 20.4,
+      "fuse": 224.3,
+      "total": 298.2
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q040",
+     "kind": "explicit",
+     "query": "a person picks something up from the ground",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 53.8,
+      "retrieve": 19.7,
+      "fuse": 223.1,
+      "total": 296.8
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q041",
+     "kind": "implicit",
+     "query": "someone bends down to grab an item off the floor",
+     "wall_s": 0.29,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 52.4,
+      "retrieve": 19.7,
+      "fuse": 212.8,
+      "total": 285.1
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q042",
+     "kind": "explicit",
+     "query": "a person puts an object down",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 61.1,
+      "retrieve": 17.4,
+      "fuse": 213.6,
+      "total": 292.3
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q043",
+     "kind": "implicit",
+     "query": "a person lowers a box onto the pavement",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 65.5,
+      "retrieve": 28.1,
+      "fuse": 224.7,
+      "total": 318.5
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.1111111111111111,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q044",
+     "kind": "explicit",
+     "query": "a person carrying a large heavy object",
+     "wall_s": 0.3,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 57.3,
+      "retrieve": 22.1,
+      "fuse": 218.8,
+      "total": 298.4
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q045",
+     "kind": "implicit",
+     "query": "someone lugging a large load",
+     "wall_s": 0.34,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 76.5,
+      "retrieve": 24.2,
+      "fuse": 232.5,
+      "total": 333.4
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.16666666666666666,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q046",
+     "kind": "explicit",
+     "query": "a person leaves a bag on the ground and walks away",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 59.1,
+      "retrieve": 25.0,
+      "fuse": 224.5,
+      "total": 308.8
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q047",
+     "kind": "implicit",
+     "query": "a rucksack is left unattended and its owner leaves",
+     "wall_s": 0.29,
+     "timings_ms": {
+      "plan": 0.3,
+      "encode": 67.5,
+      "retrieve": 21.8,
+      "fuse": 199.8,
+      "total": 289.4
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q048",
+     "kind": "explicit",
+     "query": "someone steals an item",
+     "wall_s": 0.31,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 67.5,
+      "retrieve": 25.0,
+      "fuse": 213.4,
+      "total": 306.1
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q049",
+     "kind": "implicit",
+     "query": "a thief taking a bag",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 68.6,
+      "retrieve": 21.3,
+      "fuse": 223.8,
+      "total": 313.9
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q050",
+     "kind": "explicit",
+     "query": "a person sits down on a chair or bench",
+     "wall_s": 0.32,
+     "timings_ms": {
+      "plan": 0.2,
+      "encode": 75.7,
+      "retrieve": 21.5,
+      "fuse": 216.0,
+      "total": 313.4
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 1.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.2,
+     "tIoU@0.3": 1.0,
+     "tIoU@0.5": 1.0
+    }
+   ],
+   "summary": {
+    "n": 50,
+    "errors": 0,
+    "overall": {
+     "R@1": 0.04,
+     "R@5": 0.16,
+     "R@10": 0.22,
+     "AP@10": 0.038,
+     "tIoU@0.3": 0.04,
+     "tIoU@0.5": 0.04
+    },
+    "explicit": {
+     "n": 30,
+     "R@1": 0.067,
+     "R@5": 0.167,
+     "R@10": 0.2,
+     "AP@10": 0.033,
+     "tIoU@0.3": 0.067,
+     "tIoU@0.5": 0.067
+    },
+    "implicit": {
+     "n": 20,
+     "R@1": 0.0,
+     "R@5": 0.15,
+     "R@10": 0.25,
+     "AP@10": 0.046,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    "wall_s_median": 0.31,
+    "latency": {
+     "encode": {
+      "median_ms": 64.3,
+      "p95_ms": 75.7,
+      "n": 50
+     },
+     "fuse": {
+      "median_ms": 224.4,
+      "p95_ms": 247.7,
+      "n": 50
+     },
+     "plan": {
+      "median_ms": 0.2,
+      "p95_ms": 0.3,
+      "n": 50
+     },
+     "retrieve": {
+      "median_ms": 21.8,
+      "p95_ms": 27.0,
+      "n": 50
+     },
+     "total": {
+      "median_ms": 309.9,
+      "p95_ms": 341.3,
+      "n": 50
+     }
+    }
+   }
+  },
+  "+rerank": {
+   "config": "+rerank",
+   "rows": [
+    {
+     "id": "q001",
+     "kind": "explicit",
+     "query": "a person gets into a car",
+     "wall_s": 36.29,
+     "timings_ms": {
+      "plan": 6951.5,
+      "encode": 169.1,
+      "retrieve": 40.5,
+      "fuse": 209.0,
+      "rerank": 28915.9,
+      "total": 36286.0
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q002",
+     "kind": "implicit",
+     "query": "someone climbs into the driver's seat",
+     "wall_s": 27.84,
+     "timings_ms": {
+      "plan": 6354.1,
+      "encode": 176.8,
+      "retrieve": 68.5,
+      "fuse": 239.2,
+      "rerank": 20991.0,
+      "total": 27829.6
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q003",
+     "kind": "explicit",
+     "query": "a person gets out of a car",
+     "wall_s": 35.7,
+     "timings_ms": {
+      "plan": 5690.0,
+      "encode": 221.5,
+      "retrieve": 69.1,
+      "fuse": 287.7,
+      "rerank": 29420.9,
+      "total": 35689.2
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q004",
+     "kind": "implicit",
+     "query": "the driver steps out onto the road",
+     "wall_s": 36.69,
+     "timings_ms": {
+      "plan": 5619.7,
+      "encode": 217.6,
+      "retrieve": 68.8,
+      "fuse": 258.1,
+      "rerank": 30504.0,
+      "total": 36668.2
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 1.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 1.0,
+     "tIoU@0.3": 1.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q005",
+     "kind": "explicit",
+     "query": "a person opens a car door",
+     "wall_s": 34.03,
+     "timings_ms": {
+      "plan": 5199.0,
+      "encode": 173.8,
+      "retrieve": 93.6,
+      "fuse": 226.2,
+      "rerank": 28330.5,
+      "total": 34023.1
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q006",
+     "kind": "explicit",
+     "query": "a person closes a car door",
+     "wall_s": 37.58,
+     "timings_ms": {
+      "plan": 5524.8,
+      "encode": 190.6,
+      "retrieve": 85.7,
+      "fuse": 236.6,
+      "rerank": 31528.9,
+      "total": 37566.6
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.08333333333333333,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q007",
+     "kind": "explicit",
+     "query": "someone opens the trunk of a car",
+     "wall_s": 35.69,
+     "timings_ms": {
+      "plan": 6124.7,
+      "encode": 231.2,
+      "retrieve": 83.4,
+      "fuse": 266.1,
+      "rerank": 28947.1,
+      "total": 35652.5
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q008",
+     "kind": "implicit",
+     "query": "the boot lid of a car swings up",
+     "wall_s": 43.55,
+     "timings_ms": {
+      "plan": 8697.8,
+      "encode": 283.2,
+      "retrieve": 75.1,
+      "fuse": 263.2,
+      "rerank": 34219.4,
+      "total": 43538.7
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q009",
+     "kind": "explicit",
+     "query": "someone closes the trunk of a car",
+     "wall_s": 37.49,
+     "timings_ms": {
+      "plan": 8101.6,
+      "encode": 188.7,
+      "retrieve": 68.3,
+      "fuse": 256.3,
+      "rerank": 28864.9,
+      "total": 37479.8
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.3333333333333333,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q010",
+     "kind": "implicit",
+     "query": "someone slams the boot shut",
+     "wall_s": 32.33,
+     "timings_ms": {
+      "plan": 6389.8,
+      "encode": 207.8,
+      "retrieve": 65.7,
+      "fuse": 253.4,
+      "rerank": 25401.1,
+      "total": 32317.8
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.041666666666666664,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q011",
+     "kind": "explicit",
+     "query": "someone loading bags or boxes into a vehicle",
+     "wall_s": 37.03,
+     "timings_ms": {
+      "plan": 6291.0,
+      "encode": 194.1,
+      "retrieve": 52.9,
+      "fuse": 242.9,
+      "rerank": 30238.6,
+      "total": 37019.5
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q012",
+     "kind": "implicit",
+     "query": "someone putting shopping into the back of a car",
+     "wall_s": 34.57,
+     "timings_ms": {
+      "plan": 5099.2,
+      "encode": 252.4,
+      "retrieve": 85.9,
+      "fuse": 222.3,
+      "rerank": 28876.9,
+      "total": 34536.7
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q013",
+     "kind": "explicit",
+     "query": "a person taking things out of a vehicle",
+     "wall_s": 36.44,
+     "timings_ms": {
+      "plan": 6152.2,
+      "encode": 145.2,
+      "retrieve": 69.8,
+      "fuse": 244.6,
+      "rerank": 29816.7,
+      "total": 36428.5
+     },
+     "notes": [
+      "12 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q014",
+     "kind": "implicit",
+     "query": "a person removing luggage from the back of a car",
+     "wall_s": 40.22,
+     "timings_ms": {
+      "plan": 5709.5,
+      "encode": 230.2,
+      "retrieve": 88.3,
+      "fuse": 284.6,
+      "rerank": 33883.6,
+      "total": 40196.2
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q015",
+     "kind": "explicit",
+     "query": "a car stops and picks up a person",
+     "wall_s": 35.98,
+     "timings_ms": {
+      "plan": 5811.8,
+      "encode": 369.8,
+      "retrieve": 373.8,
+      "fuse": 246.8,
+      "rerank": 29160.7,
+      "total": 35962.9
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 1.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.3333333333333333,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q016",
+     "kind": "explicit",
+     "query": "a car stops and drops off a person",
+     "wall_s": 37.05,
+     "timings_ms": {
+      "plan": 6048.2,
+      "encode": 421.6,
+      "retrieve": 88.8,
+      "fuse": 246.3,
+      "rerank": 30235.9,
+      "total": 37040.8
+     },
+     "notes": [
+      "17 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.08333333333333333,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q017",
+     "kind": "explicit",
+     "query": "a car driving in reverse",
+     "wall_s": 37.72,
+     "timings_ms": {
+      "plan": 6331.1,
+      "encode": 449.4,
+      "retrieve": 112.2,
+      "fuse": 247.2,
+      "rerank": 30558.8,
+      "total": 37698.7
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q018",
+     "kind": "implicit",
+     "query": "a car backing out of its space",
+     "wall_s": 31.62,
+     "timings_ms": {
+      "plan": 4479.8,
+      "encode": 509.9,
+      "retrieve": 98.5,
+      "fuse": 245.0,
+      "rerank": 26267.2,
+      "total": 31600.4
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.16666666666666666,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q019",
+     "kind": "explicit",
+     "query": "a parked car starts to move",
+     "wall_s": 33.61,
+     "timings_ms": {
+      "plan": 5202.7,
+      "encode": 475.2,
+      "retrieve": 126.7,
+      "fuse": 262.4,
+      "rerank": 27523.9,
+      "total": 33590.9
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q020",
+     "kind": "implicit",
+     "query": "a stationary car pulls away",
+     "wall_s": 31.42,
+     "timings_ms": {
+      "plan": 6060.5,
+      "encode": 583.2,
+      "retrieve": 174.7,
+      "fuse": 284.6,
+      "rerank": 24297.3,
+      "total": 31400.3
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q021",
+     "kind": "explicit",
+     "query": "a moving car comes to a stop",
+     "wall_s": 110.8,
+     "timings_ms": {
+      "plan": 6497.5,
+      "encode": 908.5,
+      "retrieve": 117.4,
+      "fuse": 407.7,
+      "rerank": 102823.3,
+      "total": 110754.4
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy",
+      "reasoning rerank skipped (TimeoutError); showing fused order"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q022",
+     "kind": "explicit",
+     "query": "a car turning left",
+     "wall_s": 42.9,
+     "timings_ms": {
+      "plan": 14883.8,
+      "encode": 420.4,
+      "retrieve": 201.8,
+      "fuse": 275.2,
+      "rerank": 27103.1,
+      "total": 42884.3
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.125,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q023",
+     "kind": "explicit",
+     "query": "a car turning right",
+     "wall_s": 38.36,
+     "timings_ms": {
+      "plan": 9128.8,
+      "encode": 173.7,
+      "retrieve": 91.2,
+      "fuse": 275.3,
+      "rerank": 28681.1,
+      "total": 38350.1
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q024",
+     "kind": "explicit",
+     "query": "a car making a u-turn",
+     "wall_s": 38.91,
+     "timings_ms": {
+      "plan": 6331.0,
+      "encode": 152.0,
+      "retrieve": 57.8,
+      "fuse": 254.7,
+      "rerank": 32109.9,
+      "total": 38905.4
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q025",
+     "kind": "implicit",
+     "query": "a car swings round to face the other way",
+     "wall_s": 31.22,
+     "timings_ms": {
+      "plan": 6883.7,
+      "encode": 156.0,
+      "retrieve": 55.8,
+      "fuse": 283.7,
+      "rerank": 23835.4,
+      "total": 31214.6
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q026",
+     "kind": "explicit",
+     "query": "a person walks into a building through a door",
+     "wall_s": 15.27,
+     "timings_ms": {
+      "plan": 2510.8,
+      "encode": 188.1,
+      "retrieve": 40.1,
+      "fuse": 214.2,
+      "rerank": 12316.4,
+      "total": 15269.6
+     },
+     "notes": [
+      "17 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q027",
+     "kind": "implicit",
+     "query": "a person goes through a doorway into a house",
+     "wall_s": 13.87,
+     "timings_ms": {
+      "plan": 2913.2,
+      "encode": 137.1,
+      "retrieve": 40.4,
+      "fuse": 230.1,
+      "rerank": 10541.6,
+      "total": 13862.4
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q028",
+     "kind": "explicit",
+     "query": "a person walks out of a building through a door",
+     "wall_s": 17.33,
+     "timings_ms": {
+      "plan": 2688.0,
+      "encode": 175.1,
+      "retrieve": 50.0,
+      "fuse": 543.0,
+      "rerank": 13869.9,
+      "total": 17326.0
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q029",
+     "kind": "explicit",
+     "query": "a person opens the door of a building",
+     "wall_s": 12.37,
+     "timings_ms": {
+      "plan": 3107.6,
+      "encode": 180.3,
+      "retrieve": 47.6,
+      "fuse": 243.1,
+      "rerank": 8788.6,
+      "total": 12367.2
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q030",
+     "kind": "explicit",
+     "query": "two people standing and talking to each other",
+     "wall_s": 16.09,
+     "timings_ms": {
+      "plan": 2747.8,
+      "encode": 513.2,
+      "retrieve": 62.6,
+      "fuse": 581.3,
+      "rerank": 12183.6,
+      "total": 16088.5
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.13055555555555554,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q031",
+     "kind": "implicit",
+     "query": "a pair of pedestrians chatting",
+     "wall_s": 11.1,
+     "timings_ms": {
+      "plan": 2560.9,
+      "encode": 179.6,
+      "retrieve": 53.1,
+      "fuse": 213.6,
+      "rerank": 8089.1,
+      "total": 11096.3
+     },
+     "notes": [
+      "17 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q032",
+     "kind": "explicit",
+     "query": "two people hugging",
+     "wall_s": 19.74,
+     "timings_ms": {
+      "plan": 2973.7,
+      "encode": 152.5,
+      "retrieve": 49.3,
+      "fuse": 225.3,
+      "rerank": 16323.2,
+      "total": 19724.0
+     },
+     "notes": [
+      "12 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q033",
+     "kind": "implicit",
+     "query": "friends greeting each other with a hug",
+     "wall_s": 19.85,
+     "timings_ms": {
+      "plan": 2746.4,
+      "encode": 152.1,
+      "retrieve": 49.1,
+      "fuse": 229.7,
+      "rerank": 16671.7,
+      "total": 19849.0
+     },
+     "notes": [
+      "12 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q034",
+     "kind": "explicit",
+     "query": "two people shaking hands",
+     "wall_s": 36.96,
+     "timings_ms": {
+      "plan": 25002.1,
+      "encode": 98.3,
+      "retrieve": 28.5,
+      "fuse": 241.2,
+      "rerank": 11586.7,
+      "total": 36956.8
+     },
+     "notes": [
+      "query decomposition skipped (TimeoutError); used keywords",
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q035",
+     "kind": "implicit",
+     "query": "two men greeting with a handshake",
+     "wall_s": 17.31,
+     "timings_ms": {
+      "plan": 2370.9,
+      "encode": 184.9,
+      "retrieve": 45.6,
+      "fuse": 245.9,
+      "rerank": 14450.5,
+      "total": 17297.8
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q036",
+     "kind": "explicit",
+     "query": "one person hands an object to another person",
+     "wall_s": 16.76,
+     "timings_ms": {
+      "plan": 3501.5,
+      "encode": 224.6,
+      "retrieve": 83.7,
+      "fuse": 219.0,
+      "rerank": 12725.2,
+      "total": 16754.0
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q037",
+     "kind": "implicit",
+     "query": "a man passes a parcel to someone",
+     "wall_s": 15.12,
+     "timings_ms": {
+      "plan": 3198.1,
+      "encode": 171.1,
+      "retrieve": 49.1,
+      "fuse": 233.3,
+      "rerank": 11465.1,
+      "total": 15116.7
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q038",
+     "kind": "explicit",
+     "query": "a person buying something at a counter",
+     "wall_s": 15.79,
+     "timings_ms": {
+      "plan": 2438.6,
+      "encode": 141.2,
+      "retrieve": 48.2,
+      "fuse": 239.5,
+      "rerank": 12915.4,
+      "total": 15782.9
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q039",
+     "kind": "implicit",
+     "query": "a customer paying at a till",
+     "wall_s": 22.3,
+     "timings_ms": {
+      "plan": 3535.8,
+      "encode": 213.2,
+      "retrieve": 61.8,
+      "fuse": 252.2,
+      "rerank": 18217.6,
+      "total": 22280.6
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q040",
+     "kind": "explicit",
+     "query": "a person picks something up from the ground",
+     "wall_s": 20.12,
+     "timings_ms": {
+      "plan": 2792.0,
+      "encode": 384.7,
+      "retrieve": 82.9,
+      "fuse": 272.9,
+      "rerank": 16569.0,
+      "total": 20101.5
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q041",
+     "kind": "implicit",
+     "query": "someone bends down to grab an item off the floor",
+     "wall_s": 20.27,
+     "timings_ms": {
+      "plan": 3317.7,
+      "encode": 371.5,
+      "retrieve": 93.6,
+      "fuse": 249.7,
+      "rerank": 16223.3,
+      "total": 20255.8
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q042",
+     "kind": "explicit",
+     "query": "a person puts an object down",
+     "wall_s": 17.06,
+     "timings_ms": {
+      "plan": 2917.1,
+      "encode": 425.8,
+      "retrieve": 118.6,
+      "fuse": 259.5,
+      "rerank": 13325.0,
+      "total": 17046.0
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q043",
+     "kind": "implicit",
+     "query": "a person lowers a box onto the pavement",
+     "wall_s": 66.16,
+     "timings_ms": {
+      "plan": 2790.8,
+      "encode": 524.1,
+      "retrieve": 145.0,
+      "fuse": 342.1,
+      "rerank": 62344.1,
+      "total": 66146.1
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q044",
+     "kind": "explicit",
+     "query": "a person carrying a large heavy object",
+     "wall_s": 24.96,
+     "timings_ms": {
+      "plan": 11634.2,
+      "encode": 336.1,
+      "retrieve": 81.1,
+      "fuse": 226.9,
+      "rerank": 12678.1,
+      "total": 24956.4
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q045",
+     "kind": "implicit",
+     "query": "someone lugging a large load",
+     "wall_s": 18.38,
+     "timings_ms": {
+      "plan": 3318.8,
+      "encode": 177.6,
+      "retrieve": 54.4,
+      "fuse": 232.8,
+      "rerank": 14587.3,
+      "total": 18370.9
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.037037037037037035,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q046",
+     "kind": "explicit",
+     "query": "a person leaves a bag on the ground and walks away",
+     "wall_s": 22.84,
+     "timings_ms": {
+      "plan": 2942.3,
+      "encode": 171.3,
+      "retrieve": 57.0,
+      "fuse": 517.5,
+      "rerank": 19139.9,
+      "total": 22828.0
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q047",
+     "kind": "implicit",
+     "query": "a rucksack is left unattended and its owner leaves",
+     "wall_s": 15.06,
+     "timings_ms": {
+      "plan": 3450.5,
+      "encode": 187.1,
+      "retrieve": 45.2,
+      "fuse": 235.9,
+      "rerank": 11139.4,
+      "total": 15058.1
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.1,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q048",
+     "kind": "explicit",
+     "query": "someone steals an item",
+     "wall_s": 20.2,
+     "timings_ms": {
+      "plan": 4767.2,
+      "encode": 159.8,
+      "retrieve": 67.7,
+      "fuse": 214.1,
+      "rerank": 14983.9,
+      "total": 20192.7
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q049",
+     "kind": "implicit",
+     "query": "a thief taking a bag",
+     "wall_s": 20.87,
+     "timings_ms": {
+      "plan": 3166.4,
+      "encode": 172.4,
+      "retrieve": 40.6,
+      "fuse": 237.4,
+      "rerank": 17248.3,
+      "total": 20865.1
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q050",
+     "kind": "explicit",
+     "query": "a person sits down on a chair or bench",
+     "wall_s": 20.29,
+     "timings_ms": {
+      "plan": 3638.9,
+      "encode": 181.5,
+      "retrieve": 42.7,
+      "fuse": 252.6,
+      "rerank": 16163.6,
+      "total": 20279.3
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.14444444444444443,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    }
+   ],
+   "summary": {
+    "n": 50,
+    "errors": 0,
+    "overall": {
+     "R@1": 0.04,
+     "R@5": 0.16,
+     "R@10": 0.24,
+     "AP@10": 0.052,
+     "tIoU@0.3": 0.02,
+     "tIoU@0.5": 0.0
+    },
+    "explicit": {
+     "n": 30,
+     "R@1": 0.033,
+     "R@5": 0.2,
+     "R@10": 0.233,
+     "AP@10": 0.041,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    "implicit": {
+     "n": 20,
+     "R@1": 0.05,
+     "R@5": 0.1,
+     "R@10": 0.25,
+     "AP@10": 0.067,
+     "tIoU@0.3": 0.05,
+     "tIoU@0.5": 0.0
+    },
+    "wall_s_median": 31.42,
+    "latency": {
+     "encode": {
+      "median_ms": 189.6,
+      "p95_ms": 524.1,
+      "n": 50
+     },
+     "fuse": {
+      "median_ms": 246.6,
+      "p95_ms": 517.5,
+      "n": 50
+     },
+     "plan": {
+      "median_ms": 5149.1,
+      "p95_ms": 11634.2,
+      "n": 50
+     },
+     "rerank": {
+      "median_ms": 22413.2,
+      "p95_ms": 34219.4,
+      "n": 50
+     },
+     "retrieve": {
+      "median_ms": 68.4,
+      "p95_ms": 174.7,
+      "n": 50
+     },
+     "total": {
+      "median_ms": 31307.4,
+      "p95_ms": 43538.7,
+      "n": 50
+     }
+    }
+   }
+  },
+  "+jit": {
+   "config": "+jit",
+   "rows": [
+    {
+     "id": "q001",
+     "kind": "explicit",
+     "query": "a person gets into a car",
+     "wall_s": 51.11,
+     "timings_ms": {
+      "plan": 3014.0,
+      "encode": 176.0,
+      "retrieve": 56.3,
+      "fuse": 238.5,
+      "rerank": 47624.2,
+      "total": 51109.0
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q002",
+     "kind": "implicit",
+     "query": "someone climbs into the driver's seat",
+     "wall_s": 53.04,
+     "timings_ms": {
+      "plan": 3120.0,
+      "encode": 345.9,
+      "retrieve": 39.6,
+      "fuse": 240.8,
+      "rerank": 49275.6,
+      "total": 53021.9
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q003",
+     "kind": "explicit",
+     "query": "a person gets out of a car",
+     "wall_s": 48.44,
+     "timings_ms": {
+      "plan": 2819.3,
+      "encode": 389.1,
+      "retrieve": 68.9,
+      "fuse": 279.6,
+      "rerank": 44878.6,
+      "total": 48435.5
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q004",
+     "kind": "implicit",
+     "query": "the driver steps out onto the road",
+     "wall_s": 41.04,
+     "timings_ms": {
+      "plan": 3035.6,
+      "encode": 346.9,
+      "retrieve": 54.1,
+      "fuse": 232.0,
+      "rerank": 37352.1,
+      "total": 41020.7
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 1.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 1.0,
+     "tIoU@0.3": 1.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q005",
+     "kind": "explicit",
+     "query": "a person opens a car door",
+     "wall_s": 48.91,
+     "timings_ms": {
+      "plan": 2568.0,
+      "encode": 348.7,
+      "retrieve": 51.8,
+      "fuse": 230.9,
+      "rerank": 45695.7,
+      "total": 48895.1
+     },
+     "notes": [
+      "16 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q006",
+     "kind": "explicit",
+     "query": "a person closes a car door",
+     "wall_s": 47.07,
+     "timings_ms": {
+      "plan": 2592.5,
+      "encode": 360.0,
+      "retrieve": 64.1,
+      "fuse": 229.9,
+      "rerank": 43820.7,
+      "total": 47067.2
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.1111111111111111,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q007",
+     "kind": "explicit",
+     "query": "someone opens the trunk of a car",
+     "wall_s": 51.67,
+     "timings_ms": {
+      "plan": 3413.8,
+      "encode": 360.8,
+      "retrieve": 75.6,
+      "fuse": 244.7,
+      "rerank": 47567.1,
+      "total": 51662.0
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q008",
+     "kind": "implicit",
+     "query": "the boot lid of a car swings up",
+     "wall_s": 50.16,
+     "timings_ms": {
+      "plan": 3672.8,
+      "encode": 360.4,
+      "retrieve": 56.3,
+      "fuse": 235.2,
+      "rerank": 45823.2,
+      "total": 50147.9
+     },
+     "notes": [
+      "13 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q009",
+     "kind": "explicit",
+     "query": "someone closes the trunk of a car",
+     "wall_s": 48.18,
+     "timings_ms": {
+      "plan": 3373.3,
+      "encode": 362.0,
+      "retrieve": 41.0,
+      "fuse": 231.6,
+      "rerank": 44155.2,
+      "total": 48163.1
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 1.0,
+     "R@10": 1.0,
+     "AP@10": 0.2222222222222222,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q010",
+     "kind": "implicit",
+     "query": "someone slams the boot shut",
+     "wall_s": 49.98,
+     "timings_ms": {
+      "plan": 3200.6,
+      "encode": 367.3,
+      "retrieve": 65.1,
+      "fuse": 231.1,
+      "rerank": 46111.0,
+      "total": 49975.1
+     },
+     "notes": [
+      "14 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 1.0,
+     "AP@10": 0.07407407407407407,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q011",
+     "kind": "explicit",
+     "query": "someone loading bags or boxes into a vehicle",
+     "wall_s": 48.47,
+     "timings_ms": {
+      "plan": 3538.3,
+      "encode": 352.4,
+      "retrieve": 69.4,
+      "fuse": 229.2,
+      "rerank": 44275.7,
+      "total": 48465.0
+     },
+     "notes": [
+      "12 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    {
+     "id": "q012",
+     "kind": "implicit",
+     "query": "someone putting shopping into the back of a car",
+     "wall_s": 49.76,
+     "timings_ms": {
+      "plan": 2672.0,
+      "encode": 340.7,
+      "retrieve": 59.8,
+      "fuse": 230.7,
+      "rerank": 46448.4,
+      "total": 49751.6
+     },
+     "notes": [
+      "15 older matches hidden: the recording has been removed by the retention policy"
+     ],
+     "error": null,
+     "R@1": 0.0,
+     "R@5": 0.0,
+     "R@10": 0.0,
+     "AP@10": 0.0,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    }
+   ],
+   "summary": {
+    "n": 12,
+    "errors": 0,
+    "overall": {
+     "R@1": 0.083,
+     "R@5": 0.25,
+     "R@10": 0.333,
+     "AP@10": 0.117,
+     "tIoU@0.3": 0.083,
+     "tIoU@0.5": 0.0
+    },
+    "explicit": {
+     "n": 7,
+     "R@1": 0.0,
+     "R@5": 0.286,
+     "R@10": 0.286,
+     "AP@10": 0.048,
+     "tIoU@0.3": 0.0,
+     "tIoU@0.5": 0.0
+    },
+    "implicit": {
+     "n": 5,
+     "R@1": 0.2,
+     "R@5": 0.2,
+     "R@10": 0.4,
+     "AP@10": 0.215,
+     "tIoU@0.3": 0.2,
+     "tIoU@0.5": 0.0
+    },
+    "wall_s_median": 49.76,
+    "latency": {
+     "encode": {
+      "median_ms": 356.2,
+      "p95_ms": 389.1,
+      "n": 12
+     },
+     "fuse": {
+      "median_ms": 231.8,
+      "p95_ms": 279.6,
+      "n": 12
+     },
+     "plan": {
+      "median_ms": 3077.8,
+      "p95_ms": 3672.8,
+      "n": 12
+     },
+     "rerank": {
+      "median_ms": 45759.4,
+      "p95_ms": 49275.6,
+      "n": 12
+     },
+     "retrieve": {
+      "median_ms": 58.0,
+      "p95_ms": 75.6,
+      "n": 12
+     },
+     "total": {
+      "median_ms": 49323.3,
+      "p95_ms": 53021.9,
+      "n": 12
+     }
+    }
+   }
+  }
+ },
+ "same_queries": {
+  "+rerank": {
+   "n": 12,
+   "R@1": 0.083,
+   "R@5": 0.25,
+   "R@10": 0.333,
+   "AP@10": 0.122,
+   "tIoU@0.3": 0.083,
+   "tIoU@0.5": 0.0
+  },
+  "+jit": {
+   "n": 12,
+   "R@1": 0.083,
+   "R@5": 0.25,
+   "R@10": 0.333,
+   "AP@10": 0.117,
+   "tIoU@0.3": 0.083,
+   "tIoU@0.5": 0.0
+  }
+ }
+}

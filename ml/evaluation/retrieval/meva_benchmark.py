@@ -216,6 +216,13 @@ def ts(value: str) -> float:
 async def fetch_recording(
     camera: str,
 ) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
+    """The last recording of `camera`: its segments, and when each of its tracks began and ended.
+
+    Tracks come from `vision.track_segments`, which has a row per track *and* segment, not from
+    `vision.tracks`: that table is keyed by track id alone, and before 2026-10-27 a perception run
+    whose checkpoint had expired counted from 0 again, so a second recording of a camera kept
+    almost none of its tracks there (the rows of the first recording won). A segment id carries its
+    time, so the per-segment rows of one recording are always whole."""
     from sqlalchemy import text
     from vms_common.config import DatabaseSettings
     from vms_db.session import create_engine
@@ -232,18 +239,27 @@ async def fetch_recording(
                     {"c": camera},
                 )
             ).all()
+            spans = [(a.timestamp(), b.timestamp()) for a, b in segs]
+            if not spans:
+                return [], []
+            spans, _ = latest_recording(spans, [])
+            lo, hi = (
+                datetime.fromtimestamp(spans[0][0], UTC),
+                datetime.fromtimestamp(spans[-1][1], UTC),
+            )
             trk = (
                 await c.execute(
-                    text("select first_ts, last_ts from vision.tracks where camera_id = :c"),
-                    {"c": camera},
+                    text(
+                        "select min(first_ts), max(last_ts) from vision.track_segments "
+                        "where camera_id = :c and first_ts >= :lo and first_ts <= :hi "
+                        "group by track_id"
+                    ),
+                    {"c": camera, "lo": lo, "hi": hi},
                 )
             ).all()
     finally:
         await engine.dispose()
-    return (
-        [(a.timestamp(), b.timestamp()) for a, b in segs],
-        [(a.timestamp(), b.timestamp()) for a, b in trk],
-    )
+    return spans, [(a.timestamp(), b.timestamp()) for a, b in trk]
 
 
 async def run_mode(
