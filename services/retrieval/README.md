@@ -66,7 +66,11 @@ a result whose keyframe no longer exists is dropped and counted in `notes`.
   cached).
 - **JIT picture checks** (`jit: true`, reason mode): the rerank's yes/no questions about what the
   records cannot tell go to `jit_vqa` on the result's keyframe; answers are cached per
-  `(segment, question)` in `retrieval.jit_cache` and trigger a rescoring pass.
+  `(segment, question)` in `retrieval.jit_cache` and trigger a rescoring pass. The time budget is
+  `VMS_RETRIEVAL_JIT_BUDGET_S` (default 8 s, the design's; the demo launcher sets 150 s because a
+  text-to-vision model swap alone is ~20 s on the 4 GB GPU). A "yes" is also written to the
+  `knowledge` index (`doc_type: jit_answer`) so a later search finds the footage without asking the
+  model again; a "no" is not (it would be found by the very queries it rules out).
 - **Metrics** at `/metrics` (`vms_search_stage_seconds{stage}`, `vms_search_requests_total`,
   `vms_assistant_turns_total`).
 
@@ -75,6 +79,7 @@ Measured on the build machine (`ml/evaluation/results/p7-latency.md`): fast sear
 
 ## Not built
 
-`candidate.v1` hand-over to a separate JIT worker (JIT runs in-process, ADR-015), the retrieval evaluation harness against labelled queries
-(`P4-J6`: needs human-labelled ground truth), object masks on the GPU in perception (they run on CPU
-here), and tests of the assistant against recorded `FakeGateway` conversations.
+`candidate.v1` hand-over to a separate JIT worker (JIT runs in-process, ADR-015) and object masks on
+the GPU in perception (they run on CPU in this service, ADR-017). The retrieval evaluation is
+`ml/evaluation/retrieval` (`run_ablation.py`); fusion keeps `VMS_RETRIEVAL_CANDIDATE_POOL` (30)
+windows before the rerank reads the best 10.

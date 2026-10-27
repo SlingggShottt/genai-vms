@@ -25,12 +25,20 @@ job ─▶ events + group ─▶ keyframes from the twins of the window (±15 s)
    which labels each frame with one of baseline / precursor / escalation / action / aftermath;
    `domain/timeline.py` lifts any backwards label, puts boundaries halfway between frames of
    different phases, and rejects an unusable labelling. Then the timeline comes from the
-   detector's own timing and `fallback_used` is set. Today `phase_tg` is the **zero-shot** base
-   model — the fine-tuned adapters (P5-D2/P5-J2) are not trained, so expect the fallback often.
+   detector's own timing and `fallback_used` is set. The default `phase_tg` is the **zero-shot** base
+   model. A TG adapter (`tg/v1`) is trained and can be served through `hf_local` (see the comment in
+   `config/models.yaml` for the entry, the frame size it needs and the fallback chain adapter →
+   base → cloud model), but it did not beat the detector's own timing on judged labels
+   (`ml/evaluation/results/tg-adapter-real.md`), so it is not the default. The incident's
+   provenance says which link answered: `tg` is `adapter:tg/v1:hf_local/…`, `zero-shot:ollama/…`
+   (with `(after N fallbacks)` when an earlier model failed) or `rules`. The PhaVR adapter is not
+   trained: evidence is read by the zero-shot base.
 3. **Evidence** (`steps/readings.py`). For each phase × camera (≤ 2 cameras) up to two frames of
    that phase go to `phase_vr` with the event type's questions from `config/vqa_bank.yaml`; the
    caption and the answers (matched to the allowed vocabulary, else dropped) become `evidence.v1`
-   with stable ids, and the cited frames are copied to `vms-evidence`.
+   with stable ids, and the cited frames are copied to `vms-evidence`. A stage × camera with no
+   frame within 4 s of it is skipped, not invented. `provenance.timings` lists every model-driven
+   step with its seconds, source and frames, and how many views were skipped.
 4. **Report** (`steps/synthesis.py`). Two schema-validated calls (stage summaries; causal chain,
    factors, actions) with citation checks and ≤ 2 retries that quote the problems back to the
    model. A claim that still cites nothing valid is **dropped**, never given a borrowed citation,

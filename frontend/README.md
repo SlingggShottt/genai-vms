@@ -210,3 +210,15 @@ Phase 2 (both tracks) is now fully implemented.
   fallback for capturing a frame (WebRTC was used), and that the events service picks a new zone up
   (it reads `/internal/v1/zones`; nothing here ran it). Zones can only be drawn while a camera is
   streaming, because the api has no snapshot endpoint.
+
+- **Find similar, timeline links, search in range (2026-10-26).** `features/search/components/
+  FindSimilarDialog.jsx` lets an operator draw a box over a frame and search for what looks like it
+  (`POST /search/image/crop`; the frame is named as an event keyframe, a search result, or a camera
+  and moment, never as a storage address). It is offered on search result cards, on each keyframe of
+  an event, and on the playback page ("Find similar here", which fetches the stored frame nearest the
+  playhead). The box maths is `features/search/crop.js`. Drawing is a mouse gesture; *Use the whole
+  frame* is the keyboard route. The timeline page outlines events a correlation group links, draws
+  each group on a Linked row, and a selected period offers *Search in range*, which opens the search
+  page with that camera and period as filters (`features/search/lib.js: periodFromParams`).
+  Component-tested in jsdom; **not yet clicked through in a real browser** (needs fresh footage:
+  `make demo-refresh`).
