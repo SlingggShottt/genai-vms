@@ -1,0 +1,132 @@
+<div class="cover">
+  <h1>GenAI-VMS</h1>
+  <div class="sub">The whole project, explained from zero.<br>A study guide and presentation companion.</div>
+  <div class="meta">
+    GenAI-Powered Video Management System with Multimodal Search,<br>Event Reasoning and Automated Incident Summarization<br><br>
+    CCVR Centre of Excellence Internship &middot; RV College of Engineering, Bengaluru<br>
+    Department of MCA &middot; Guide: Prof. Chandrani Chakravorty<br><br>
+    Prepared for Divyansh &middot; 1 November 2026
+  </div>
+</div>
+
+<h1 class="first">How to use this guide</h1>
+<p>You said you know nothing about this project. This guide assumes exactly that. It starts with the problem in everyday words, then follows <b>one video clip</b> through the whole system, then opens each part of the machine one at a time. Every part has the same four things: a <b>plain-English idea</b>, an <b>analogy</b>, a <b>diagram</b>, and a box saying <b>what to say when you present</b>.</p>
+
+<div class="key"><b class="t">The one-minute version (memorise this first)</b>
+Cameras record video all day, and nobody can watch it all. <b>GenAI-VMS</b> watches it for you. It cuts each camera's video into 10-second pieces, writes a small structured "report card" for every piece (<i>who and what is in the scene, where, doing what</i>), notices suspicious things with simple rules, asks a vision AI model "is that really happening?", links the same event across cameras, and then uses language AI to <b>search</b> the footage in plain words, <b>explain</b> incidents in phases with a written report that cites its evidence, and <b>answer questions</b> in a chat. Everything runs on a laptop with a 4 GB graphics card, using small models, and every AI answer says which model gave it and why.</div>
+
+<h2>Reading order</h2>
+<table>
+<tr><th>If you have&hellip;</th><th>Read</th></tr>
+<tr><td>30 minutes</td><td>Chapters 1, 2, 3 and 12 (the demo script), then the Q&amp;A in chapter 13.</td></tr>
+<tr><td>2 hours</td><td>Everything except the optional boxes marked "go deeper".</td></tr>
+<tr><td>The night before</td><td>Chapter 9 (results and honesty), chapter 11 (the 5-minute and 15-minute talks), chapter 13 (Q&amp;A), and the cheat sheet at the very end.</td></tr>
+</table>
+
+<h2>How the boxes work</h2>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>An everyday picture that makes the idea stick.</div>
+<div class="say"><b class="t">What to say</b>A sentence you can use almost word for word when presenting.</div>
+<div class="honest"><b class="t">Be honest about&hellip;</b>A limit or an unfinished part. Examiners respect it when you say it first.</div>
+<div class="tryit"><b class="t">Try it</b>Something you can click or run to see the idea with your own eyes.</div>
+
+<div class="honest"><b class="t">Status in one honest paragraph</b>The system works end to end on this laptop: video in, understanding, alerts, search, reports, assistant, timeline, PDF. About three quarters of the planned backlog is done and tested (thousands of automated tests). The headline research claim "our fine-tuned model beats the untrained one" is <b>not proven</b>; we measured it honestly and it only helped on labels that came from a rule. The system has not been deployed to a real cloud server or Kubernetes cluster, no user study was held, and one benchmark run is unfinished. Chapter 10 lists everything. Knowing this list is part of presenting well.</div>
+
+<h1 class="first">Contents</h1>
+<ol class="toc">
+<li><b>The problem and the big idea</b> &mdash; why this project exists</li>
+<li><b>The system on one page</b> &mdash; the map you will keep coming back to</li>
+<li><b>One clip's journey</b> &mdash; the story that ties everything together</li>
+<li><b>The pipeline, station by station</b> &mdash; cameras to alerts</li>
+<li><b>The GenAI machinery</b> &mdash; gateway, search, reasoning, assistant, reports</li>
+<li><b>The AI ideas you need</b> &mdash; a plain-English primer</li>
+<li><b>What the user sees, and who may do what</b> &mdash; interface and security</li>
+<li><b>Running it, keeping it healthy</b> &mdash; deployment, monitoring, tests</li>
+<li><b>What we measured</b> &mdash; the real numbers</li>
+<li><b>What is not done, and what went wrong</b> &mdash; the honest chapter</li>
+<li><b>How to present it</b> &mdash; 1-minute, 5-minute and 15-minute plans</li>
+<li><b>The live demo, step by step</b></li>
+<li><b>Questions you will be asked</b> &mdash; with answers</li>
+<li><b>Glossary and cheat sheet</b></li>
+</ol>
+
+<h1>1. The problem and the big idea</h1>
+
+<h2>1.1 The problem</h2>
+<p>A <b>video management system (VMS)</b> is the software behind CCTV: it records cameras, shows them live, and lets you replay them. A campus or a shopping mall can have dozens of cameras recording 24 hours a day. That is thousands of hours of video, and almost all of it is boring. When something happens, a person has to scrub through hours of footage to find it.</p>
+<figure><!--FIG:problem--><figcaption>Figure 1.1 &mdash; The problem and what this project adds.</figcaption></figure>
+
+<div class="analogy"><b class="t">Think of it as&hellip;</b>A huge library where every book is a video tape and there is <b>no catalogue</b>. To find one scene you must open every tape. Our project hires a tireless librarian who watches every tape, writes a summary card for each, files the cards by meaning, and can also write you a short report on any incident &mdash; with footnotes pointing at the exact pages.</div>
+
+<h2>1.2 What we built, in three pillars</h2>
+<table>
+<tr><th>Pillar</th><th>The question it answers</th><th>The idea</th></tr>
+<tr><td><b>1. Multimodal search</b></td><td>"Show me a person in a red top near the service door."</td><td>Describe what you want in words (or with a picture). The system finds matching moments across all cameras, without you knowing the camera or the time.</td></tr>
+<tr><td><b>2. Event reasoning</b></td><td>"What actually happened, and how did it unfold?"</td><td>Detect events with rules, confirm them with a vision AI, link them across cameras, and break an incident into five phases (before, building up, the incident, after).</td></tr>
+<tr><td><b>3. Incident summarization</b></td><td>"Write it up for me."</td><td>An AI writes a structured incident report (and a PDF) in which every claim cites evidence. Plus a daily security report and a chat assistant.</td></tr>
+</table>
+
+<h2>1.3 Where the idea comes from (the research)</h2>
+<p>The project is based on three research papers, and you should be able to name them:</p>
+<ol>
+<li><b>De Silva et al., "LLMs for Video Surveillance Applications" (IEEE TENCON 2024)</b> &mdash; turn video into <i>text</i>, then a language model can search and summarise it.</li>
+<li><b>Zhen et al., "MP-PVIR" (2025)</b> &mdash; incident reasoning: split an incident into <i>phases</i>, describe each phase from each camera, then write the report with an AI, checking the format.</li>
+<li><b>Shen et al., "Reasoning Text-to-Video Retrieval via Digital Twins" (2025)</b> &mdash; search by building a structured "digital twin" of each frame, then using a language model to reason over candidates.</li>
+</ol>
+<div class="key"><b class="t">Our own contribution</b>Those papers each solve one pillar on short benchmark clips. We use <b>one shared representation &mdash; the digital twin &mdash; to feed all three pillars</b>, and we make it work on <b>continuous live streams</b> on small hardware, with a single operator-facing explanation per incident.</div>
+
+<h2>1.4 The constraints that shaped every decision</h2>
+<ul>
+<li><b>Hardware:</b> each of us has a laptop with a <b>4 GB graphics card</b> (RTX 3050). That is tiny for AI. So: small models (3 billion parameters), squeezed to 4 bits, and <b>one heavy model at a time</b> on the GPU.</li>
+<li><b>Money:</b> zero. Free tools only; cloud AI only through free tiers and only as an option.</li>
+<li><b>Privacy:</b> local-first. By default nothing leaves the laptop.</li>
+<li><b>Time:</b> a few weeks, two builders. So the work was split into two <b>tracks</b> (Divyansh and Jatin) that meet at strictly defined message formats ("contracts").</li>
+</ul>
+<div class="say"><b class="t">What to say</b>"Surveillance generates more video than anyone can watch. We built a system that turns that video into structured knowledge, so operators can search it in plain language, get alerts that an AI has double-checked, and get incident reports that cite their evidence &mdash; all running locally on a 4 GB GPU laptop."</div>
+
+<h1>2. The system on one page</h1>
+<p>This is the picture to keep in your head. Four floors, top to bottom: <b>get the video in</b>, <b>understand it</b>, <b>notice and check things</b>, <b>explain and answer</b> &mdash; and a window at the bottom through which the user looks.</p>
+<figure><!--FIG:big_picture--><figcaption>Figure 2.1 &mdash; The whole system. Arrows show what feeds what. Purple cylinders are places that hold data.</figcaption></figure>
+
+<h2>2.1 Everyday picture of each part</h2>
+<figure><!--FIG:analogy--><figcaption>Figure 2.2 &mdash; Each component and its everyday twin.</figcaption></figure>
+
+<h2>2.2 The five "planes" (how the parts are grouped)</h2>
+<table>
+<tr><th>Plane</th><th>Parts</th><th>Behaviour</th></tr>
+<tr><td><b>Media plane</b></td><td>MediaMTX, ingestion, MinIO</td><td>Runs all the time. <b>Never blocked by AI</b>: if every model dies, recording and playback continue.</td></tr>
+<tr><td><b>Perception plane</b></td><td>perception, indexer</td><td>Near real time. Uses the GPU for the detector.</td></tr>
+<tr><td><b>Event plane</b></td><td>events, correlation, alerts</td><td>Near real time. Small GPU use (the VLM gate).</td></tr>
+<tr><td><b>GenAI plane</b></td><td>reasoning, search, assistant, gateway, Ollama</td><td>On demand or queued. The big GPU consumer.</td></tr>
+<tr><td><b>Experience plane</b></td><td>API, React dashboard</td><td>What the operator touches.</td></tr>
+</table>
+
+<h2>2.3 Seven design principles (they explain almost every "why")</h2>
+<ol>
+<li><b>One representation, three pillars.</b> The digital twin feeds search, event reasoning and summaries. Nobody re-watches raw video unless pixels are truly needed.</li>
+<li><b>Cheap filter first, expensive reasoning second.</b> Rules before the vision AI; embeddings before the language-model rerank; correlation before phase reasoning.</li>
+<li><b>Metadata on Kafka, pixels in object storage.</b> Messages carry <i>links</i>, never video.</li>
+<li><b>Local-first, cloud-switchable.</b> Every AI call goes through one gateway chosen by task name and profile.</li>
+<li><b>Contract-first parallel work.</b> Divyansh and Jatin build against agreed message formats, not each other's unfinished code.</li>
+<li><b>Evidence or it didn't happen.</b> Every generated claim cites evidence ids.</li>
+<li><b>Degrade, don't die.</b> If a model is down, features fall back; recording never stops.</li>
+</ol>
+<div class="say"><b class="t">What to say</b>"If I remember one slogan: <i>cheap filter first, expensive reasoning second</i>. It is why a 4 GB laptop can run this."</div>
+
+<h1>3. One clip's journey</h1>
+<p>Abstract diagrams are hard to remember; a story is easy. Follow one 10-second piece of video from <b>camera cam03</b>, where a person lingers near a restricted door.</p>
+<figure><!--FIG:clip_journey--><figcaption>Figure 3.1 &mdash; Nine steps from camera to answer.</figcaption></figure>
+
+<h2>3.1 The same story as a timeline</h2>
+<table>
+<tr><th>When</th><th>What happens</th><th>Who does it</th><th>What is produced</th></tr>
+<tr><td>10:15:00</td><td>cam03 streams video</td><td>MediaMTX</td><td>a live stream everyone can watch</td></tr>
+<tr><td>10:15:10</td><td>The 10 s piece is closed and saved</td><td>ingestion</td><td>a <code>.ts</code> file in MinIO, 10 keyframes, a Kafka note</td></tr>
+<tr><td>10:15:12 +</td><td>Objects found and followed</td><td>perception</td><td>the digital twin (JSON)</td></tr>
+<tr><td>10:15:13 +</td><td>Facts and vectors filed</td><td>indexer</td><td>rows in Postgres, points in Qdrant</td></tr>
+<tr><td>10:16:15</td><td>Person has been in the zone for 60 s</td><td>events (rules)</td><td>a <i>loitering candidate</i></td></tr>
+<tr><td>+ a few seconds</td><td>"Is this real?"</td><td>VLM gate</td><td>verdict <b>yes</b> + caption, so a <i>verified event</i></td></tr>
+<tr><td>immediately</td><td>Operator sees a card</td><td>API + dashboard</td><td>an <b>open alert</b> pushed live</td></tr>
+<tr><td>when the group closes</td><td>Linked to events on cam02</td><td>correlation</td><td>a correlation group</td></tr>
+<tr><td>on demand</td><td>Operator clicks <b>Analyze</b></td><td>reasoning</td><td>a 5-phase incident report with citations and a PDF</td></tr>
+</table>
+<div class="say"><b class="t">What to say</b>"Let me follow one 10-second clip through the system..." &mdash; then use the nine steps. Telling it as a story beats listing components.</div>

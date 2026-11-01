@@ -1,0 +1,109 @@
+<h1>5. The GenAI machinery</h1>
+<p>Chapter 4 was the plumbing that produces structured facts. This chapter is where the <b>generative AI</b> comes in: one gateway that every model call passes through, and four features built on it.</p>
+
+<h2>5.1 The LLM gateway &mdash; one switchboard for every model</h2>
+<figure><!--FIG:gateway--><figcaption>Figure 5.1 &mdash; The gateway and the GPU lease.</figcaption></figure>
+<p>No service ever says "call model X". It says <b>"do task <code>event_verify</code>"</b>. The gateway looks the task up in <code>config/models.yaml</code>, finds the model for the active <b>profile</b>, and handles everything around the call.</p>
+<table>
+<tr><th>Profile</th><th>Meaning</th></tr>
+<tr><td><code>local</code></td><td>Everything on this machine through <b>Ollama</b>: vision tasks on <code>qwen2.5vl:3b</code>, text tasks on <code>qwen2.5:3b</code>. Default for development.</td></tr>
+<tr><td><code>hybrid</code></td><td>Vision stays local; text reasoning (query planning, reranking, reports, assistant, daily narrative) goes to cloud models (Gemini / Groq free tiers).</td></tr>
+<tr><td><code>cloud</code></td><td>Everything in the cloud (for a server with no GPU).</td></tr>
+</table>
+<p>The tasks are: <code>event_verify</code>, <code>jit_vqa</code>, <code>query_decompose</code>, <code>rerank</code>, <code>phase_tg</code>, <code>phase_vr</code>, <code>incident_synthesis</code>, <code>assistant</code>, <code>daily_narrative</code> (and an evaluation judge).</p>
+<h3>What the gateway does on every call</h3>
+<ol>
+<li><b>Cache check</b> (Redis): an identical question gets the stored answer. Only for tasks where that is safe.</li>
+<li><b>Wait for the GPU chair</b> (the lease, below).</li>
+<li><b>Call the model</b> with a timeout. If it fails, try the <b>next model in the fallback list</b>.</li>
+<li><b>Validate the answer shape.</b> We ask for JSON that must fit a Python schema (Pydantic). If it does not fit, the gateway shows the model its own mistakes and asks again (up to 2 more times).</li>
+<li><b>Record provenance:</b> which provider and model answered, how many tries, whether a fallback was used. Reports store this.</li>
+</ol>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>A switchboard operator. You ask for "the doctor" (a task); the operator knows which doctor is on duty today (the profile), dials them, and if nobody picks up, tries the next one. And there is <b>only one consulting room</b> (the GPU): one doctor at a time.</div>
+<h3>The GPU lease (ADR-007)</h3>
+<p>A 4 GB card cannot hold the text model and the vision model at once without thrashing. A <b>lease</b> in Redis says which model family currently holds the GPU. Calls of the same family share it; a call of a different family <b>waits its turn</b> (and goes first in line so it is not starved). The lease expires if the holder crashes. We recently added a safety net: even a <i>stuck</i> holder stops being renewed after 15 minutes. (We found that bug the hard way during a benchmark; see chapter 10.)</p>
+<div class="say"><b class="t">What to say</b>"Models are configuration, not code. Switching from local to cloud is one environment variable, and every answer records which model produced it."</div>
+
+<h2>5.2 Search &mdash; "find it in plain words"</h2>
+<figure><!--FIG:search--><figcaption>Figure 5.2 &mdash; The search pipeline: fast mode, reason mode, and JIT.</figcaption></figure>
+<h3>Walking through one query</h3>
+<p>Query: <i>"a person in a red top near the service door"</i></p>
+<ol>
+<li><b>Plan.</b> In fast mode a keyword plan is enough (category = person, colour = red, zone = service door, time words like "yesterday"). In reason mode a language model <b>decomposes</b> the sentence into entities, relations, and sub-questions; relative times are resolved with the current time and the site's timezone.</li>
+<li><b>Encode.</b> SigLIP 2 turns the text into a vector on the CPU (so the GPU stays free).</li>
+<li><b>Retrieve.</b> The vector is compared with picture vectors of <b>frames</b> and <b>tracks</b> in Qdrant, with hard filters (camera, time, object type); event captions are searched in Postgres; the <code>knowledge</code> index is searched by meaning and by words. Colour and zone <i>boost</i> a result rather than filter it (the colour naming is rough).</li>
+<li><b>Fuse.</b> <b>Reciprocal Rank Fusion</b> merges the ranked lists (figure 5.3); hits within 10 seconds on one camera become one <b>window</b>; the best 30 windows are kept.</li>
+<li><b>Rerank (reason mode).</b> For the top 10 windows the system builds a short text <b>excerpt of the digital twin</b> ("a person, red top, in service-door zone, seen 14 times, speed 0.02") and asks a language model, five windows per call, for a <b>score 0 to 1</b>, a one-sentence <b>reason</b>, and the sub-questions it <b>cannot answer from records</b>. Final score = 40% fused + 60% model score.</li>
+<li><b>JIT refinement (optional "Look closer").</b> If the reranker said "cannot tell whether the bag is blue", a <b>vision model looks at that keyframe</b> and answers yes/no/unsure. Answers are cached, fed back for rescoring, and a "yes" is also written into the knowledge index so a later search can find the footage without asking again.</li>
+</ol>
+<figure><!--FIG:rrf--><figcaption>Figure 5.3 &mdash; Reciprocal Rank Fusion with real arithmetic.</figcaption></figure>
+<h3>Other ways to search</h3>
+<ul>
+<li><b>Search by image:</b> upload a photo; it is embedded and matched against tracked objects.</li>
+<li><b>Find similar:</b> draw a box on any frame (a result, an event keyframe, or the paused playback frame). The server cuts that part out of the stored keyframe and searches with it. <span class="chip">built; browser check pending</span></li>
+<li><b>Masks:</b> for a result, SAM 2.1-tiny draws the outline of the matched object over the picture (computed once, cached).</li>
+</ul>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>Fast mode is a good librarian grabbing the books whose covers look right. Reason mode is the librarian then <b>reading the blurbs</b> of the ten best candidates and ranking them by how well they really fit. JIT is going back to <b>open the book at one page</b> to check a detail.</div>
+<div class="key"><b class="t">Numbers to know</b>Fast mode: about <b>0.22 s</b> median (0.25 s at the 95th percentile). Reason mode: about <b>15.5 s</b> on this laptop (almost all of it the rerank). Cold object masks: 1.3 s; cached: 9 ms.</div>
+<div class="honest"><b class="t">Be honest about&hellip;</b>Search separates <i>what is in the picture</i> (phone, laptop, bike, trunk) far better than <i>what is happening</i> (turning left, handing over an object). A single frame cannot show motion. And a clean 4-way ablation (embedding only, +filters, +rerank, +JIT) is built but the final clean run was not completed; use the earlier results in chapter 9.</div>
+
+<h2>5.3 Reasoning &mdash; phases, evidence and the incident report</h2>
+<figure><!--FIG:phases--><figcaption>Figure 5.4 &mdash; Five phases, read separately for each camera.</figcaption></figure>
+<figure><!--FIG:reasoning--><figcaption>Figure 5.5 &mdash; One reasoning job from trigger to stored report.</figcaption></figure>
+<figure><!--FIG:analyze_sequence--><figcaption>Figure 5.5b &mdash; What happens, in order, when an operator clicks Analyze (who talks to whom).</figcaption></figure>
+<h3>The steps in plain words</h3>
+<ol>
+<li><b>A job is queued</b> in a Postgres table (claimed with <code>FOR UPDATE SKIP LOCKED</code>, so two workers never take the same job; a worker that dies loses its lease and the job is claimed again).</li>
+<li><b>Phase location (TG = temporal grounding).</b> Five frames from the primary camera are shown to the vision model: "which of the five phases is each frame?" The answers become spans on a timeline; impossible answers (going backwards in time) are repaired or rejected, and then the detector's own timing is used instead.</li>
+<li><b>Evidence (PhaVR = phase-specific captioning and VQA).</b> For each phase and each camera, two frames and a few event-specific questions from a <b>question bank</b> (e.g. "is the area lit?") are shown; the answers are checked against the allowed vocabulary and become <b>evidence items with stable ids</b> such as <code>ev-cap-03</code>. The cited frames are copied to a separate bucket so they outlive the keyframe retention.</li>
+<li><b>Report.</b> Two schema-checked LLM calls write stage summaries, then the causal chain, factors and recommended actions. Every claim must cite evidence ids that exist; bad citations are quoted back to the model for a retry; a claim that still cites nothing is <b>dropped and counted</b>. A tolerance exists for near-misses like <code>[ev-cap-1]</code>.</li>
+<li><b>Store and announce.</b> The report goes into Postgres and a PDF into MinIO; a JSON copy is kept; browsers get a live "report ready" push. <b>Provenance</b> says which model located the phases ("adapter", "zero-shot" or "rules"), per-step timings, and how many views were skipped.</li>
+</ol>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>A junior analyst: first marks on a timeline "the trouble started here", then sits with each camera's footage for each stage and takes notes with photo references, then writes the report with <b>footnotes</b> to those notes. A supervisor (the checker) strikes out any sentence without a footnote.</div>
+<div class="key"><b class="t">The one-line principle</b><i>Evidence or it didn't happen.</i> That is how we handle AI "hallucination": the model is not allowed to assert something that it cannot point at.</div>
+<div class="honest"><b class="t">Be honest about&hellip;</b>The default phase locator is the <b>untrained</b> vision model, and the model that reads each phase is also untrained: the second fine-tuned adapter (PhaVR) was never trained because it needs caption annotations nobody had time to make. If any model fails, the system falls back to the detector's own timing, and says so in the report's provenance.</div>
+
+<h2>5.4 The assistant &mdash; ask in chat</h2>
+<figure><!--FIG:assistant--><figcaption>Figure 5.6 &mdash; How one question becomes a cited answer.</figcaption></figure>
+<p>Examples the assistant handles: "What happened today?", "How many people were on cam01 yesterday?", "List high-severity incidents", "Show me the daily security report for yesterday", "Find a white car near the gate". A small model computes dates badly, so questions with clear keywords are <b>routed</b> to the right tool without asking the model; the rest go to a <b>planner</b> that returns a JSON action (at most 4 lookups). The conversation keeps the last 12 messages and a rolling summary.</p>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>A receptionist with seven filing cabinets (the tools). You ask a question; the receptionist pulls the right folder, <b>reads you what is in it</b>, and adds only a short explanation. If the folder is empty, the receptionist says "I found nothing", never "I think it was probably...".</div>
+<div class="say"><b class="t">What to say</b>"The assistant never writes database queries. It can only call seven fixed, parameterised tools. And every answer is built from what those tools returned, with citation chips you can click."</div>
+
+<h2>5.5 Daily reports, the timeline and cases</h2>
+<ul>
+<li><b>Daily security report.</b> A fixed set of SQL queries produces the day's <b>facts</b> (counts by type, camera, hour; incidents; alert response times). An LLM writes a short narrative from those figures; a <b>post-check demands that every number in the text appears in the facts</b> (one retry, then a template text, and the report says which was used). It is generated automatically after 06:00 site time for the previous day, or on demand for up to 7 days, and exported as a PDF.</li>
+<li><b>Investigation timeline.</b> One lane per camera showing events and incident reports across a period; events linked across cameras are outlined and shown on a "Linked" row. Drag across a lane to pick a period, then zoom, open the recording, play several cameras <b>in sync from one playhead</b> (measured drift well under 300 ms), save to a case, or <b>search in that range</b>.</li>
+<li><b>Cases.</b> Bookmark events, incident reports, footage moments and searches into an investigation with notes.</li>
+</ul>
+
+<h1>6. The AI ideas you need</h1>
+<p>You do not have to be an AI expert. You need about a dozen ideas, each explained with a picture in your head.</p>
+<table>
+<tr><th>Idea</th><th>In one sentence</th><th>Everyday picture</th></tr>
+<tr><td><b>Object detection (YOLO)</b></td><td>A model that looks at a picture and draws boxes around things with labels ("person", "car", "backpack").</td><td>A spot-the-objects robot that circles things in a photo.</td></tr>
+<tr><td><b>Tracking (ByteTrack)</b></td><td>Gives the same object the same id in consecutive frames.</td><td>Putting a name tag on every person in a crowd and following the tags.</td></tr>
+<tr><td><b>Embedding</b></td><td>A list of numbers (a vector) that captures the <i>meaning</i> of a picture or sentence, so similar things get similar numbers.</td><td>GPS coordinates on a map of <i>meaning</i>: "red jacket" and "scarlet coat" are neighbours; "banana" is far away.</td></tr>
+<tr><td><b>Vector search</b></td><td>Find the stored vectors closest to the query vector.</td><td>"Who lives nearest to this point on the map?"</td></tr>
+<tr><td><b>SigLIP 2</b></td><td>A model that makes embeddings for <i>both</i> text and images <b>in the same space</b>, so a sentence can find a picture.</td><td>A translator that puts words and photos on the same map.</td></tr>
+<tr><td><b>Hybrid search + RRF</b></td><td>Combine search by meaning (dense) with search by exact words (BM25), then merge the rankings.</td><td>Asking two friends for recommendations and trusting the places both name.</td></tr>
+<tr><td><b>LLM / VLM</b></td><td>Large language model = reads and writes text. Vision-language model = also sees pictures.</td><td>A reader vs. a reader with eyes.</td></tr>
+<tr><td><b>Token &amp; context window</b></td><td>Models read in word-pieces (tokens). The context window is how many fit at once. In our setup one image costs about a thousand tokens.</td><td>The model's short-term memory.</td></tr>
+<tr><td><b>Quantization (4-bit)</b></td><td>Storing a model's numbers with fewer bits so it fits in memory.</td><td>Saving a photo as a smaller JPEG: a little quality lost, a lot of space saved.</td></tr>
+<tr><td><b>Zero-shot vs. fine-tuning</b></td><td>Zero-shot = ask a general model straight away. Fine-tuning = further train it on your examples.</td><td>Asking a bright stranger vs. training a new hire.</td></tr>
+<tr><td><b>LoRA / QLoRA</b></td><td>Fine-tune by training only a small add-on and leaving the big model frozen (Q = also squeezed to 4 bits).</td><td>Clipping sticky notes onto a textbook instead of rewriting it.</td></tr>
+<tr><td><b>Structured output</b></td><td>Make the model fill a form (JSON that fits a schema) and check it.</td><td>A tick-box form, not an essay.</td></tr>
+<tr><td><b>Hallucination &amp; grounding</b></td><td>Models sometimes state things that are not true. Grounding = tie every statement to evidence.</td><td>Footnotes. No footnote, no sentence.</td></tr>
+</table>
+<figure><!--FIG:lora--><figcaption>Figure 6.1 &mdash; LoRA in one picture, and what our experiment found.</figcaption></figure>
+
+<h2>6.1 How we score things (so you can read the results chapter)</h2>
+<table>
+<tr><th>Measure</th><th>Meaning</th><th>Picture</th></tr>
+<tr><td><b>mIoU</b> (phase accuracy)</td><td>For each phase, how much the predicted time span overlaps the true span (overlap divided by union), averaged. 1 = perfect, 0 = none.</td><td>Two highlighter marks on the same ruler: how much of the ink overlaps?</td></tr>
+<tr><td><b>Boundary error</b></td><td>How many seconds off the predicted phase change is.</td><td>How late the referee blew the whistle.</td></tr>
+<tr><td><b>hit@k / R@k</b></td><td>The share of queries for which a correct result appears in the top k.</td><td>"Did the right book show up on the first page of results?"</td></tr>
+<tr><td><b>mAP</b></td><td>Average precision: rewards putting <i>all</i> correct results high, not just one.</td><td>Not just finding a book, but putting all the right ones at the top.</td></tr>
+<tr><td><b>tIoU@t</b></td><td>Whether the top result's time span overlaps the true span by at least t.</td><td>A stricter "right place <i>and</i> right length".</td></tr>
+<tr><td><b>95% interval</b></td><td>A range that says how uncertain a number is, given so few samples. Overlapping intervals mean "cannot tell them apart".</td><td>Error bars. Small samples, wide bars.</td></tr>
+<tr><td><b>Paired comparison</b></td><td>Compare two methods <i>clip by clip</i> on the same clips; the clips differ more than the methods do.</td><td>Race both runners on the same track, not on different tracks.</td></tr>
+</table>

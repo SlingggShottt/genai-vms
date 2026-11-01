@@ -1,0 +1,195 @@
+<h1>11. How to present it</h1>
+
+<h2>11.1 The shape of a good talk</h2>
+<figure><!--FIG:demo_flow--><figcaption>Figure 11.1 &mdash; The story arc to follow in a talk and in the demo.</figcaption></figure>
+<ol>
+<li><b>Hook</b> (problem): one person, many screens, hours of video.</li>
+<li><b>Idea</b>: turn video into structured knowledge once; reuse it three ways.</li>
+<li><b>Show the machine</b>: the big-picture figure (figure 2.1) and <b>one clip's journey</b> (figure 3.1).</li>
+<li><b>Show it working</b>: the live demo.</li>
+<li><b>Show it is honest</b>: results with their limits.</li>
+<li><b>Close</b>: what you would do next.</li>
+</ol>
+
+<h2>11.2 The 1-minute pitch</h2>
+<div class="say"><b class="t">Say this</b>"Surveillance cameras record far more video than anyone can watch. Our system turns every ten-second clip into a structured report card &mdash; who and what is there, where, and doing what &mdash; and then uses that to do three things. First, you can <b>search the footage in plain words</b>. Second, it <b>detects events with simple rules, has a vision AI double-check them, and links the same event across cameras</b>. Third, it <b>writes an incident report in phases, where every sentence cites its evidence</b>, and you can chat with an assistant about it. It runs locally on a 4 GB GPU laptop, and we measured it honestly, including where it falls short."</div>
+
+<h2>11.3 The 5-minute talk (7 slides)</h2>
+<table>
+<tr><th>#</th><th>Slide</th><th>Say (about)</th><th>Time</th></tr>
+<tr><td>1</td><td><b>Problem</b> (figure 1.1)</td><td>Cameras produce hours of video nobody can search. A person scrubbing through footage is slow and misses things.</td><td>0:40</td></tr>
+<tr><td>2</td><td><b>Idea: the digital twin</b> (figure 4.3)</td><td>We convert each 10-second clip into a small structured JSON (objects, tracks, attributes, zones, vectors). One representation feeds search, events and reports.</td><td>0:45</td></tr>
+<tr><td>3</td><td><b>Architecture</b> (figure 2.1)</td><td>Four stages: ingest, understand, notice and check, explain. Kafka between services, heavy files in object storage, one gateway for every model, a GPU lease so a 4 GB card works.</td><td>1:00</td></tr>
+<tr><td>4</td><td><b>Cheap then expensive</b> (figures 4.5 and 5.2)</td><td>Rules first, vision AI second; embeddings first, language-model rerank second. That is why it runs on a laptop.</td><td>0:45</td></tr>
+<tr><td>5</td><td><b>Live demo</b> (chapter 12, short form)</td><td>Search fast vs reason; an alert; Analyze to an incident report with citations.</td><td>1:00</td></tr>
+<tr><td>6</td><td><b>Results, honestly</b> (figures 9.2 and 9.3)</td><td>Fast search 0.22 s; finds what is <i>in</i> the picture, weak on actions. Our fine-tuned model learned the format but not yet the understanding &mdash; we say so.</td><td>0:40</td></tr>
+<tr><td>7</td><td><b>Next steps</b></td><td>More human labels, train the second adapter, re-identification across cameras, a real deployment and user study.</td><td>0:10</td></tr>
+</table>
+
+<h2>11.4 The 15-minute talk</h2>
+<table>
+<tr><th>Min</th><th>Part</th><th>Content</th></tr>
+<tr><td>0&ndash;2</td><td>Problem and the three pillars</td><td>Chapter 1; the one-minute pitch.</td></tr>
+<tr><td>2&ndash;5</td><td>Architecture</td><td>Figure 2.1, then one clip's journey (figure 3.1). Mention Kafka, MinIO, Postgres, Qdrant, Redis in one sentence each using the analogies.</td></tr>
+<tr><td>5&ndash;7</td><td>Perception and events</td><td>Twin (figure 4.3); six rules; the VLM gate and the real example (30/30 loitering verified, 9/9 doorway intrusions rejected); correlation.</td></tr>
+<tr><td>7&ndash;9</td><td>GenAI: search and reasoning</td><td>Figures 5.2 and 5.5; evidence-or-it-didn't-happen; provenance.</td></tr>
+<tr><td>9&ndash;12</td><td>Live demo</td><td>Chapter 12 in full.</td></tr>
+<tr><td>12&ndash;14</td><td>Results and limits</td><td>Latency; retrieval chart; the adapter experiment and its honest reading; the bugs the benchmarks found.</td></tr>
+<tr><td>14&ndash;15</td><td>Next steps and questions</td><td>Chapter 10's gaps framed as the roadmap.</td></tr>
+</table>
+
+<h2>11.5 Presentation habits that help</h2>
+<ul>
+<li><b>Tell the story of one clip</b> rather than listing components.</li>
+<li><b>Know five numbers</b> by heart: <b>10 s</b> segments; <b>4 GB</b> GPU; <b>0.22 s</b> fast search; <b>~15 s</b> reason search; <b>966 MB</b> perception memory.</li>
+<li><b>Name a limit before they find it.</b> "One thing I want to be clear about..."</li>
+<li>When you do not know, say <i>"I measured X; I did not measure Y"</i>. That is a strong answer.</li>
+<li>Use analogies: post office (Kafka), warehouse / filing cabinet / meaning map (MinIO / Postgres / Qdrant), detective's report card (twin), one chair (GPU lease), footnotes (citations).</li>
+</ul>
+
+<h1>12. The live demo, step by step</h1>
+<h2>12.1 Preparation checklist</h2>
+<table>
+<tr><th>When</th><th>Do</th><th>Why</th></tr>
+<tr><td><b>The day before</b></td><td><code>make demo-refresh</code> (about 45 minutes). It replays real clips through the pipeline, lets the rules and VLM gate judge them, and restarts the demo stack.</td><td>Footage in storage expires after 24 hours. Without it, search shows "recording removed".</td></tr>
+<tr><td><b>1 hour before</b></td><td><code>make up PROFILE=infra,core</code>; <code>make migrate</code>; <code>deploy/demo/start.sh</code>.</td><td>Containers + the host services (Ollama, retrieval, reasoning, API, UI).</td></tr>
+<tr><td><b>30 minutes before</b></td><td>Stop perception and the camera simulator. Check <code>curl localhost:11434/api/ps</code> shows the model on the GPU (<code>size_vram</code> not tiny).</td><td>Perception, the gate and the language model cannot share a 4 GB card; if Ollama falls back to CPU, reason mode becomes very slow.</td></tr>
+<tr><td><b>10 minutes before</b></td><td>Log in (admin account from <code>.env</code>) at <code>http://127.0.0.1:5173</code>. Open Search once so the encoder is warm; run one reason search so the language model is loaded.</td><td>The first call is a cold start (8 to 14 s).</td></tr>
+<tr><td><b>Close other things</b></td><td>Close extra browser tabs and heavy apps.</td><td>14 GB RAM is shared with the models; memory pressure caused slow runs before.</td></tr>
+</table>
+
+<h2>12.2 The script</h2>
+<table>
+<tr><th>#</th><th>Click</th><th>Say</th><th>What you should see</th></tr>
+<tr><td>1</td><td><b>Live wall</b></td><td>"These are the cameras, live over WebRTC. This is a normal VMS. Everything after this is what the AI adds."</td><td>Camera tiles with status.</td></tr>
+<tr><td>2</td><td><b>Playback</b> &rarr; pick a camera and range &rarr; Load &rarr; turn <i>Detections on</i></td><td>"The coloured boxes are the digital twin: objects the AI found and tracked. The video is raw; this is what the system <i>understood</i>."</td><td>Video with boxes and ids; scrub bar.</td></tr>
+<tr><td>3</td><td><b>Search</b> &rarr; type <i>"a person in a red top near the service door"</i> (or any example shown) &rarr; <b>Fast</b></td><td>"Fast mode: picture similarity only, about a quarter of a second."</td><td>Result cards with keyframes and a match percentage.</td></tr>
+<tr><td>4</td><td>Same query &rarr; <b>Reason</b></td><td>"Now a language model re-reads the best candidates against the system's records. It takes about fifteen seconds on this laptop, and each card tells you <i>why</i> it ranked there."</td><td>Re-ranked cards with a "Why this result" box and a model score.</td></tr>
+<tr><td>5</td><td>Click <b>Find similar</b> on a card (if time allows), draw a box around a person</td><td>"I can also draw a box on a frame and search for things that look like it."</td><td>A dialog with similar results. (Built; browser-tested only in simulation, so use it last.)</td></tr>
+<tr><td>6</td><td><b>Events</b> &rarr; open one</td><td>"A rule noticed this, then a vision model looked at the keyframes and confirmed it, with this caption. The operator can acknowledge it. If the model had said 'no', the operator would never have seen it."</td><td>Event detail with keyframes, caption, verdict.</td></tr>
+<tr><td>7</td><td>Click <b>Analyze</b></td><td>"Now the reasoning service finds the five phases, reads each camera, and writes a report."</td><td>A progress bar with stages (reading action &middot; cam02...). Takes two to four minutes on this laptop.</td></tr>
+<tr><td>8</td><td><b>Incidents</b> &rarr; open the report</td><td>"Every sentence cites evidence ids; click one to see the frame. If the model cannot cite, the sentence is dropped. Here is the PDF. And at the bottom, which model produced it."</td><td>Phase band, lanes, cited evidence frames, PDF button.</td></tr>
+<tr><td>9</td><td><b>Assistant</b> &rarr; ask "What happened today?", then "How many people were on &lt;camera&gt; today?"</td><td>"It can only call seven fixed tools. The first line is the tool's own sentence; the citations are real records."</td><td>Streaming answer, tool trace, citation chips.</td></tr>
+<tr><td>10</td><td><b>Timeline</b> &rarr; drag across a lane</td><td>"One lane per camera. Events linked across cameras are outlined. I can play cameras together, search just this range, or save it to a case."</td><td>Lanes, Linked row, selection bar.</td></tr>
+<tr><td>11</td><td><b>Reports</b></td><td>"A daily report is produced automatically; every number in the text is checked against the figures."</td><td>Report page with charts and PDF.</td></tr>
+</table>
+
+<h2>12.3 If something goes wrong</h2>
+<table>
+<tr><th>Problem</th><th>Say / do</th></tr>
+<tr><td>Reason search takes much longer than 15 s</td><td>"It is a 3B model on a 4 GB card; if it is slow the system falls back to the fast order and says so." Check <code>/api/ps</code> for GPU use afterwards.</td></tr>
+<tr><td>Search shows "recording removed"</td><td>The footage expired. Explain the retention policy and show the report pages (they keep their evidence frames).</td></tr>
+<tr><td>Analyze fails or hangs</td><td>Show an existing incident report. Explain that jobs show a clear failure reason and the system never half-writes a report.</td></tr>
+<tr><td>The language model is down</td><td>Show that fast search, live view and playback still work: "degrade, don't die".</td></tr>
+</table>
+
+<h1>13. Questions you will be asked</h1>
+<p>Short, honest answers. Adapt them to your own voice.</p>
+
+<div class="qa"><span class="q">1. Why not just send the video to a big cloud model?</span><br>Cost, privacy and volume. Hours of video from many cameras is far too large to send; the data is sensitive; and cloud models have rate limits. Our design converts video to small structured text once, locally, and uses cloud models only as an option for text reasoning (the <i>hybrid</i> profile).</div>
+<div class="qa"><span class="q">2. What is a digital twin here?</span><br>A small structured JSON for each 10-second segment: objects, tracks, attributes, zones, motion and vectors. It is a text copy of what the video <i>contains</i>, so search, rules and reports read it instead of re-watching video.</div>
+<div class="qa"><span class="q">3. Why Kafka?</span><br>It decouples fast and slow parts. The slow GPU service never blocks ingestion; a crashed service resumes from where it stopped; messages can be replayed. Messages carry links, not video.</div>
+<div class="qa"><span class="q">4. How do you stop the AI making things up?</span><br>Structured outputs checked against a schema, retries that quote the errors, and <b>mandatory citations</b>: every claim must point to an evidence id that exists, and uncited claims are dropped. Also fixed tools for the assistant, numeric post-checks for the daily report, and provenance on every result.</div>
+<div class="qa"><span class="q">5. Why both rules and an AI gate?</span><br>Rules are cheap and run on everything but produce false alarms; the vision model is accurate but slow and uses the GPU, so it only checks the suspicions. On real footage the gate rejected all 9 doorway "intrusions" and kept 30 of 30 loitering events.</div>
+<div class="qa"><span class="q">6. How does it run on only 4 GB?</span><br>Small models (3B) squeezed to 4 bits, one model family on the GPU at a time through a lease, embeddings on the CPU, masks on the CPU on demand, and a "cheap before expensive" design. Perception needs under 1 GB.</div>
+<div class="qa"><span class="q">7. What is the GPU lease?</span><br>A lock in Redis that says which model family currently occupies the GPU. Others wait their turn; it expires if the holder crashes (and after 15 minutes even if stuck).</div>
+<div class="qa"><span class="q">8. What is the difference between fast and reason search?</span><br>Fast = picture and text similarity, about 0.2 s. Reason = a language model decomposes the query and re-reads the best candidates (and optionally a vision model checks details), about 15 s. Reason mode is the "reasoning-based" part of the title.</div>
+<div class="qa"><span class="q">9. Did the fine-tuning work?</span><br>Technically yes: we trained a 3B vision model on a 4 GB GPU and served it. As an accuracy claim, not proven: the gain was only on labels made by a rule; on a person's labels there was no gain. We report that and we did not make it the default.</div>
+<div class="qa"><span class="q">10. How do you know search works?</span><br>We built a benchmark from real MEVA labels (36 queries): fast mode finds a relevant clip in the top 10 for 20 of 36 queries (random would be about 9), reason mode 24. It is strong on objects and postures, weak on motion. The clips are staged, so it is a ceiling.</div>
+<div class="qa"><span class="q">11. What does idempotent mean, and why do you care?</span><br>Doing an operation twice gives the same result as once. Kafka can redeliver messages, so every consumer writes idempotently to avoid duplicates after a restart.</div>
+<div class="qa"><span class="q">12. How does correlation work without recognising people?</span><br>It uses time and a camera map: two events on connected cameras whose times fit are linked, and chains are merged with union-find. The limit is that it cannot tell whether it is the same person; re-identification is future work.</div>
+<div class="qa"><span class="q">13. What happens if the language model is down?</span><br>Recording, live view, playback and fast search continue. Reason search falls back with a note, the assistant says the model is unavailable, the daily report uses a template, and an analysis job fails with a clear reason.</div>
+<div class="qa"><span class="q">14. How is it secured?</span><br>Hashed passwords, short-lived JWTs, roles re-read from the database every call, a role-by-endpoint test matrix, rate limits, 15-minute presigned links, audit logging, no secrets in code. Face recognition is deliberately not built.</div>
+<div class="qa"><span class="q">15. What is novel compared with the papers?</span><br>One shared digital twin feeding search, reasoning and reports; running on continuous live streams, not short clips; running on a 4 GB laptop; a unified operator experience with evidence-cited reports.</div>
+<div class="qa"><span class="q">16. What did you personally build?</span><br>(Track D) ingestion, perception, the events service and the VLM gate, the LLM gateway and GPU lease, text search, reasoning and incident reports, the assistant, the deployment and the evaluations. Jatin built the API, frontend, correlation, alerts, indexing and the timeline. Several cross-track pieces were done deliberately and flagged.</div>
+<div class="qa"><span class="q">17. Why Qdrant and Postgres?</span><br>Postgres for exact relational facts; Qdrant for similarity search with payload filters and hybrid dense+sparse search. Each does its job well.</div>
+<div class="qa"><span class="q">18. Why JavaScript and not TypeScript?</span><br>A team decision based on skills. We compensate with runtime validation (zod) at the API boundary and tests.</div>
+<div class="qa"><span class="q">19. How would you scale it?</span><br>Kafka partitions (6 per topic) let consumers scale out; the indexer can scale horizontally; heavy models would move to a bigger GPU or the cloud profile. The tested target here is 4 to 6 cameras.</div>
+<div class="qa"><span class="q">20. What are the biggest limitations?</span><br>Small models, so quality is limited; search is weak on actions that need motion; the fine-tuning experiment was inconclusive because labels were mostly drafts; cloud and Kubernetes deployments were not exercised on real infrastructure; no user study.</div>
+<div class="qa"><span class="q">21. What would you do next?</span><br>Collect more human-made labels and retest the adapter on them; train the second adapter; add person re-identification; finish the clean retrieval ablation; deploy to a VM and run the usability study.</div>
+<div class="qa"><span class="q">22. What are MEVA and UCF-Crime?</span><br>Public research video datasets: MEVA has multi-camera everyday activity (we used bus-station cameras and activity clips); UCF-Crime has crime videos with labelled categories. We used them as stand-ins for live cameras.</div>
+<div class="qa"><span class="q">23. What is MinIO / S3?</span><br>An object store: a place for big files, each with a link. S3 is Amazon's version; MinIO is a free one with the same interface, so the project can later switch to real S3.</div>
+<div class="qa"><span class="q">24. How is the system tested if models are non-deterministic?</span><br>Unit tests never call a real model: a <code>FakeGateway</code> replays recorded answers; golden tests run the report writer on real stored evidence bundles; benchmarks measure the real models separately.</div>
+<div class="qa"><span class="q">25. Why 10-second segments?</span><br>Short enough for low latency and cheap re-processing, long enough to track an object and keep file counts sane. It is a setting.</div>
+<div class="qa"><span class="q">26. Is it legal / ethical to monitor people?</span><br>We use public research datasets and team members for demos, keep data local by default, avoid face recognition, log access, and expire footage. Real deployments need consent, signage and policy decisions that are not ours to make.</div>
+<div class="qa"><span class="q">27. What is the "gate" rejecting?</span><br>Candidates where the vision model answers "no" (or "unsure" for a rule that does not accept it). Rejected ones are stored with their reason, never shown to operators, and useful for measuring the gate.</div>
+<div class="qa"><span class="q">28. What does "provenance" mean?</span><br>The record of how a result was made: which model, how many tries, whether a fallback was used, how long each step took. It lets you audit and compare.</div>
+<div class="qa"><span class="q">29. What if I ask for something that never happened?</span><br>Search returns the closest matches with scores (it cannot say "none exist" for a visual query, but the reason mode's trace and low scores show weak matches). The assistant says it found nothing for questions about records.</div>
+<div class="qa"><span class="q">30. How long did it take, and how big is it?</span><br>About six weeks of two-person work (kickoff 17 September); roughly 74 stories planned, about three quarters finished and tested; thousands of automated tests across eight services, a shared library and a frontend.</div>
+
+<h1>14. Glossary and cheat sheet</h1>
+<h2>14.1 Glossary</h2>
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td><b>Adapter (LoRA)</b></td><td>A small add-on trained on top of a frozen model to change its behaviour for a task.</td></tr>
+<tr><td><b>Alert</b></td><td>A notification created from a verified event; lifecycle open &rarr; acknowledged &rarr; resolved.</td></tr>
+<tr><td><b>API</b></td><td>The service the browser talks to; checks login and roles.</td></tr>
+<tr><td><b>BM25</b></td><td>A classic keyword-ranking method; the "exact words" half of hybrid search.</td></tr>
+<tr><td><b>ByteTrack</b></td><td>The tracker that keeps ids stable across frames.</td></tr>
+<tr><td><b>Candidate</b></td><td>A rule hit before the vision model has checked it.</td></tr>
+<tr><td><b>Contract</b></td><td>An agreed message format (Pydantic class + sample file + version) between services.</td></tr>
+<tr><td><b>Correlation group</b></td><td>Verified events on linked cameras, close in time, treated as one story.</td></tr>
+<tr><td><b>Dead-letter topic (DLQ)</b></td><td>Where messages that keep failing are parked.</td></tr>
+<tr><td><b>Digital twin</b></td><td>Structured JSON describing what a segment contains.</td></tr>
+<tr><td><b>Embedding</b></td><td>A vector of numbers capturing the meaning/appearance of a text or image.</td></tr>
+<tr><td><b>Evidence id</b></td><td>A stable id (like <code>ev-cap-03</code>) for a caption or answer that reports must cite.</td></tr>
+<tr><td><b>Fallback</b></td><td>The next model (or method) tried when one fails.</td></tr>
+<tr><td><b>Gateway</b></td><td>The single place every AI call passes through (cache, lease, validation, provenance).</td></tr>
+<tr><td><b>GPU lease</b></td><td>The Redis lock that lets one model family use the GPU at a time.</td></tr>
+<tr><td><b>HLS / WebRTC</b></td><td>Two ways to play video in a browser: HLS for playback, WebRTC for low-delay live view.</td></tr>
+<tr><td><b>Idempotent</b></td><td>Safe to repeat: same result the second time.</td></tr>
+<tr><td><b>JIT refinement</b></td><td>"Just in time": ask a vision model about a detail only when a result needs it.</td></tr>
+<tr><td><b>JWT</b></td><td>A signed login token the browser sends with every request.</td></tr>
+<tr><td><b>Kafka</b></td><td>The message system between services.</td></tr>
+<tr><td><b>Keyframe</b></td><td>One saved picture per second of video.</td></tr>
+<tr><td><b>LLM / VLM</b></td><td>Large language model / vision-language model.</td></tr>
+<tr><td><b>MediaMTX</b></td><td>The media server that re-broadcasts camera streams.</td></tr>
+<tr><td><b>MinIO</b></td><td>S3-compatible object storage for large files.</td></tr>
+<tr><td><b>Ollama</b></td><td>A program that runs language and vision models locally.</td></tr>
+<tr><td><b>Phase</b></td><td>One of baseline, precursor, escalation, action, aftermath.</td></tr>
+<tr><td><b>PhaVR / TG</b></td><td>The two reasoning tasks: reading each phase (captions + Q&amp;A), and locating the phases in time (temporal grounding).</td></tr>
+<tr><td><b>Postgres</b></td><td>The relational database.</td></tr>
+<tr><td><b>Profile</b></td><td>local, hybrid or cloud: which models serve the tasks.</td></tr>
+<tr><td><b>Provenance</b></td><td>The record of which model and steps produced a result.</td></tr>
+<tr><td><b>Qdrant</b></td><td>The vector database.</td></tr>
+<tr><td><b>RAG</b></td><td>Retrieval-augmented generation: look things up first, then write the answer from what was found.</td></tr>
+<tr><td><b>Redis</b></td><td>The fast scratchpad: lease, cache, push, limits.</td></tr>
+<tr><td><b>RRF</b></td><td>Reciprocal rank fusion: merge rankings by summing 1/(60+rank).</td></tr>
+<tr><td><b>SAM 2</b></td><td>A model that draws precise object outlines (masks).</td></tr>
+<tr><td><b>Segment</b></td><td>A 10-second recorded piece of one camera's stream.</td></tr>
+<tr><td><b>SigLIP 2</b></td><td>The model that makes embeddings for both text and images.</td></tr>
+<tr><td><b>Topology</b></td><td>The camera map: overlap and transit links.</td></tr>
+<tr><td><b>Track</b></td><td>One object followed over time (<code>cam03-t412</code>).</td></tr>
+<tr><td><b>VQA bank</b></td><td>A list of standard questions per event type asked of each phase's frames.</td></tr>
+<tr><td><b>WebSocket / SSE</b></td><td>Ways the server pushes live data to the browser.</td></tr>
+<tr><td><b>YOLO11</b></td><td>The object detector.</td></tr>
+<tr><td><b>Zero-shot</b></td><td>Using a model without any task-specific training.</td></tr>
+<tr><td><b>Zone</b></td><td>A polygon drawn on a camera view (entrance, restricted area...).</td></tr>
+</table>
+
+<h2>14.2 Numbers and facts to memorise</h2>
+<table>
+<tr><th>Fact</th><th>Value</th></tr>
+<tr><td>Segment length</td><td>10 s; one keyframe per second</td></tr>
+<tr><td>Target scale</td><td>4 to 6 cameras on a 4 GB GPU</td></tr>
+<tr><td>Perception GPU memory (YOLO11 + SigLIP 2)</td><td>966 MB peak</td></tr>
+<tr><td>Models (local profile)</td><td><code>qwen2.5vl:3b</code> (vision), <code>qwen2.5:3b</code> (text), via Ollama</td></tr>
+<tr><td>Fast / reason search</td><td>0.22 s / 15.5 s median</td></tr>
+<tr><td>Search windows</td><td>hits within 10 s on a camera merge; top 30 kept; rerank reads the top 10 (5 per call)</td></tr>
+<tr><td>Blend in reason mode</td><td>40% fused score + 60% model score</td></tr>
+<tr><td>Rules</td><td>6: two intrusion rules, loitering (60 s), crowding (more than 8 for 20 s), abandoned object (30 s + 20 s), running</td></tr>
+<tr><td>Phases</td><td>baseline, precursor, escalation, action, aftermath</td></tr>
+<tr><td>Kafka topics</td><td>segments, twin, events, correlations, incidents, dlq (all <code>.v1</code>)</td></tr>
+<tr><td>Assistant</td><td>7 tools, at most 4 lookups per question, last 12 messages kept</td></tr>
+<tr><td>Roles</td><td>admin, operator, viewer</td></tr>
+<tr><td>Presigned link lifetime</td><td>15 minutes</td></tr>
+<tr><td>Footage retention</td><td>24 hours in object storage</td></tr>
+<tr><td>Ports</td><td>UI 5173, API 8000, retrieval 8010, Ollama 11434, MinIO 9000, Qdrant 6333</td></tr>
+<tr><td>Adapter training</td><td>QLoRA r=16, 138 samples, 3 epochs, about 50 minutes, 3.3 GB peak GPU</td></tr>
+<tr><td>Retrieval benchmark (Oct 6, 36 queries)</td><td>hit@1/5/10: fast .14/.36/.56; reason .22/.39/.67; random .03/.13/.24</td></tr>
+<tr><td>Adapter vs untrained (mIoU)</td><td>0.354 vs 0.274 overall, but gain only on rule-made labels</td></tr>
+</table>
+<div class="key"><b class="t">The three sentences to remember if you forget everything else</b>
+1. <b>Turn video into structured knowledge once</b> (the digital twin), then reuse it for search, events and reports.<br>
+2. <b>Cheap filter first, expensive reasoning second</b>, so it runs on a 4 GB laptop.<br>
+3. <b>Evidence or it didn't happen</b>: every generated claim cites its evidence, and we report our results honestly, including what did not work.</div>

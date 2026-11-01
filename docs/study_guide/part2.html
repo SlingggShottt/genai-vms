@@ -1,0 +1,92 @@
+<h1>4. The pipeline, station by station</h1>
+<p>Now we open each box of the big picture. The order is the order the video travels. Remember the rule that explains the design: <b>heavy things (video, pictures) sit in storage; only small notes with links travel between services.</b></p>
+
+<h2>4.1 Cameras and MediaMTX &mdash; getting the video in</h2>
+<p>Cameras speak a protocol called <b>RTSP</b> (a way to stream video over a network). We do not have a building full of cameras, so a <b>camera simulator</b> plays recorded datasets as if they were live RTSP cameras (it uses <code>ffmpeg</code>). We replayed real footage from public research datasets (MEVA bus-station cameras, UCF-Crime clips) this way.</p>
+<p><b>MediaMTX</b> is the media server in the middle. It receives each stream and re-publishes it two ways: <b>WebRTC</b> (very low delay, used for the live wall) and <b>HLS</b> (chopped into small files, used for playback in a browser).</p>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>A TV broadcasting hub. Cameras are the studios; MediaMTX is the control room that re-broadcasts each channel in two formats: live (WebRTC) and on-demand (HLS).</div>
+
+<h2>4.2 Ingestion &mdash; cutting the tape into envelopes</h2>
+<figure><!--FIG:ingestion--><figcaption>Figure 4.1 &mdash; Ingestion: one worker per camera cuts the stream into 10-second pieces.</figcaption></figure>
+<ol>
+<li>There is <b>one asynchronous worker per enabled camera</b>. The list of cameras comes from the API (and falls back to a config file); it is refreshed every 60 seconds, so adding a camera needs no restart.</li>
+<li><code>ffmpeg</code> copies the stream into <b>10-second MPEG-TS files without re-encoding</b> (so it costs almost no CPU).</li>
+<li>Each file is uploaded to the MinIO bucket <code>vms-segments</code>; <b>one picture per second</b> (a keyframe) goes to <code>vms-keyframes</code>.</li>
+<li>It publishes a small Kafka message <code>segment.v1</code>: camera, segment id, start and end time in UTC, and the storage link.</li>
+<li>If the stream drops it reconnects with exponential waiting (1, 2, 4&hellip; up to 30 s) and the next message is flagged <code>gap_before = true</code>, so nobody mistakes a gap for silence.</li>
+</ol>
+<div class="honest"><b class="t">Be honest about&hellip;</b>The 30-minute, 6-camera "no missing segment" stress test was written but never run as specified. Shorter real runs and the "restart workers mid-stream" chaos test passed (chapter 9).</div>
+
+<h2>4.3 Kafka &mdash; the post office</h2>
+<figure><!--FIG:kafka--><figcaption>Figure 4.2 &mdash; Kafka topics: who writes, who reads.</figcaption></figure>
+<figure><!--FIG:consumer_flow--><figcaption>Figure 4.2b &mdash; What every consumer does with every message.</figcaption></figure>
+<p><b>Kafka</b> is a message system. A <b>producer</b> writes a message to a <b>topic</b>; any number of <b>consumers</b> read it at their own speed. Because the queue sits between services, a slow GPU service never slows the one before it, and if a service crashes it simply resumes where it stopped.</p>
+<ul>
+<li><b>Messages carry links, not video</b> (and must stay under 1 MB). This was decision D-02.</li>
+<li>Every topic name ends in a version (<code>.v1</code>). A message format may only <i>gain</i> optional fields; anything else needs a new version and a new topic. These formats are the <b>contracts</b> between Divyansh's and Jatin's code; each has a Python class (Pydantic) and a sample file (fixture).</li>
+<li>Consumers follow one rule: <b>validate, write idempotently, then commit</b>. "Idempotent" means doing it twice gives the same result as doing it once, so a replayed message cannot create duplicates.</li>
+<li>A message that keeps failing goes to the <b>dead-letter topic</b> (<code>vms.dlq.v1</code>) instead of blocking everything. There is a tool to inspect and replay it.</li>
+</ul>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>A post office with labelled pigeonholes. The clerk who cuts the tape drops a note into the "segments" hole saying "parcel at shelf 12, camera 3, 10:15:00". The detective collects notes from that hole when ready; the clerk does not wait.</div>
+
+<h2>4.4 Perception &mdash; writing the report card (the digital twin)</h2>
+<figure><!--FIG:twin--><figcaption>Figure 4.3 &mdash; From a video segment to a digital twin.</figcaption></figure>
+<p>Perception is the first AI step. For every 10-second segment it:</p>
+<ol>
+<li><b>Samples frames</b> (2 to 5 per second) from the video.</li>
+<li><b>Detects objects</b> with <b>YOLO11</b>: what is in the picture and where (a bounding box), for people, cars, bags and so on.</li>
+<li><b>Tracks them</b> with <b>ByteTrack</b>: the same person in consecutive frames gets the same id (like <code>cam03-t412</code>), even across segment boundaries. The tracker state is checkpointed in Redis so a restart continues the numbering.</li>
+<li>Adds <b>attributes</b> (colour of clothes), the <b>zone</b> the object is in (polygons an admin draws on each camera: e.g. "staff doorway"), and <b>motion</b> (speed, direction).</li>
+<li>Computes a <b>SigLIP 2 embedding</b>: a list of numbers that captures what the object <i>looks like</i>, used later for "find things like this".</li>
+<li>Writes it all as the <b>digital twin</b> JSON, stores it in MinIO and announces it on Kafka.</li>
+</ol>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>A detective who watches each 10-second envelope and fills in a standard form: "3 people, 1 backpack; person #412 in a red top stayed 47 seconds in the staff doorway". Later, everyone reads the <b>form</b>, nobody re-watches the tape.</div>
+<div class="key"><b class="t">Why a "lightweight" twin?</b>The research paper builds a heavy twin for every frame (segmentation plus depth). That is impossible live on 4 GB. We keep a small twin (boxes, tracks, attributes, zones, vectors) and <b>draw detailed object outlines (masks) only on demand</b> for search results. Measured: both perception models together use only about <b>966 MB</b> of GPU memory.</div>
+
+<h2>4.5 The storage trio (plus Redis)</h2>
+<figure><!--FIG:stores--><figcaption>Figure 4.4 &mdash; What lives where.</figcaption></figure>
+<p>Beginners often ask "why four databases?" Because each is good at one job:</p>
+<ul>
+<li><b>MinIO</b> speaks the same language as Amazon S3. It is for big files and gives each a link. Locally it is free; in the cloud it can be swapped for real S3.</li>
+<li><b>PostgreSQL</b> is the classic relational database: exact facts you can filter and join ("all high-severity events on cam02 yesterday").</li>
+<li><b>Qdrant</b> is a <b>vector database</b>: it stores the "meaning vectors" and finds the closest ones. It also supports hybrid search (by meaning <i>and</i> by exact words).</li>
+<li><b>Redis</b> is a fast scratchpad: the GPU lease, response cache, live-push channel, rate limits.</li>
+</ul>
+
+<h2>4.6 The indexer &mdash; filing the report card</h2>
+<p>The indexer listens to the twin, event and incident topics and files everything: segments, tracks and counts into Postgres; frame and track vectors into Qdrant; event captions and incident-report sections into the <code>knowledge</code> collection (two search indexes at once: a <b>dense</b> one for meaning and a <b>BM25</b> one for exact words). It is idempotent, so replaying a message changes nothing.</p>
+
+<h2>4.7 The events service &mdash; rules plus a second opinion</h2>
+<figure><!--FIG:events--><figcaption>Figure 4.5 &mdash; Rules suspect; the vision model confirms; low-quality alarms die quietly.</figcaption></figure>
+<h3>The six rules (config/rules.yaml)</h3>
+<table>
+<tr><th>Rule</th><th>Fires when&hellip;</th><th>Severity</th></tr>
+<tr><td><code>intrusion.restricted</code></td><td>a person/vehicle is seen in a zone marked <i>restricted</i> for at least 2 sampled frames</td><td>high</td></tr>
+<tr><td><code>intrusion.after_hours</code></td><td>a person is seen in a zone outside its allowed hours (zones can have a schedule)</td><td>high</td></tr>
+<tr><td><code>loitering</code></td><td>a person stays in a zone for 60 s or more</td><td>medium</td></tr>
+<tr><td><code>crowding</code></td><td>more than 8 people in a zone for 20 s</td><td>medium</td></tr>
+<tr><td><code>abandoned_object</code></td><td>a bag stays still 30 s and its owner has been away 20 s</td><td>high</td></tr>
+<tr><td><code>running</code></td><td>a person moves faster than a speed threshold (0.35 frame-widths per second) in at least 3 samples</td><td>low</td></tr>
+</table>
+<p>Rules look at consecutive twins, so one long episode becomes <b>one</b> candidate, not a hundred (the rule engine folds consecutive hits and debounces them). Thresholds live in a config file, not in code.</p>
+
+<h3>The VLM gate</h3>
+<p>A <b>VLM</b> (vision-language model) is an AI that can look at pictures and talk about them. Our gate sends up to 4 keyframes of the candidate to <code>qwen2.5-VL 3B</code> (running locally through Ollama) and asks for structured JSON: a <b>verdict</b> (yes / no / unsure), a confidence, and a one-sentence <b>caption</b>. The result is one of:</p>
+<ul>
+<li><b>verified</b> &mdash; published as an event and becomes an alert (if severe enough);</li>
+<li><b>rejected</b> &mdash; stored with its reason (useful for measuring the gate), never published;</li>
+<li><b>skipped</b> &mdash; the model could not be asked (or the rule has verification off); published but flagged unverified.</li>
+</ul>
+<div class="key"><b class="t">A real result worth quoting</b>On a replay of real bus-station footage (MEVA), the rules raised <b>49 candidates</b> and the gate judged all 49. It <b>verified 30 of 30 loitering</b> candidates in the waiting room, but <b>rejected all 9</b> "restricted-doorway intrusion" candidates (people were just walking past) and rejected 2 of 4 abandoned-object candidates. That is the gate earning its keep: it removes false alarms that rules alone would have sent to the operator.</div>
+<div class="honest"><b class="t">Be honest about&hellip;</b>Those figures come from one 10-minute replay with zones drawn by hand. The gate's precision and recall against labelled clips was <b>not</b> measured (that needs labelled data). Also, 31 of the 37 verified alerts were waiting-room loitering: a rules-tuning problem, not an AI problem.</div>
+
+<h2>4.8 Alerts</h2>
+<figure><!--FIG:alert_states--><figcaption>Figure 4.6 &mdash; The life of an alert.</figcaption></figure>
+<p>The API consumes verified events and creates <b>one alert per event</b> (severity at least <i>medium</i> by default; lower ones are stored and searchable but do not interrupt anyone). Each alert is pushed to every dashboard through a <b>WebSocket</b> the moment it is created. Notification channels (dashboard, email, Telegram) are plugins; only the dashboard is on, by team decision. Actions are <b>audited</b> (who acknowledged what, with their note).</p>
+
+<h2>4.9 Correlation &mdash; connecting the dots across cameras</h2>
+<figure><!--FIG:correlation--><figcaption>Figure 4.7 &mdash; Camera topology, time, and grouping.</figcaption></figure>
+<p>A single camera sees only part of the story. The <b>camera topology</b> is a small map an admin draws: which cameras overlap (two views of one area) and which are linked by <b>transit</b> (walking from A to B takes between a minimum and maximum number of seconds). The correlation service links events on <b>different</b> cameras if (1) their event types are compatible (a matrix in <code>config/correlation.yaml</code>), (2) the cameras are connected, and (3) the times fit once a tolerance is added. Chains of links are merged into groups with <b>union-find</b>.</p>
+<div class="analogy"><b class="t">Think of it as&hellip;</b>Friend groups. If A knows B and B knows C, then A, B and C are one group, even if A never met C. Events on different cameras become one "story" the same way.</div>
+<p>A group stays <b>open</b> while linked events keep arriving and <b>closes</b> after a quiet period, which is the signal for the reasoning service. If two groups turn out to be one, they are <b>merged</b>: the oldest survives and absorbs the rest. A hard rule: an event is in at most one live group.</p>
+<div class="honest"><b class="t">Be honest about&hellip;</b>Correlation uses <b>time and the camera map only</b>. It does not recognise that the <i>same person</i> appears on two cameras (person re-identification is future work, decision D-10). So in busy scenes it can over- or under-link.</div>

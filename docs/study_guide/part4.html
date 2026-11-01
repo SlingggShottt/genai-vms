@@ -1,0 +1,169 @@
+<h1>7. What the user sees, and who may do what</h1>
+
+<h2>7.1 The dashboard (React)</h2>
+<figure><!--FIG:frontend--><figcaption>Figure 7.1 &mdash; The pages of the web app and what each is for.</figcaption></figure>
+<p>The frontend is a <b>React + Vite + Tailwind + shadcn/ui</b> single-page app written in <b>JavaScript (not TypeScript)</b>, by team decision. Data from the API is validated with <b>zod</b> so a wrong shape fails loudly. Each feature lives in its own folder (<code>features/search</code>, <code>features/alerts</code>, &hellip;) with its API calls, schemas, components, pages and tests. The visual rules (sentence-case text, design tokens, no raw colours) are in <code>docs/style_guide.md</code>.</p>
+<table>
+<tr><th>Page</th><th>What it does</th><th>Good for the demo because&hellip;</th></tr>
+<tr><td><b>Live wall</b></td><td>All cameras live over WebRTC, with online/offline status.</td><td>shows the system is a real VMS first</td></tr>
+<tr><td><b>Playback</b></td><td>Pick a camera and time range; HLS video; scrub bar with density; detection boxes over the video; "Find similar here".</td><td>shows the twin overlay: the AI's view</td></tr>
+<tr><td><b>Search</b></td><td>Type a sentence; choose Fast or Reason; "Look closer"; result cards with why-this-result trace and picture checks; masks; "Search by image".</td><td>the headline feature</td></tr>
+<tr><td><b>Events</b></td><td>Verified events and alerts, filters, keyframes, VLM caption, acknowledge / resolve, <b>Analyze</b> and live progress.</td><td>the operator workflow</td></tr>
+<tr><td><b>Incidents</b></td><td>AI incident reports: phase band, per-camera lanes, evidence frames, PDF, similar past incidents.</td><td>the "wow" of GenAI explanation</td></tr>
+<tr><td><b>Assistant</b></td><td>Chat with citation chips and the tools it used.</td><td>interactive and easy to explain</td></tr>
+<tr><td><b>Timeline</b></td><td>Lanes, correlation links, drag-select, synced playback, search in range.</td><td>the investigation view</td></tr>
+<tr><td><b>Cases</b></td><td>Bookmarks with notes.</td><td>closes the investigation story</td></tr>
+<tr><td><b>Reports</b></td><td>Daily security report, PDF.</td><td>shows scheduled automation</td></tr>
+<tr><td><b>Settings</b></td><td>Cameras, zones (draw polygons), camera links (topology). Admin only.</td><td>how rules and correlation are configured</td></tr>
+</table>
+
+<h2>7.2 The API &mdash; the one door</h2>
+<p>The <b>API</b> (FastAPI) is the only thing the browser talks to. It authenticates, checks permissions, forwards search and assistant calls to the retrieval service, signs video links, and pushes live updates. Three ways data reaches the browser:</p>
+<ul>
+<li><b>REST</b> (ordinary request/response) for almost everything;</li>
+<li><b>WebSocket</b> for live pushes: new alerts, job progress, "incident ready", camera status. The push is only a <i>hint</i>; the browser refetches the real state from the database, so a missed push never loses data;</li>
+<li><b>SSE</b> (server-sent events) to stream the assistant's answer as it is written.</li>
+</ul>
+<p>Errors always use one envelope <code>{"error": {"code", "message", "details", "request_id"}}</code>, which makes the UI's messages consistent.</p>
+
+<h2>7.3 Security and roles</h2>
+<figure><!--FIG:security--><figcaption>Figure 7.2 &mdash; Login, roles, and the main protections.</figcaption></figure>
+<ul>
+<li><b>Passwords</b> are hashed; login returns short-lived <b>JWT</b> tokens. The API <b>re-reads the user and role from the database on every call</b>, so changing a role or deactivating a user takes effect immediately.</li>
+<li><b>Three roles</b> (admin, operator, viewer). A <b>role &times; endpoint test matrix</b> checks every endpoint against every role, so a new endpoint cannot silently be open to everyone.</li>
+<li><b>Rate limits</b> in Redis: login 10 per minute, search 30, assistant 20, analyses and reports 6.</li>
+<li><b>Presigned links</b> for video and pictures expire in 15 minutes and are created per request; permanent links are never stored.</li>
+<li>CORS allow-list, security headers and a Content-Security-Policy; a secret scanner (gitleaks) passes on the repo; secrets come only from the environment.</li>
+<li><b>Deliberately out of scope:</b> face recognition and face blurring.</li>
+</ul>
+
+<h1>8. Running it, keeping it healthy</h1>
+
+<h2>8.1 Where it runs</h2>
+<figure><!--FIG:deploy--><figcaption>Figure 8.1 &mdash; The ways the system can be deployed, and which are proven.</figcaption></figure>
+<div class="honest"><b class="t">Be honest about&hellip;</b>What is <b>proven</b>: everything running on one laptop with Docker Compose plus a few host processes. What is <b>written but never run for real</b>: the cloud-VM stack (Caddy, GitHub Actions deployment) and the Kubernetes manifests (they render and pass the validator <code>kubeconform</code>, but there was never a cluster to apply them to).</div>
+
+<h2>8.2 Commands you may need</h2>
+<pre>make setup                      # install Python (uv) + Node deps, pre-commit hooks
+make up PROFILE=infra,core      # Kafka, Postgres, Qdrant, MinIO, Redis, MediaMTX, ingestion, indexer, correlation
+make migrate                    # create/upgrade the database tables (Alembic)
+deploy/demo/start.sh            # host services: Ollama, retrieval :8010, reasoning, api :8000, UI :5173
+deploy/demo/stop.sh             # stop them again
+make demo-refresh               # about 45 min: replay real clips so there is fresh footage to search
+make test                       # all Python unit tests;  make test-int  adds real-database tests
+make lint                       # ruff (Python) + eslint (frontend)
+cd frontend &amp;&amp; npm run dev      # the UI by itself on :5173</pre>
+<div class="key"><b class="t">Footage expires after one day</b>The object store deletes video segments and keyframes after 24 hours (a retention policy, to protect disk). Database rows remain, so older search results say "the recording has been removed". <b>Run <code>make demo-refresh</code> the day of your demo.</b></div>
+
+<h2>8.3 Observability &mdash; knowing it is healthy</h2>
+<ul>
+<li>Every service exposes <b>Prometheus metrics</b> (segments ingested, reconnects, search time per stage, queue depth, Kafka lag, GPU memory, model latency and tokens per provider&hellip;).</li>
+<li>A <b>Grafana dashboard</b> with 22 panels (lag, dead letters, GPU memory, ingestion per camera, API rate/errors/latency, firing alerts) and nine <b>alert rules</b> that are themselves unit-tested with <code>promtool</code>.</li>
+<li>Logs are structured JSON with request ids so one request can be followed across services.</li>
+</ul>
+
+<h2>8.4 Resilience &mdash; what happens when things break</h2>
+<table>
+<tr><th>What breaks</th><th>What happens</th></tr>
+<tr><td>A worker restarts mid-stream (indexer, events, correlation)</td><td>Kafka replays from the last commit; idempotent writes avoid duplicates. We restarted them five times in 7 minutes: no segment gap, 839/839 frame points and 1,403/1,403 track points present, no event in two groups.</td></tr>
+<tr><td>Ollama (the language models) stops</td><td>Fast search is unaffected; reason search falls back to the fused order with a note; the assistant says the model is unavailable; the daily report uses its template; an analysis job fails with a clear reason. Recording and playback never depend on it.</td></tr>
+<tr><td>A message is poisoned</td><td>After retries it goes to the dead-letter topic; there is a replay tool.</td></tr>
+<tr><td>A GPU holder crashes</td><td>The lease expires by itself in 30 s.</td></tr>
+<tr><td>Redis is down</td><td>The cache is a miss, rate limiting fails open; heavy models refuse to run without the lease.</td></tr>
+</table>
+
+<h2>8.5 Testing and CI</h2>
+<ul>
+<li>About <b>2,400 Python unit tests</b>, about <b>600 frontend tests</b>, and several hundred <b>integration tests</b> that start real Postgres, Redis, Kafka and S3 containers (testcontainers). Tests never touch the network or a real model: a <code>FakeGateway</code> replays recorded answers.</li>
+<li>Many tests were <b>mutation-checked</b>: we deliberately broke the code and confirmed a test failed.</li>
+<li><b>GitHub Actions</b> runs path-filtered lint+tests per service, an integration job, frontend lint/test/build, and Docker builds; an aggregate <code>ci-success</code> job gates merging.</li>
+</ul>
+<div class="honest"><b class="t">Be honest about&hellip;</b>CI last ran on GitHub on 8 October. Work since then (this guide's final week) was tested locally but has <b>not been through CI</b>, because no pull request was opened.</div>
+
+<h2>8.6 The repository and the team</h2>
+<pre>genai-vms/
+  libs/vms_common/   shared: contracts, Kafka, storage, LLM gateway
+  libs/vms_db/       database models + one migration history
+  services/          ingestion perception indexer events
+                     correlation retrieval reasoning api
+  frontend/          React app (JavaScript)
+  config/            models.yaml  rules.yaml  correlation.yaml  vqa_bank.yaml
+  tools/             camera_sim  annotation_kit
+  ml/                annotation  training  evaluation (benchmarks and their results)
+  deploy/            compose  k8s  demo
+  docs/              PRD  SRS  context  design_architecture  backlog  style_guide  techstack</pre>
+<p><b>Team.</b> Two builders worked in parallel on separate "tracks" that meet at the message contracts. <b>Track D (Divyansh)</b>: ingestion, perception, events, the LLM gateway, text search, reasoning, the assistant, deployment and evaluation. <b>Track J (Jatin)</b>: the API, frontend, indexing and playback, correlation, alerts, image search, reports and the timeline. Kuldeep and Pankaj supported documentation, testing and evaluation. Rules in the repo: services never import each other (only shared libs), no TypeScript, no model name in code, no video on Kafka.</p>
+
+<h1>9. What we measured</h1>
+<p>Everything in this chapter was measured on the build laptop: <b>RTX 3050 4 GB, Ryzen 5 5600H, 14 GB RAM</b>, local profile. Where a number is a small sample it says so. <b>Quote only these numbers.</b></p>
+
+<h2>9.1 Perception and models</h2>
+<table>
+<tr><th>Measurement</th><th>Result</th></tr>
+<tr><td>GPU memory, YOLO11s + SigLIP 2 loaded and running a batch of 8</td><td><b>966 MB</b> peak (the budget was 4 GB)</td></tr>
+<tr><td>YOLO11s on 8 frames of 1080p</td><td>37 ms</td></tr>
+<tr><td><code>qwen2.5:3b</code> structured query plan, warm</td><td><b>0.25 s</b> (cold start 6.5 s)</td></tr>
+<tr><td><code>qwen2.5vl:3b</code> with 1 / 2 / 4 images, warm</td><td>3.1 s / 5.4 s / 11.0 s (about 1,050 prompt tokens per image)</td></tr>
+</table>
+
+<h2>9.2 Search latency</h2>
+<figure><!--FIG:latency_chart--><figcaption>Figure 9.1 &mdash; Where search time goes (30 fast and 5 reason runs).</figcaption></figure>
+
+<h2>9.3 Real footage through the whole pipeline</h2>
+<p>Three real bus-station cameras (MEVA), 10 minutes each, with perception on the GPU and the VLM gate on all 49 candidates: <b>37 verified alerts</b> in total, the gate rejecting false alarms such as all 9 doorway "intrusions" (see chapter 4). One camera's twin found 127 person tracks, 13 backpack and 5 suitcase tracks.</p>
+
+<h2>9.4 Retrieval quality on real labels (MEVA activity clips)</h2>
+<figure><!--FIG:retrieval_chart--><figcaption>Figure 9.2 &mdash; 36 plain-language queries; a result counts if it overlaps a clip of that activity.</figcaption></figure>
+<p>Fast mode puts a relevant window at rank 1 for 5 of 36 queries and in the top 10 for 20 (random would be about 1 and 9). Reason mode: 8 and 24, at roughly 70 times the latency; query by query it was better on 12, worse on 7. <b>What it shows:</b> search is good at <i>what is in the picture</i> (phones, laptops, bikes, trunks, 7 of 7 in the top 10) and poor at <i>actions that need motion</i> (turning left, handing over, entering through a door).</p>
+<div class="honest"><b class="t">Be honest about&hellip;</b>The clips are short and staged with black gaps between them, so these numbers are a <b>ceiling</b>, not a promise for a day of one real camera. One query per activity, written by the builder. A newer, larger harness (63 queries, explicit vs implicit, four configurations, mAP and tIoU) is built and tested, but <b>its final clean run did not finish</b>: the first attempts were invalidated by a recording gap and stale data, which taught us useful lessons (chapter 10).</div>
+
+<h2>9.5 The fine-tuning experiment &mdash; the honest headline</h2>
+<p>We trained a QLoRA adapter for the <b>phase locator</b> on the real 3B model, on the 4 GB laptop GPU, in about 50 minutes (138 training samples; 26 validation; 32 held-out test samples from 18 clips). We scored it on the held-out set.</p>
+<figure><!--FIG:adapter_chart--><figcaption>Figure 9.3 &mdash; Fine-tuned adapter vs untrained model, split by who made the labels.</figcaption></figure>
+<ul>
+<li>Overall the adapter looks better (0.354 vs 0.274), and the paired difference is small but positive (+0.080, 95% interval +0.005 to +0.153).</li>
+<li><b>But the whole gain is on the 8 samples whose labels came from a padding rule</b> (+0.265): the adapter learned the labelling rule. On a person's labels (6 samples) it was slightly <i>worse</i> (&minus;0.04) and on drafts that looked at the clip it was about equal (+0.02), both with intervals that include zero.</li>
+<li>What it does win: it <b>always answers in the right form</b> (32 of 32 usable answers vs 23 of 32), puts boundaries 1 to 2 seconds nearer, and labels more frames correctly (0.61 vs 0.47).</li>
+<li>It stayed well below the detector's own timing on judged labels, and it almost never says "precursor" or "escalation". So we <b>did not make it the default</b>.</li>
+</ul>
+<div class="key"><b class="t">How to say it</b>"We proved the pipeline: we can fine-tune a 3B vision model on a 4 GB laptop and serve it. But with labels that are mostly model drafts, we cannot claim it understands incident phases better. A fair test needs more labels made by a person, which is the next step."</div>
+<div class="honest"><b class="t">Be honest about&hellip;</b>Labels: of 119 labelled clips, a person marked 9 from scratch and checked 20 drafts; 58 are model drafts made from contact sheets, 25 come from a padding rule, 7 from the dataset's crime span. Test samples from one clip (its 2 or 3 camera views) are not independent, so the intervals are tighter than they should be. One run, one seed.</div>
+
+<h2>9.6 Assistant and report quality</h2>
+<p>72 test questions were asked before and after fixes. Objective checks (no model judging): the <b>first lookup was the right tool</b> 78% &rarr; 100%; the lookup used the <b>camera asked about</b> 28% &rarr; 100%; used the <b>day asked about</b> 0% &rarr; 100%; tags that matched no record fell from 27/92 to 14/80. The automated judge (a 3B model, a different family from the generator) gave high but unreliable scores &mdash; it named a "problem" in every single answer &mdash; so <b>we do not claim answer quality from it</b>; a 20% human-verification sheet exists but was not filled in.</p>
+
+<h2>9.7 Tests and delivery</h2>
+<p>Roughly three quarters of the planned backlog (by points) is done and ticked with evidence. Two thousand four hundred Python unit tests, about six hundred frontend tests and the integration suites passed at the last full run (27 October).</p>
+
+<h1>10. What is not done, and what went wrong</h1>
+<p>Examiners trust a presenter who names the gaps first. This chapter is your list. Say these calmly: they are normal for a project built in weeks.</p>
+
+<h2>10.1 Not done</h2>
+<table>
+<tr><th>Gap</th><th>Why / status</th></tr>
+<tr><td>Fine-tuned adapter does not beat the untrained model on judged labels</td><td>Labels are mostly model drafts. Result recorded honestly (9.5).</td></tr>
+<tr><td>Second adapter (PhaVR: captions and Q&amp;A) not trained</td><td>Needs caption annotations; the three stories that depend on it stay open.</td></tr>
+<tr><td>Cloud-VM deployment and Kubernetes never run for real</td><td>Written and validated, but no VM or cluster was available. No domain, no certificates.</td></tr>
+<tr><td>Four-way retrieval ablation: final clean run not completed</td><td>Harness, 63 queries and metrics are built and tested; the recorded stream expired before a clean run finished.</td></tr>
+<tr><td>Usability study (SUS) and human scoring sheets</td><td>Kit is written; no sessions were held.</td></tr>
+<tr><td>Long load tests (2/4/6 cameras for 30 minutes per profile)</td><td>Shorter real runs exist; one real camera feed plus replays.</td></tr>
+<tr><td>Hybrid / cloud model profiles never exercised with real keys</td><td>No provider keys on the build machine.</td></tr>
+<tr><td>Find-similar, timeline links and search-in-range clicked through in a real browser</td><td>Built and unit-tested in a simulated browser; a live browser pass needs fresh footage.</td></tr>
+<tr><td>Daily report indexed into the knowledge search</td><td>Not built; the assistant reads reports straight from the database.</td></tr>
+<tr><td>CI on the newest commits</td><td>No pull request was opened.</td></tr>
+<tr><td>Guide's approval of the phase scheme</td><td>Not needed (confirmed by you).</td></tr>
+</table>
+
+<h2>10.2 Things we found and fixed late (good stories to tell)</h2>
+<p>Benchmarks and real runs are how these were discovered, which is the point of benchmarking.</p>
+<table>
+<tr><th>What we found</th><th>How</th><th>Fix</th></tr>
+<tr><td><b>Track ids were reused</b> after a restart with no checkpoint, so a second recording of a camera kept only 9 of about 2,800 tracks in the database.</td><td>The retrieval benchmark's timeline alignment failed.</td><td>Track numbers now start at the clock in milliseconds when there is no checkpoint. Unit-tested.</td></tr>
+<tr><td><b>A stuck GPU-lease holder</b> blocked every vision call until the service was restarted.</td><td>"Look closer" never produced an answer in a benchmark.</td><td>Holders now stop being renewed after 15 minutes. Tested.</td></tr>
+<tr><td><b>The training run ran out of GPU memory</b> on 4 GB.</td><td>First real training attempt.</td><td>Five changes (matching weight type, 8-bit optimizer, no dropout, offloading saved activations to host memory, freeing cache); peak 3.3 of 3.68 GB.</td></tr>
+<tr><td><b>Image size mismatch:</b> the serving config shrank frames the adapter was trained on.</td><td>Reviewing the evaluation settings.</td><td>Serve at 640 px; both settings are reported.</td></tr>
+<tr><td>A <b>4-minute ingestion stall</b> under memory pressure left a hole in a recorded stream.</td><td>Segment-gap check before a benchmark.</td><td>Re-recorded; the benchmark now searches only inside the recording under test.</td></tr>
+<tr><td>The <b>database migration</b> for the search log was not applied on the live database.</td><td>Search log inserts failed quietly in logs.</td><td>Migration applied.</td></tr>
+<tr><td><b>The disk was 96% full.</b></td><td>Routine check.</td><td>Removed rebuildable caches and unused images (about 10 GB).</td></tr>
+</table>
+<div class="say"><b class="t">What to say</b>"Our benchmarks found real bugs in our own system &mdash; ID reuse, a lease that could wedge the GPU &mdash; and we fixed them with tests. I'd rather show you that than a perfect-looking number."</div>
