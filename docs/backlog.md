@@ -699,6 +699,12 @@
       queries, worse on 7). What is still missing here: the `queries.jsonl` format and labelling guide, ≥ 150 queries
       with half implicit, mAP/tIoU, filters/JIT ablations and the `hybrid` profile. The MEVA queries are one clean
       activity name each, and clips of one activity often share a scene, so the numbers are a ceiling.
+      > **Status 2026-11-01 — the ablation runner is built and tested but has no valid result.** The runs of
+      > 2026-10-26/27 were invalidated (a 4-minute ingestion stall left a hole in the recording; earlier
+      > recordings' windows leaked into some configurations; a migration was unapplied), so
+      > `retrieval-ablation.{json,md}` were deleted instead of kept. Every configuration now searches inside the
+      > recording window under test. A clean run needs fresh footage and ~1 h of the GPU. Use the 36-query MEVA
+      > result above until then.
 
 ---
 

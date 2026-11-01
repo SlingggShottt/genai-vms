@@ -70,7 +70,11 @@ VMS_RETRIEVAL_JIT_BUDGET_S=150 deploy/demo/start.sh        # the demo launcher a
 uv run --package vms-retrieval python ml/evaluation/retrieval/run_ablation.py --limit 50
 ```
 
-Results land in `ml/evaluation/results/retrieval-ablation.{json,md}`. The `hybrid` profile needs
+Results land in `ml/evaluation/results/retrieval-ablation.{json,md}`. **No valid run is committed:** the
+runs of 2026-10-26 and 27 were thrown out (an ingestion stall left a gap in the recorded stream, and some
+configurations searched windows from an earlier recording), so the files were removed rather than kept as
+numbers nobody should quote. The runner now confines every configuration to the recording under test; it
+needs fresh footage (`make demo-refresh`) and a clean re-record to produce a result. The `hybrid` profile needs
 provider keys and has not been run; start the retrieval service under `VMS_LLM_PROFILE=hybrid` and
 pass `--profile-label hybrid` to get it.
 
